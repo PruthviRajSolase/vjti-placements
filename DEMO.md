@@ -1,6 +1,6 @@
 # DEMO.md — TPO presentation runbook
 
-This is the **presenter's script** for showing the placement portal to the TPO. It assumes no prior context and takes about **6–7 minutes** plus questions (§1–§4 are the core; §3b is a short student-convenience pass; §5 is the staff-controls closer; §5b is notifications/company CSV import; §5c is alumni outreach with bulk actions). Keep `README.md` open in another tab for technical questions — this file is only about what to click and what to say.
+This is the **presenter's script** for showing the placement portal to the TPO. It assumes no prior context and takes about **6–7 minutes** plus questions (§1–§4 are the core; §3b is a short student-convenience pass; §5 is the staff-controls closer; §5b is notifications/company CSV import; §5c is alumni outreach with bulk actions). Keep `README.md` (and `DEVELOPMENT.md` for deeper detail) open in another tab for technical questions — this file is only about what to click and what to say.
 
 ---
 
