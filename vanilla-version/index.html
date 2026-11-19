@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+
+<!--
+  ============================================================
+  VJTI PLACEMENTS — VANILLA VERSION (Steps 1-6, archived)
+  This is the plain HTML/CSS/JS version we built together
+  before migrating to React. Kept for reference and comparison.
+  Double-click this file to open it — no build step needed.
+  ============================================================
+-->
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="VJTI placement statistics, company-wise packages, branch data and reviewed interview experiences."
+    />
+    <title>VJTI Placements — Stats, Companies &amp; Experiences</title>
+
+    <!-- The line that connects HTML to CSS -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body id="top">
+    <header class="site-header">
+      <a class="brand" href="#top">VJTI Placements</a>
+
+      <nav class="main-nav">
+        <a href="#stats">Overview</a>
+        <a href="#companies">Companies</a>
+        <a href="#branches">Branches</a>
+        <a href="#experiences">Experiences</a>
+      </nav>
+
+      <a class="btn-signin" href="#">Sign in</a>
+    </header>
+
+    <!-- Shown ONLY if the user has JavaScript disabled -->
+    <noscript>
+      <p class="noscript-warning">
+        This site needs JavaScript to load placement data. Please enable it.
+      </p>
+    </noscript>
+
+    <main>
+      <section class="hero" id="overview">
+        <h1>VJTI Placements</h1>
+        <p class="hero-sub">
+          Placement statistics, company data and reviewed interview
+          experiences for <strong>Veermata Jijabai Technological Institute</strong>,
+          Mumbai — made by students, for students.
+        </p>
+
+        <!-- Step 6: clicking a tab switches the year — data-year is a
+             "data attribute" JS reads via element.dataset.year -->
+        <nav class="year-tabs" id="year-tabs">
+          <a class="year-tab" data-year="2024" href="#">2024</a>
+          <a class="year-tab" data-year="2025" href="#">2025</a>
+          <a class="year-tab active" data-year="2026" href="#">2026</a>
+        </nav>
+      </section>
+
+      <!-- Step 5: containers are EMPTY on purpose.
+           script.js grabs them by id and fills them from data.js. -->
+      <section class="stats" id="stats">
+        <h2 class="section-title" id="stats-title">2026 Season at a Glance</h2>
+
+        <div class="stat-grid" id="stat-grid"></div>
+      </section>
+
+      <section class="companies" id="companies">
+        <h2 class="section-title" id="companies-title">Companies — 2026</h2>
+        <p class="section-sub">Dummy data for now — real numbers come later.</p>
+
+        <!-- Step 6: filter controls. Pills are built BY JavaScript
+             from the data, so new branches get pills automatically. -->
+        <div class="filters">
+          <input
+            type="search"
+            id="company-search"
+            class="search-input"
+            placeholder="Search company or role…"
+            autocomplete="off"
+          />
+          <div class="branch-pills" id="branch-pills"></div>
+        </div>
+
+        <!-- Live "Showing X of Y companies" line -->
+        <p class="result-count" id="result-count"></p>
+
+        <!-- Step 4: wrapper that lets wide tables swipe sideways on phones -->
+        <div class="table-scroll">
+        <table class="company-table">
+          <thead>
+            <tr>
+              <th scope="col">Company</th>
+              <th scope="col">Role</th>
+              <th scope="col">Package (LPA)</th>
+              <th scope="col">Students Hired</th>
+              <th scope="col">Branches Eligible</th>
+            </tr>
+          </thead>
+          <!-- Step 5: rows are built by renderCompanies() in script.js -->
+          <tbody id="company-body"></tbody>
+        </table>
+        </div><!-- /table-scroll -->
+      </section>
+
+      <section class="branches" id="branches">
+        <h2 class="section-title" id="branches-title">Branch-wise Placement — 2026</h2>
+
+        <div class="table-scroll">
+        <table class="branch-table">
+          <thead>
+            <tr>
+              <th scope="col">Branch</th>
+              <th scope="col">Placement %</th>
+            </tr>
+          </thead>
+          <!-- Step 5: rows are built by renderBranches() in script.js -->
+          <tbody id="branch-body"></tbody>
+        </table>
+        </div><!-- /table-scroll -->
+      </section>
+
+      <section class="experiences" id="experiences">
+        <h2 class="section-title">Interview Experiences</h2>
+        <p class="section-sub">Reviewed write-ups from seniors who sat for these companies.</p>
+
+        <!-- Step 5: cards are built by renderExperiences() in script.js -->
+        <div class="experience-list" id="experience-list"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        <strong>VJTI Placements</strong> — an unofficial, student-run project.
+        Data shown is sample/dummy data and will be replaced with verified numbers.
+      </p>
+      <p>Made with ❤️ by VJTI students · Inspired by college placement trackers</p>
+    </footer>
+
+    <!-- Scripts at the END of <body>: containers exist by the time
+         they run. data.js BEFORE script.js (script reads its variables). -->
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,2075 @@
+/*
+  ============================================================
+  VJTI PLACEMENTS — STEP 3
+  The complete stylesheet. CSS = "how everything LOOKS".
+
+  How to read this file:
+  - A "rule" looks like:   selector { property: value; }
+  - selector  = WHICH elements to style (e.g. ".stat-card")
+  - property  = WHAT to change (e.g. "background")
+  - value     = the new look (e.g. "white")
+
+  Selector types you'll see here:
+    .stat-card   → any element with class="stat-card" (dots = class)
+    #top         → the element with id="top"          (hash = id)
+    table        → EVERY <table> on the page          (bare word = tag)
+    .tags li     → every <li> INSIDE class="tags"     (space = descendant)
+  ============================================================
+*/
+
+/* ------------------------------------------------------------
+   1. DESIGN TOKENS (CSS variables)
+   We define our colors ONCE here, then reuse them everywhere.
+   Change --accent below and the WHOLE site updates.
+   This is exactly how the reference site does its dark mode.
+   ------------------------------------------------------------ */
+:root {
+  /* :root = "the root of the page". Variables declared here
+     are usable anywhere via var(--name). */
+
+  color-scheme: light;
+
+  --bg: #f7f7ef;            /* page background (warm cream, like the reference site) */
+  --surface: #ffffff;       /* cards, tables — things that sit ON the background */
+  --surface-alt: #fafaf3;   /* striped table rows */
+  --text: #1c1e21;          /* main text color */
+  --text-soft: #5c6470;     /* secondary/muted text */
+  --border: #e3e4da;        /* subtle borders around cards */
+
+  --accent: #14498a;        /* VJTI deep blue — buttons, links, highlights */
+  --accent-soft: #e8effa;   /* pale blue for tags & highlights */
+  --accent-text: #ffffff;   /* text that sits on top of accent blue */
+
+  --good: #1a7f4e;          /* green — high placement % */
+  --mid: #b98a00;           /* amber — medium placement % */
+
+  --radius: 12px;           /* corner roundness used everywhere */
+  --shadow: 0 1px 3px rgb(0 0 0 / 8%);  /* soft shadow: x y blur color */
+}
+
+/* ------------------------------------------------------------
+   STEP 10 — DARK THEME.
+   We only REDECLARE the tokens here; every rule below keeps using
+   var(--...), so the whole site changes colour in one shot.
+   `color-scheme` also tells the browser to draw native controls
+   (scrollbars, inputs) in their dark variants.
+   ------------------------------------------------------------ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #10151c;
+  --surface: #18202b;
+  --surface-alt: #1d2733;
+  --text: #e8edf3;
+  --text-soft: #9aa7b6;
+  --border: #2b3746;
+
+  --accent: #6ea8fe;        /* lighter blue stays readable on dark surfaces */
+  --accent-soft: #1e3150;
+  --accent-text: #08111f;   /* dark ink ON the light-blue accent */
+
+  --good: #4ade80;
+  --mid: #fbbf24;
+
+  --shadow: 0 1px 3px rgb(0 0 0 / 45%);
+}
+
+/* Error/notice backgrounds are fixed colours in the base rules, so
+   they need their own dark-theme overrides. */
+:root[data-theme="dark"] .form-error,
+:root[data-theme="dark"] .noscript-warning {
+  background: #3a1d1d;
+  color: #ffb4a9;
+  border-color: #6e2f2f;
+}
+
+/* Success notices use green rather than the red error palette above. */
+:root[data-theme="dark"] .form-success {
+  background: #16382a;
+  color: #a7f3c8;
+  border-color: #2f6b4e;
+}
+
+/* ------------------------------------------------------------
+   2. RESET + BASE
+   Browsers add default margins/paddings that fight our design.
+   We "reset" them, then set OUR defaults.
+   ------------------------------------------------------------ */
+* {
+  /* * = "every element". box-sizing: border-box makes width
+     INCLUDE padding+border, so sizing boxes is predictable.
+     Every professional stylesheet starts with this. */
+  box-sizing: border-box;
+}
+
+html {
+  /* anchor link jumps (#companies etc.) glide instead of teleporting */
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;                          /* kill the default 8px gap around the page */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;                   /* space between lines of text */
+}
+
+img { max-width: 100%; }              /* never let an image overflow its container */
+
+/* ------------------------------------------------------------
+   3. HEADER — sticky top bar
+   ------------------------------------------------------------ */
+.site-header {
+  /* Flexbox: puts children (brand, nav, sign-in) in a ROW.
+     space-between = spread them out: left / middle / right */
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  position: sticky;                   /* sticks to top when you scroll */
+  top: 0;                             /* ...at exactly 0px from the top */
+  z-index: 10;                        /* float ABOVE content when overlapping */
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 12px 24px;
+  margin: 16px;                       /* gap between header and window edge */
+  box-shadow: var(--shadow);
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--text);
+  text-decoration: none;              /* remove the underline links have by default */
+}
+
+.main-nav {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;                  /* push nav+button to the right side */
+}
+
+.main-nav a {
+  color: var(--text-soft);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 999px;               /* huge value on a pill shape = fully rounded */
+  font-size: 0.95rem;
+}
+
+.main-nav a:hover {
+  /* :hover is a "pseudo-class" — styles that apply WHILE the mouse is over it */
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.btn-signin {
+  background: var(--accent);
+  color: var(--accent-text);
+  text-decoration: none;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.btn-signin:hover { opacity: 0.9; }   /* subtle dim on hover */
+
+/* ------------------------------------------------------------
+   4. LAYOUT CONTAINER
+   All <section>s get the same max width and centering,
+   so content never stretches absurdly wide on big monitors.
+   ------------------------------------------------------------ */
+main > section, footer {
+  max-width: 1100px;
+  margin: 0 auto 64px;                /* top right/left(bottom) auto = center horizontally */
+  padding: 0 24px;
+  scroll-margin-top: 96px;            /* when a nav link jumps here, leave 96px of headroom
+                                         so the sticky header doesn't cover the section title */
+}
+
+/* ------------------------------------------------------------
+   5. HERO — big intro
+   ------------------------------------------------------------ */
+.hero { text-align: center; margin-top: 72px !important; }
+
+.hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);  /* clamp = fluid size: never smaller than
+                                             2.2rem, never bigger than 3.4rem */
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;                /* slight tightening = modern look */
+}
+
+.hero-sub {
+  color: var(--text-soft);
+  max-width: 640px;
+  margin: 0 auto 24px;                    /* margin auto = center the paragraph */
+}
+
+/* Year tabs — pill-shaped year selector like the reference site */
+.year-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.year-tab {
+  padding: 8px 22px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-soft);
+  text-decoration: none;
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.year-tab:hover { border-color: var(--accent); color: var(--accent); }
+
+.year-tab.active {
+  /* .year-tab.active = element having BOTH classes:
+     class="year-tab active" — more specific than either alone */
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* ------------------------------------------------------------
+   6. STAT CARDS — the 4 big numbers
+   ------------------------------------------------------------ */
+.stat-grid {
+  /* CSS GRID: the most important layout tool in modern CSS.
+     auto-fit + minmax = "fit as many 220px-minimum cards per row
+     as possible" — and it WRAPS automatically on small screens. */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  box-shadow: var(--shadow);
+
+  display: flex;
+  flex-direction: column;             /* stack value above label */
+  gap: 6px;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.stat-label {
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+
+/* ------------------------------------------------------------
+   7. SECTION TITLES
+   ------------------------------------------------------------ */
+.section-title {
+  font-size: 1.6rem;
+  margin: 0 0 6px;
+}
+
+.section-sub {
+  color: var(--text-soft);
+  margin: 0 0 20px;
+}
+
+/* ------------------------------------------------------------
+   8. TABLES — company & branch data
+   ------------------------------------------------------------ */
+.company-table, .branch-table {
+  width: 100%;
+  border-collapse: collapse;          /* merge double borders into single lines */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;                   /* clip the square table corners to the radius */
+  font-size: 0.95rem;
+}
+
+/* Wraps each table in the HTML. Invisible on desktop, but when a table
+   is wider than the screen (phones) it becomes a sideways-swipe area. */
+.table-scroll {
+  overflow-x: auto;                   /* horizontal scrollbar ONLY when needed */
+  -webkit-overflow-scrolling: touch;  /* smooth momentum scrolling on iOS */
+}
+
+/* th and td = every table cell */
+.company-table th, .company-table td,
+.branch-table th, .branch-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.company-table thead th, .branch-table thead th {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;          /* COMPANY instead of Company */
+  letter-spacing: 0.04em;
+}
+
+/* tr:last-child td = cells of the LAST row (remove its bottom border) */
+.company-table tbody tr:last-child td,
+.branch-table tbody tr:last-child td { border-bottom: none; }
+
+/* striped rows: every even-numbered data row gets a tint */
+.company-table tbody tr:nth-child(even),
+.branch-table tbody tr:nth-child(even) { background: var(--surface-alt); }
+
+/* highlight the row under the mouse */
+.company-table tbody tr:hover,
+.branch-table tbody tr:hover { background: var(--accent-soft); }
+
+/* ------------------------------------------------------------
+   9. EXPERIENCE CARDS
+   ------------------------------------------------------------ */
+.experience-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.experience-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* transition lives on the BASE state (not :hover) so the lift-up
+     animates smoothly in BOTH directions — hover in AND hover out */
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.experience-card:hover {
+  /* lift the card up on hover — transform moves it, transition animates it */
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
+}
+
+.experience-card h3 { margin: 0; font-size: 1.05rem; }
+
+.experience-card p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+.tags {
+  list-style: none;                   /* remove bullet dots */
+  display: flex;
+  flex-wrap: wrap;                    /* allow tags to wrap to next line */
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.tags li {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.author {
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: auto;                   /* in flex-column: push author to the bottom,
+                                         so all cards' authors align evenly */
+}
+
+/* ------------------------------------------------------------
+   13. FILTERS — search box + branch pills (Step 6)
+   ------------------------------------------------------------ */
+.filters {
+  display: flex;
+  flex-direction: column;             /* search on top, pills below */
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 420px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;                      /* inputs don't inherit fonts by default! */
+}
+
+/* :focus = styles while the user is typing in the box.
+   Visible focus states are an accessibility requirement. */
+.search-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.branch-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-soft);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;                    /* buttons show an arrow by default —
+                                         cursor:pointer signals "clickable" */
+}
+
+.pill:hover { border-color: var(--accent); color: var(--accent); }
+
+.pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.result-count {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  margin: 0 0 12px;
+}
+
+/* The "nothing matched" cell in the table */
+.no-results {
+  text-align: center;
+  color: var(--text-soft);
+  padding: 28px 16px !important;
+  font-style: italic;
+}
+
+/* ------------------------------------------------------------
+   14. ROUTING (Step 8) — nav active states, company cards,
+   company detail page, 404 page
+   ------------------------------------------------------------ */
+
+/* NavLink's active state (set by the className function in Header.jsx) */
+.main-nav a.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Company names inside the homepage table are links now */
+.company-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.company-link:hover { text-decoration: underline; }
+
+/* Centered page intro (Companies page) */
+.page-intro {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.page-title {
+  font-size: 2.2rem;
+  margin: 0 0 8px;
+}
+
+.page-intro .section-sub { margin: 0 auto 18px; max-width: 560px; }
+
+/* Companies grid */
+.company-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.company-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow);
+  text-decoration: none;              /* it's an <a>! kill link styling */
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.company-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
+}
+
+.company-card h3 { margin: 0; font-size: 1.05rem; }
+
+.company-role { color: var(--text-soft); font-size: 0.9rem; }
+
+.company-package {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.company-hired { color: var(--text-soft); font-size: 0.88rem; }
+
+.view-details {
+  margin-top: auto;                   /* push to bottom, aligned across cards */
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Company detail page */
+.company-detail {
+  max-width: 800px;
+  margin: 48px auto 64px;
+  padding: 0 24px;
+}
+
+.back-link {
+  display: inline-block;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.back-link:hover { text-decoration: underline; }
+
+.company-year-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+
+.year-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.year-card-head h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.year-badge {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.year-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-bottom: 16px;
+}
+
+.detail-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-value-sm { font-weight: 700; font-size: 1.05rem; }
+.stat-value-sm.accent { color: var(--accent); font-size: 1.3rem; }
+
+/* .tag = like .tags li but as a standalone span (no list needed) */
+.tag {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin: 0 6px 6px 0;
+}
+
+.roles-line { color: var(--text-soft); margin-top: 28px; }
+
+/* 404 / not-found page */
+.not-found {
+  text-align: center;
+  padding: 90px 24px;
+}
+
+.not-found h1 {
+  font-size: 4.5rem;
+  margin: 0 0 8px;
+  color: var(--accent);
+}
+
+.not-found p { color: var(--text-soft); margin-bottom: 20px; }
+
+.not-found code {
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+/* ------------------------------------------------------------
+   15. SIGN-IN UI (Step 9)
+   Uses the same tokens as the rest of the site — change --accent
+   and this whole form restyles along with every button.
+   ------------------------------------------------------------ */
+
+/* Signed-in state in the header */
+.user-chip {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* Theme switch in the header (Step 10) */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.theme-toggle-label { white-space: nowrap; }
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.btn-signout {
+  background: var(--surface);
+  color: var(--text-soft);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-signout:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Page + card */
+.auth-page {
+  max-width: 460px;
+  margin: 64px auto;
+  padding: 0 24px;
+}
+
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px;
+  text-align: center;
+}
+
+.auth-card h1 { font-size: 1.8rem; margin: 0 0 6px; }
+
+.auth-sub {
+  color: var(--text-soft);
+  margin: 0 0 24px;
+  font-size: 0.95rem;
+}
+
+/* Form layout: label stacked on input, rows spaced with gap */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field label { font-size: 0.9rem; font-weight: 700; }
+
+.field input {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;             /* inputs don't inherit fonts by default */
+}
+
+.field input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+/* Shared primary button (also used by the "Go to homepage" link) */
+.btn-primary {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  border-radius: 999px;
+  padding: 11px 20px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover { opacity: 0.9; }
+
+.form-error {
+  background: #fdecea;
+  color: #a11206;
+  border: 1px solid #f5c6c0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.auth-switch {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  margin: 20px 0 0;
+}
+
+.auth-switch button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-hint {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  margin: 18px 0 0;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* ------------------------------------------------------------
+   16. API-ERA UI — demo banner, loading states, TPO admin (Phase 2)
+   ------------------------------------------------------------ */
+
+.demo-banner {
+  max-width: 1100px;
+  margin: 0 auto 16px;
+  padding: 8px 24px;
+  text-align: center;
+  color: var(--mid);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.page-loading, .content-error {
+  text-align: center;
+  color: var(--text-soft);
+  padding: 80px 24px;
+}
+
+.content-error h1 { color: var(--text); }
+
+/* Demo credential list on the sign-in card */
+.demo-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 20px;
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.demo-accounts code {
+  color: var(--accent);
+  font-size: 0.95em;
+}
+
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Admin panel */
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.admin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.admin-card-wide { grid-column: 1 / -1; }
+
+.admin-fields, .admin-branch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.admin-fields label, .admin-branch-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.admin-fields input, .admin-branch-grid input, .admin-company-form input {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.admin-submit { margin-top: 18px; }
+
+.admin-company-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.admin-company-form input { flex: 1 1 150px; min-width: 120px; }
+
+.admin-table { min-width: 640px; }
+
+.admin-actions { white-space: nowrap; }
+
+.admin-actions button {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-right: 6px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-actions button:hover { border-color: var(--accent); }
+
+.admin-message {
+  max-width: 1100px;
+  margin: 0 auto 20px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.admin-message.success {
+  background: #e7f6ee;
+  color: var(--good);
+  border: 1px solid #b8e6cd;
+}
+
+.admin-message.error {
+  background: #fdecea;
+  color: #a11206;
+  border: 1px solid #f5c6c0;
+}
+
+:root[data-theme="dark"] .admin-message.success {
+  background: #14382a;
+  color: var(--good);
+  border-color: #245c44;
+}
+
+:root[data-theme="dark"] .admin-message.error {
+  background: #3a1d1d;
+  color: #ffb4a9;
+  border-color: #6e2f2f;
+}
+
+/* ------------------------------------------------------------
+   17. PHASE 3 — submission form, my-experiences, review queue
+   ------------------------------------------------------------ */
+
+.btn-secondary, .btn-danger {
+  display: inline-block;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-secondary:hover { background: var(--accent-soft); }
+
+.btn-danger { border-color: #d04436; color: #b62f22; }
+.btn-danger:hover { background: #fdecea; }
+.btn-secondary:disabled, .btn-danger:disabled { opacity: 0.45; cursor: not-allowed; }
+
+:root[data-theme="dark"] .btn-danger { color: #ff9d91; border-color: #a3443a; }
+:root[data-theme="dark"] .btn-danger:hover { background: #3a1d1d; }
+
+.form-page, .list-page { max-width: 900px; margin: 0 auto 60px; }
+.form-page .page-title, .list-page .page-title { margin-bottom: 8px; }
+.page-intro .btn-primary { display: inline-block; margin-top: 12px; text-decoration: none; }
+
+/* The three-step reminder above the form */
+.workflow-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.workflow-step.current { color: var(--accent); }
+
+.experience-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.experience-form label, .visibility-group legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.form-two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.experience-form input, .experience-form textarea, .review-actions textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
+.required { color: #c53727; }
+.field-help { color: var(--mid); font-size: 0.78rem; font-weight: 500; }
+
+.visibility-group { border: 0; padding: 0; margin: 0; }
+.visibility-group legend { margin-bottom: 10px; }
+.choice-grid { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 14px; }
+
+.choice-card {
+  flex-direction: row !important;
+  align-items: flex-start;
+  gap: 10px !important;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500 !important;
+}
+
+.choice-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+.choice-card strong { display: block; color: var(--text); }
+.choice-card span { color: var(--text-soft); font-size: 0.82rem; }
+.choice-card input { width: auto; margin-top: 3px; }
+
+.form-actions { display: flex; align-items: center; gap: 12px; }
+.btn-primary { text-decoration: none; }
+
+/* Status + visibility chips shared by student and staff views */
+.status-badge, .visibility-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-right: 8px;
+}
+
+.status-badge.pending { background: #fff3d6; color: #8a5a00; }
+.status-badge.approved { background: #e7f6ee; color: #187a48; }
+.status-badge.changes_requested { background: #ffeadb; color: #9a4a00; }
+.status-badge.rejected { background: #fdecea; color: #a11206; }
+.visibility-badge { background: var(--accent-soft); color: var(--accent); }
+
+:root[data-theme="dark"] .status-badge.pending { background: #3d3115; color: #ffd68a; }
+:root[data-theme="dark"] .status-badge.approved { background: #14382a; color: #7ee2ad; }
+:root[data-theme="dark"] .status-badge.changes_requested { background: #402a16; color: #ffc290; }
+:root[data-theme="dark"] .status-badge.rejected { background: #3a1d1d; color: #ffb4a9; }
+
+.submission-list, .review-list { display: flex; flex-direction: column; gap: 18px; }
+
+.submission-card, .review-card, .empty-card {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.submission-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.submission-head h2 { margin: 8px 0 4px; font-size: 1.2rem; }
+.submission-meta { margin: 0; color: var(--mid); font-size: 0.82rem; }
+.submission-body { color: var(--text-soft); line-height: 1.65; white-space: pre-wrap; }
+.submission-foot { margin-top: 14px; color: var(--mid); font-size: 0.78rem; }
+
+.review-feedback {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent-soft);
+  font-size: 0.9rem;
+}
+
+.review-feedback small { color: var(--mid); }
+
+.identity-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.identity-panel span { color: var(--text-soft); }
+.identity-panel small { flex-basis: 100%; color: var(--mid); }
+
+.review-actions { margin-top: 16px; }
+.review-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.review-buttons button { font-size: 0.88rem; }
+.review-final { margin-top: 12px; color: var(--mid); font-size: 0.82rem; }
+
+.filter-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+
+.filter-tab {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filter-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tab-count { margin-left: 6px; opacity: 0.75; }
+
+.empty-card { text-align: center; padding: 46px 24px; }
+.empty-card h2 { margin-top: 0; }
+.empty-card p { color: var(--text-soft); }
+.empty-card .btn-primary { display: inline-block; margin-top: 10px; text-decoration: none; }
+
+.experience-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 22px;
+  padding: 18px 22px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.admin-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  max-width: 1100px;
+  margin: 0 auto 20px;
+}
+
+.admin-shortcut {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.admin-shortcut:hover { border-width: 2px; padding: 17px 19px; }
+.admin-shortcut small { color: var(--text-soft); font-weight: 500; }
+.admin-shortcut > span { margin-top: 4px; font-size: 0.82rem; }
+
+/* ---- Phase 4: accounts + audit log ---- */
+.staff-form { max-width: 1100px; margin: 0 auto 20px; }
+
+.admin-users-page .search-input, .audit-table + .search-input { width: 100%; }
+.admin-card > .search-input { max-width: 380px; margin-bottom: 14px; }
+
+.role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.role-badge.contributor { color: var(--accent); border-color: var(--accent); }
+.role-badge.tpo { color: #187a48; border-color: #8fd3ad; }
+.role-badge.tpoi { color: #7b3fb5; border-color: #c6a3e8; }
+
+.users-table select, .role-editor select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.role-editor { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+
+.role-editor button {
+  padding: 5px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.role-editor button:disabled { opacity: 0.4; cursor: not-allowed; }
+.users-table small { color: var(--mid); }
+
+.audit-action {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.audit-action.create { background: #e7f6ee; color: #187a48; }
+.audit-action.review { background: #eef0ff; color: #4b51b5; }
+.audit-action.danger { background: #fdecea; color: #a11206; }
+
+:root[data-theme="dark"] .role-badge.tpo { color: #7ee2ad; border-color: #245c44; }
+:root[data-theme="dark"] .role-badge.tpoi { color: #d6b0ff; border-color: #6b458f; }
+:root[data-theme="dark"] .audit-action.create { background: #14382a; color: #7ee2ad; }
+:root[data-theme="dark"] .audit-action.review { background: #23254d; color: #b9bcff; }
+:root[data-theme="dark"] .audit-action.danger { background: #3a1d1d; color: #ffb4a9; }
+
+/* ------------------------------------------------------------
+   10. FOOTER
+   ------------------------------------------------------------ */.site-footer {
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+
+/* a tiny bit of breathing room before the footer */
+main { padding-bottom: 24px; }
+
+/* ------------------------------------------------------------
+   11. RESPONSIVE DESIGN — Step 4
+   A "media query" applies styles ONLY when a condition is true.
+   @media (max-width: 760px) = "when the window is 760px wide OR
+   narrower" (phones, small tablets). This is the same breakpoint
+   the reference site uses for its mobile layout.
+   ------------------------------------------------------------ */
+@media (max-width: 760px) {
+
+  /* --- header: wraps onto two rows ---
+     Row 1: brand (left)  +  Sign in (right)
+     Row 2: navigation links (order + flex-basis push it to its own row) */
+  .site-header {
+    flex-wrap: wrap;        /* allow children to break onto new lines */
+    gap: 10px;
+    padding: 12px 16px;
+    margin: 10px;           /* less margin = more usable width */
+    border-radius: 18px;
+  }
+
+  .main-nav {
+    margin-left: 0;
+    order: 3;               /* flex children default to order 0; giving the
+                               nav order 3 moves it AFTER brand & sign-in */
+    flex-basis: 100%;       /* force the nav onto its own full-width row */
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .btn-signin {
+    margin-left: auto;      /* push the pill to the right edge of row 1 */
+  }
+
+  /* --- global spacing: tighter on small screens --- */
+  main > section, footer {
+    margin-bottom: 44px;
+    padding: 0 16px;
+  }
+
+  .hero { margin-top: 44px !important; }
+
+  .year-tabs { flex-wrap: wrap; }
+
+  /* filters: let the search box use the full row width */
+  .search-input { max-width: none; }
+
+  /* --- cards: slightly smaller --- */
+  .stat-grid { gap: 14px; }
+  .stat-card { padding: 20px; }
+  .experience-card { padding: 18px; }
+
+  /* sign-in card: less padding + tighter top gap on small screens */
+  .auth-page { margin-top: 40px; }
+  .auth-card { padding: 22px; }
+
+  /* admin panel stacks on phones */
+  .admin-grid { grid-template-columns: 1fr; }
+  .admin-card { padding: 18px; }
+  .demo-banner { padding: 8px 16px; }
+
+  /* Phase 3 forms/cards stack on phones */
+  .form-two-col, .choice-grid { grid-template-columns: 1fr; }
+  .experience-form { padding: 18px; }
+  .submission-card, .review-card { padding: 16px; }
+  .submission-head { flex-direction: column; }
+  .review-buttons button { flex: 1 1 140px; }
+
+  /* --- tables: swipe sideways instead of squishing ---
+     A 5-column table cannot fit in ~360px. Forcing it would crush
+     every cell into unreadable mush. Instead we give the table a
+     minimum width and let .table-scroll (added this step) turn it
+     into a horizontal swipe area — the standard pattern used by
+     real data-heavy sites like the reference one. */
+  .company-table, .branch-table { min-width: 560px; }
+
+  .company-table th, .company-table td,
+  .branch-table th, .branch-table td {
+    padding: 10px 12px;
+    white-space: nowrap;    /* stop ugly mid-word wrapping inside cells */
+  }
+}
+
+/* ------------------------------------------------------------
+   Accessibility: some users turn OFF animations at the OS level
+   (motion sickness, vestibular disorders). This respects their
+   setting — the reference site does the same for its loader.
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }          /* jump instantly, don't glide */
+  .experience-card { transition: none; }
+  .experience-card:hover { transform: none; }
+}
+
+/* ------------------------------------------------------------
+   12. NOSCRIPT WARNING (shown only when JavaScript is off)
+   ------------------------------------------------------------ */
+.noscript-warning {
+  max-width: 1100px;
+  margin: 16px auto 0;
+  padding: 12px 20px;
+  text-align: center;
+  background: #fdecea;
+  color: #a11206;
+  border: 1px solid #f5c6c0;
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------
+   18. ERROR BOUNDARY FALLBACK (quality pass)
+   ------------------------------------------------------------ */
+.crash-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 40px 20px;
+}
+
+.crash-card {
+  width: 100%;
+  max-width: 560px;
+  padding: 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.crash-card h1 { margin-top: 0; }
+.crash-card p { color: var(--text-soft); line-height: 1.6; }
+
+.crash-detail {
+  overflow-x: auto;
+  margin: 16px 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--mid);
+  font-size: 0.78rem;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.crash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* ------------------------------------------------------------
+   19. PHASE 5 — experience search, filters and detail page
+   ------------------------------------------------------------ */
+.experience-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(160px, 1fr) minmax(130px, 0.7fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.search-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-field > span {
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.search-field .search-input { max-width: none; }
+
+.filter-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.filter-select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.exp-tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filter-summary {
+  margin: 0 0 16px;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}
+
+.clear-filters {
+  margin-left: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* The whole card is a link; keep the existing surface styling but drop the
+   default anchor colours and add a small affordance for the detail page. */
+.experience-card {
+  color: inherit;
+  text-decoration: none;
+}
+
+.experience-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.experience-company {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.experience-read {
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.experience-card:hover .experience-read { text-decoration: underline; }
+
+.experience-detail {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.experience-detail-head { margin: 20px 0 24px; }
+.experience-detail-head h1 { margin: 14px 0 8px; font-size: 1.9rem; line-height: 1.25; }
+
+.experience-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.meta-dot { opacity: 0.6; }
+
+.experience-body {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  line-height: 1.75;
+  white-space: pre-wrap;      /* keep the paragraphs typed into the form */
+}
+
+.experience-detail > .tags { margin: 18px 0; }
+a.tag { text-decoration: none; }
+a.tag:hover { text-decoration: underline; }
+
+.related-experiences { margin-top: 28px; }
+.related-experiences h2 { font-size: 1.15rem; }
+
+.related-experiences ul {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.related-experiences a { color: var(--accent); font-weight: 600; }
+
+@media (max-width: 760px) {
+  .experience-filters { grid-template-columns: 1fr; }
+  .experience-detail-head h1 { font-size: 1.5rem; }
+  .experience-body { padding: 18px; }
+}
+
+/* ------------------------------------------------------------
+    20. PHASE 6 — saved companies and account settings
+    ------------------------------------------------------------ */
+
+/* A company tile is now an <article> containing a full-size link plus a
+   sibling Save button. The link fills the card so the whole tile stays
+   clickable; the button is positioned above it and stops click bubbling. */
+.company-card {
+  position: relative;
+}
+
+.company-card-link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.company-card-link h3 { padding-right: 92px; }
+
+.company-card-link:hover .view-details { text-decoration: underline; }
+
+.bookmark-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.bookmark-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.bookmark-btn.saved {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.bookmark-btn.saved:hover:not(:disabled) {
+  background: var(--accent);
+  opacity: 0.88;
+}
+
+.bookmark-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bookmark-btn.floating {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  background: var(--surface-alt);
+  box-shadow: var(--shadow);
+}
+
+.bookmark-btn.floating.saved {
+  background: var(--accent);
+}
+
+.company-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.company-detail-actions .back-link { margin-bottom: 0; }
+
+/* The header user chip is now a route to /account. */
+a.user-chip { text-decoration: none; }
+a.user-chip:hover { opacity: 0.85; }
+
+/* Saved companies page */
+.saved-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.saved-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.saved-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.saved-link strong { font-size: 1.05rem; }
+.saved-link span { color: var(--accent); font-size: 0.85rem; font-weight: 600; }
+.saved-link:hover span { text-decoration: underline; }
+
+.saved-hint {
+  margin: 18px 0 0;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}
+
+/* Account settings page */
+.account-page .account-form { margin-bottom: 20px; }
+.account-page .account-form h2 { margin-top: 0; }
+
+.account-form .field-hint {
+  margin: -4px 0 16px;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+}
+
+.form-success {
+  background: #e7f6ed;
+  color: #12603a;
+  border: 1px solid #b7e2ca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .company-card-link h3 { padding-right: 0; }
+  .bookmark-btn.floating { position: static; margin-bottom: 8px; }
+  .saved-item { align-items: flex-start; }
+}
+
+/* ============================================================
+   21. Phase 8 — notifications + CSV import
+   ============================================================ */
+
+/* Header bell: sits inline with the nav pills and carries a small badge. */
+.notification-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Notifications inbox */
+.notification-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notification-item {
+  display: flex;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.notification-item.unread {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.notification-dot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.notification-item.unread .notification-dot { background: var(--accent); }
+
+.notification-content { flex: 1 1 auto; min-width: 0; }
+.notification-content p { margin: 6px 0 0; color: var(--text-soft); font-size: 0.92rem; }
+
+.notification-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.notification-head strong { font-size: 1rem; }
+.notification-head time { color: var(--text-soft); font-size: 0.8rem; }
+
+.notification-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 0.88rem;
+}
+
+.notification-actions a { color: var(--accent); font-weight: 600; }
+.notification-actions button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+}
+.notification-actions button:hover { color: var(--accent); }
+.notification-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* CSV import card */
+.admin-message p { margin: 0; }
+.admin-message-details {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  font-weight: 500;
+}
+.admin-message-details li { margin: 2px 0; }
+
+.csv-format {
+  margin: 0 0 14px;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+}
+
+.csv-format code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--surface-alt);
+  font-size: 0.82rem;
+}
+
+.csv-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.csv-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.csv-file-label input { max-width: 240px; font-size: 0.82rem; }
+.csv-file-name { color: var(--accent); font-size: 0.85rem; font-weight: 600; }
+
+.csv-paste-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.csv-paste-label textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.82rem;
+  resize: vertical;
+}
+
+/* ============================================================
+   22. Alumni outreach (TPO-initiated)
+   ============================================================ */
+
+.alumni-template-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.alumni-composer label,
+.alumni-edit-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.alumni-composer input,
+.alumni-composer textarea,
+.alumni-edit-card input,
+.alumni-edit-card textarea,
+.alumni-edit-card select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.alumni-composer textarea,
+.alumni-edit-card textarea { resize: vertical; }
+
+.alumni-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+
+.alumni-preview {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-alt);
+}
+
+.alumni-preview pre {
+  white-space: pre-wrap;
+  font: inherit;
+  margin: 8px 0 0;
+}
+
+.alumni-filters { margin-bottom: 12px; }
+
+.alumni-status-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.alumni-row-selected td { background: var(--accent-soft); }
+
+.alumni-edit-card {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.alumni-edit-card h3 { margin: 0 0 12px; }
+
+.alumni-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-alt);
+}
+
+.alumni-bulk-summary,
+.alumni-bulk-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.alumni-bulk-controls select,
+.alumni-bulk-controls input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.alumni-table th:first-child,
+.alumni-table td:first-child {
+  width: 36px;
+  text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.status-badge.status-not_contacted { background: #e9ecef; color: #495057; }
+.status-badge.status-contacted { background: #fff3d6; color: #8a5a00; }
+.status-badge.status-responded { background: #e7f1ff; color: #0b5ed7; }
+.status-badge.status-interested { background: #e7f6ee; color: #187a48; }
+.status-badge.status-referred { background: #dff7e8; color: #146c43; }
+.status-badge.status-not_interested { background: #fdecea; color: #a11206; }
+.status-badge.status-no_response { background: #f1f3f5; color: #5c636a; }
+
+:root[data-theme="dark"] .status-badge.status-not_contacted { background: #2b3035; color: #dee2e6; }
+:root[data-theme="dark"] .status-badge.status-contacted { background: #3d3115; color: #ffd68a; }
+:root[data-theme="dark"] .status-badge.status-responded { background: #15304a; color: #9ec5fe; }
+:root[data-theme="dark"] .status-badge.status-interested { background: #14382a; color: #7ee2ad; }
+:root[data-theme="dark"] .status-badge.status-referred { background: #0f5132; color: #b7f0c8; }
+:root[data-theme="dark"] .status-badge.status-not_interested { background: #3a1d1d; color: #ffb4a9; }
+:root[data-theme="dark"] .status-badge.status-no_response { background: #343a40; color: #ced4da; }
+
+@media (max-width: 760px) {
+  .notification-label { display: none; }
+  .csv-file-label input { max-width: 170px; }
+  .alumni-actions { flex-direction: column; align-items: stretch; }
+  .alumni-bulk-bar,
+  .alumni-bulk-summary,
+  .alumni-bulk-controls { flex-direction: column; align-items: stretch; }
+}
