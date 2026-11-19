@@ -23,7 +23,7 @@ An unofficial, student-run placement portal demo for **Veermata Jijabai Technolo
 | --- | --- |
 | Frontend | React 19, Vite 7, React Router 7, plain CSS with custom properties |
 | Backend | Express 5, Node's built-in `node:sqlite`, JWT in an httpOnly cookie, bcryptjs |
-| Tests | Node `node:test` (40 API tests), Playwright (7 browser flows) |
+| Tests | Node `node:test` (43 API tests), Playwright (10 browser flows) |
 | Tooling | ESLint 10, GitHub Actions CI, npm scripts |
 
 ## Getting started
@@ -75,8 +75,8 @@ Restart Vite after editing `vite.config.js` — a stale dev server can serve `in
 | `npm run build` | Production build into `dist/` |
 | `npm start` | Serve the API and built SPA from one Express process |
 | `npm run preview` | Preview the production build locally |
-| `npm test` | 40 API integration tests against a throwaway database |
-| `npm run test:ui` | Build, then run 7 Playwright flows against a throwaway database |
+| `npm test` | 43 API integration tests against a throwaway database |
+| `npm run test:ui` | Build, then run 10 Playwright flows against a throwaway database |
 | `npm run lint` | ESLint across source, server, tests and config |
 | `npm run seed`, `npm run seed:demo` | Seed the first admin / reset presentation data |
 

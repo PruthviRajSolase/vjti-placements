@@ -939,4 +939,109 @@ describe("alumni outreach", () => {
     assert.ok(audit.data.entries.some((e) => e.action === "update_alumni_outreach" && e.target.includes("alumni.one@example.com")));
     assert.ok(audit.data.entries.some((e) => e.action === "bulk_alumni_outreach" && e.actor.email === "tpo@vjti.ac.in"));
   });
+
+  test("alumni CSV import rejects duplicates and oversized input, and normalizes emails", async () => {
+    const oversized = await request("/api/admin/alumni/import", {
+      method: "POST", cookie: session.tpo, body: { csv: "x".repeat(100_001) },
+    });
+    assert.equal(oversized.status, 400);
+    assert.match(oversized.data.error, /too large/);
+
+    const headerOnly = await request("/api/admin/alumni/import", {
+      method: "POST", cookie: session.tpo, body: { csv: "full_name,email" },
+    });
+    assert.equal(headerOnly.status, 400);
+    assert.match(headerOnly.data.error, /header row/);
+
+    const duplicates = await request("/api/admin/alumni/import", {
+      method: "POST", cookie: session.tpo,
+      body: { csv: [
+        "full_name,email",
+        "Twin One,dup.alumni@example.com",
+        "Twin Two,DUP.ALUMNI@EXAMPLE.COM",
+      ].join("\n") },
+    });
+    assert.equal(duplicates.status, 400);
+    assert.ok(duplicates.data.details.some((d) => d.includes("duplicate email")));
+    assert.equal((await request("/api/admin/alumni", { cookie: session.tpo })).data.alumni
+      .some((a) => a.email === "dup.alumni@example.com"), false);
+
+    const alias = await request("/api/admin/alumni/import", {
+      method: "POST", cookie: session.tpo,
+      body: { csv: "name,email\nAlias Alumni,Alias.Mixed@Example.com" },
+    });
+    assert.equal(alias.status, 200);
+    assert.deepEqual([alias.data.created, alias.data.updated], [1, 0]);
+
+    let list = (await request("/api/admin/alumni", { cookie: session.tpo })).data.alumni;
+    let contact = list.find((a) => a.email === "alias.mixed@example.com");
+    assert.ok(contact);
+    assert.equal(contact.fullName, "Alias Alumni");
+
+    const upsert = await request("/api/admin/alumni/import", {
+      method: "POST", cookie: session.tpo,
+      body: { csv: "full_name,email\nAlias Renamed,alias.mixed@example.com" },
+    });
+    assert.equal(upsert.status, 200);
+    assert.deepEqual([upsert.data.created, upsert.data.updated], [0, 1]);
+    list = (await request("/api/admin/alumni", { cookie: session.tpo })).data.alumni;
+    contact = list.find((a) => a.email === "alias.mixed@example.com");
+    assert.equal(contact.fullName, "Alias Renamed");
+  });
+
+  test("bulk outreach validates input and skips ids that do not exist", async () => {
+    const auditCount = async () => (await request("/api/admin/audit", { cookie: session.tpoi }))
+      .data.entries.filter((e) => e.action === "bulk_alumni_outreach").length;
+    const before = await auditCount();
+
+    const contact = (await request("/api/admin/alumni", { cookie: session.tpo })).data.alumni
+      .find((a) => a.email === "alias.mixed@example.com");
+    assert.ok(contact);
+
+    const badStatus = await request("/api/admin/alumni/bulk", {
+      method: "PUT", cookie: session.tpo, body: { ids: [contact.id], outreachStatus: "bogus" },
+    });
+    assert.equal(badStatus.status, 400);
+    assert.match(badStatus.data.error, /Unknown outreach status/);
+
+    const badType = await request("/api/admin/alumni/bulk", {
+      method: "PUT", cookie: session.tpo, body: { ids: [contact.id], outreachType: "bogus" },
+    });
+    assert.equal(badType.status, 400);
+    assert.match(badType.data.error, /Unknown outreach type/);
+
+    assert.equal((await request("/api/admin/alumni/bulk", {
+      method: "PUT", cookie: session.tpo, body: { ids: Array.from({ length: 501 }, (_, i) => i + 1), outreachStatus: "contacted" },
+    })).status, 400);
+    assert.equal((await request("/api/admin/alumni/bulk", {
+      method: "PUT", cookie: session.tpo, body: { ids: [contact.id] },
+    })).status, 400);
+    assert.equal(await auditCount(), before);
+
+    const mixed = await request("/api/admin/alumni/bulk", {
+      method: "PUT", cookie: session.tpo,
+      body: { ids: ["abc", 0, -1, contact.id, 999999], outreachStatus: "contacted" },
+    });
+    assert.equal(mixed.status, 200);
+    assert.equal(mixed.data.updated, 1);
+    const after = (await request("/api/admin/alumni", { cookie: session.tpo })).data.alumni
+      .find((a) => a.id === contact.id);
+    assert.equal(after.outreachStatus, "contacted");
+    assert.equal(await auditCount(), before + 1);
+  });
+
+  test("the in-charge can manage alumni outreach too", async () => {
+    const list = await request("/api/admin/alumni", { cookie: session.tpoi });
+    assert.equal(list.status, 200);
+    assert.ok(list.data.alumni.length > 0);
+
+    const contact = list.data.alumni.find((a) => a.email === "alias.mixed@example.com");
+    const updated = await request(`/api/admin/alumni/${contact.id}`, {
+      method: "PUT", cookie: session.tpoi, body: { outreachStatus: "contacted", responseNote: "TPOI reviewed the lead." },
+    });
+    assert.equal(updated.status, 200);
+    const after = (await request("/api/admin/alumni", { cookie: session.tpoi })).data.alumni
+      .find((a) => a.id === contact.id);
+    assert.equal(after.responseNote, "TPOI reviewed the lead.");
+  });
 });

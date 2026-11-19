@@ -41,9 +41,9 @@ npm run dev:api      # backend only -> http://localhost:3001/api/health
 npm run build        # production build into dist/
 npm run preview      # preview the production build locally
 npm start            # production: ONE Express process serves API + built SPA on :3001
-npm test             # 40 API integration tests (isolated temp database)
+npm test             # 43 API integration tests (isolated temp database)
 npm run lint         # ESLint across src/, server/, tests/ and config files
-npm run test:ui      # build + 7 Playwright browser tests (isolated temp database)
+npm run test:ui      # build + 10 Playwright browser tests (isolated temp database)
 ```
 
 - `npm run test:ui` drives **Edge** on this Windows machine via `PLAYWRIGHT_CHANNEL=msedge`; CI uses bundled Chromium. In PowerShell: `$env:PLAYWRIGHT_CHANNEL='msedge'; npm run test:ui`. It builds first, then serves the production app on port **3107** with a throwaway SQLite DB, so demo data is never touched.
@@ -84,7 +84,7 @@ npm run test:ui      # build + 7 Playwright browser tests (isolated temp databas
 | Backend | Node + Express 5 on port 3001; Node's built-in `node:sqlite` (no native build) |
 | Auth | bcryptjs hashes + jsonwebtoken signed token in an httpOnly, SameSite=Lax cookie; user reloaded from DB per request |
 | Data | SQLite at `server/data/placements.db`; `src/data.js` remains only as the demo seed's source of sample content |
-| Tests | `npm test` — 40 Node `node:test` API checks + `npm run test:ui` — 7 Playwright browser flows, both on isolated temp DBs |
+| Tests | `npm test` — 43 Node `node:test` API checks + `npm run test:ui` — 10 Playwright browser flows, both on isolated temp DBs |
 | Lint / CI | ESLint 10 flat config (`eslint.config.js`) + `.github/workflows/ci.yml` (lint, API tests, build, browser tests) |
 | Browser automation | `@playwright/test` 1.65 — Edge channel locally, Chromium in CI |
 | Version control | Git + GitHub: `PruthviRajSolase/vjti-placements`, default branch `main`; `.github/workflows/ci.yml` runs on pushes and PRs |
@@ -112,7 +112,7 @@ D:\Placement
 │   └── serve-ui-test.js           # starts built app on :3107 with a throwaway DB
 ├── tests/
 │   ├── api.test.js                # 37 HTTP integration tests on a throwaway DB (npm test)
-│   └── ui/portal.spec.js          # 7 Playwright browser flows (npm run test:ui)
+│   └── ui/portal.spec.js          # 10 Playwright browser flows (npm run test:ui)
 ├── vanilla-version/               # ARCHIVED Steps 1–6, plain HTML/CSS/JS
 │   ├── index.html
 │   ├── style.css
@@ -445,7 +445,7 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 - `npm run seed:demo` recreates realistic data and all presentation accounts.
 - Phase 3: student submission + editing, own-submission tracker, and a staff review queue with real identities, named/anonymous choice, approve/reject/request-changes and student-visible feedback. Approval updates the public site immediately.
 - Phase 4: TPOI can create staff accounts and change roles; TPO can grant contributor; role changes revoke access on the next request. Readable audit log for TPOI.
-- Quality pass: `npm test` runs 40 isolated API integration tests, `npm run test:ui` runs 7 real-browser flows against the built app, `npm run lint` is clean, and `.github/workflows/ci.yml` wires them together; a React error boundary prevents blank screens; `npm start` serves the API + built SPA from one Express process with deep-link fallback.
+- Quality pass: `npm test` runs 43 isolated API integration tests, `npm run test:ui` runs 10 real-browser flows against the built app, `npm run lint` is clean, and `.github/workflows/ci.yml` wires them together; a React error boundary prevents blank screens; `npm start` serves the API + built SPA from one Express process with deep-link fallback.
 - Phase 5: public write-up library with shareable search/company/year/topic filters and approved-only detail pages (`/experience/:id`); privacy enforced by both the list and detail endpoints.
 - Phase 6: private company shortlist and account settings. Bookmarks are scoped by `req.user.id`, only real company slugs can be saved, profile edits cannot change email/role, and password changes require the current password. Demo seed includes two student bookmarks.
 - Phase 8: private notification inbox (bell + unread badge) for submission and review events; staff CSV import with full-row validation, per-line error details and upsert-by-`(year, slug)`. All notification reads/writes are scoped by `req.user.id`, and import is tpo/tpoi-only.
@@ -455,7 +455,7 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 **Not built / limitations:**
 - Search is per section — there is no single global search across stats, companies and write-ups.
 - Alumni outreach uses **mailto/copy + manual tracking** (no SMTP/in-app sending, delivery logs, or automated follow-up reminders). Referred companies/contacts are tracked as notes/fields, not converted into company/drive records.
-- Browser coverage is a 7-flow smoke suite, not exhaustive or visual-regression tested. Alumni outreach (including bulk actions) is not yet covered by automated API/UI tests. Notifications update on sign-in and tab focus rather than live polling. CI is configured and now runs on GitHub because the folder is a git repository.
+- Browser coverage is a 10-flow smoke suite, not exhaustive or visual-regression tested. Notifications update on sign-in and tab focus rather than live polling. CI is configured and now runs on GitHub because the folder is a git repository.
 - Vite dev server must be restarted after editing `vite.config.js` (stale proxy serves `index.html` for `/api/*`).
 - `npm audit` reports 4 high-severity advisories from `picomatch` (via `fdir`/`tinyglobby`/Vite). They affect **dev tooling only** — the Express production server has no vulnerable dependency. No patched `picomatch` version exists upstream; older Vite majors were checked and trade this for more serious dev-server advisories, so Vite 7.3.8 was kept deliberately. Do not expose the Vite dev server to an untrusted network.
 - Minor behaviour difference from vanilla: homepage search text is not reset when the year changes (harmless with the current branch data).
@@ -466,10 +466,10 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 
 Candidate next steps, in no particular order:
 
-1. **Alumni outreach upgrades:** real SMTP/in-app sending (logs, sender config), follow-up reminders/due-today view + notifications, CSV export of outreach/referrals, convert a referral into a company/drive record, and automated tests for alumni/bulk actions.
+1. **Alumni outreach upgrades:** real SMTP/in-app sending (logs, sender config), follow-up reminders/due-today view + notifications, CSV export of outreach/referrals, and converting a referral into a company/drive record.
 2. Optionally add live notification polling / push and expand the browser suite beyond smoke flows.
 3. Revisit `npm audit` when `picomatch` ships a fix.
-4. ~~**Alumni outreach MVP (import, mailto/copy, tracking, bulk actions)**~~ **DONE (post-Phase 8)** · ~~**Notifications + CSV import**~~ **DONE (Phase 8)** · ~~**Browser tests + linter/CI**~~ **DONE (Phase 7)** · ~~**Student conveniences**~~ **DONE (Phase 6)** · ~~**Experience detail pages and filters**~~ **DONE (Phase 5)** · ~~**Quality pass**~~ **DONE** · ~~**Dark mode toggle**~~ **DONE** · ~~**Real backend / API / TPO admin / review workflow / staff controls**~~ **DONE (Phases 1–4)**.
+4. ~~**Automated tests for alumni outreach and bulk actions**~~ **DONE (2026-11-19)** · ~~**Alumni outreach MVP (import, mailto/copy, tracking, bulk actions)**~~ **DONE (post-Phase 8)** · ~~**Notifications + CSV import**~~ **DONE (Phase 8)** · ~~**Browser tests + linter/CI**~~ **DONE (Phase 7)** · ~~**Student conveniences**~~ **DONE (Phase 6)** · ~~**Experience detail pages and filters**~~ **DONE (Phase 5)** · ~~**Quality pass**~~ **DONE** · ~~**Dark mode toggle**~~ **DONE** · ~~**Real backend / API / TPO admin / review workflow / staff controls**~~ **DONE (Phases 1–4)**.
 
 ---
 
@@ -548,6 +548,13 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 ## 14. Changelog & development log
 
 > **Working agreement:** after every task, add a dated entry here describing what was done, which files changed, and how it was verified. Keep older entries; never rewrite history.
+
+### 2026-11-19 — Alumni outreach test coverage
+
+- Added three API integration tests to `tests/api.test.js`: CSV import rejects duplicate emails in one file, oversized input and header-only files, accepts the `name` alias and normalizes emails (including case-insensitive upserts); bulk outreach rejects unknown status/type, >500 ids and empty payloads without auditing, and ignores invalid/non-existent ids; the TPOI can also manage alumni contacts.
+- Added three Playwright flows to `tests/ui/portal.spec.js`: template selection, personalization preview, copy and mark-contacted from the composer; single-contact response/referral tracking; select-all-visible plus bulk status/type apply.
+- Updated test counts in `README.md`, `DEMO.md` and this file (43 API tests, 10 browser flows), removed the stale “alumni outreach is not yet covered” limitation and marked the roadmap item done.
+- Verified: `npm run lint` clean; `npm test` **43/43 pass** (10 suites, isolated temp DB); `$env:PLAYWRIGHT_CHANNEL='msedge'; npm run test:ui` **10/10 pass** in Edge on a throwaway DB; `npm run build` succeeds (76 modules, CSS 32.62 kB, JS 347.11 kB). One initial browser assertion was corrected after it assumed the editable subject field was pre-filled — it deliberately keeps `{placeholders}` while only the preview is personalized.
 
 ### 2026-11-19 — Documentation split
 

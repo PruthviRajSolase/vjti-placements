@@ -171,3 +171,79 @@ test("TPO manages alumni outreach import and bulk actions", async ({ page }) => 
   await page.getByPlaceholder("Search name, email, company, branch…").fill("UI Alumni");
   await expect(page.locator("tbody tr", { hasText: "ui.alumni@example.com" })).toBeVisible();
 });
+
+test("TPO personalizes an outreach template and marks a contact contacted", async ({ page }) => {
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await page.goto("/admin/alumni");
+  await page.getByPlaceholder("Search name, email, company, branch…").fill("Meera Iyer");
+  const row = page.locator("tbody tr", { hasText: "Meera Iyer" });
+  await row.getByRole("button", { name: "Select", exact: true }).click();
+
+  const composer = page.locator(".alumni-composer");
+  await expect(composer).toContainText("meera.iyer.alumni@example.com");
+  const subject = composer.locator('input[type="text"]');
+  await expect(subject).toHaveValue("Invitation to participate in VJTI {drive_label} campus drive");
+
+  await composer.getByText("Preview personalized message").click();
+  const preview = composer.locator(".alumni-preview");
+  await expect(preview).toContainText("Invitation to participate in VJTI placement campus drive");
+  await expect(preview).toContainText("Meera Iyer");
+  await expect(preview).toContainText("Larsen & Toubro");
+  await expect(preview).not.toContainText("{name}");
+
+  await page.getByRole("button", { name: "Internship drive" }).click();
+  await expect(subject).toHaveValue("Invitation to offer internships to VJTI students");
+  await expect(preview).toContainText("internship");
+
+  await composer.getByRole("button", { name: "Copy subject" }).click();
+  await expect(page.locator(".admin-message.success")).toContainText("Subject copied.");
+
+  await composer.getByRole("button", { name: "Mark contacted now" }).click();
+  await expect(page.locator(".admin-message.success")).toContainText("Outreach marked as contacted.");
+  await expect(row).toContainText("Last:");
+});
+
+test("TPO records an alumni response and referral details", async ({ page }) => {
+  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await page.goto("/admin/alumni");
+  await page.getByPlaceholder("Search name, email, company, branch…").fill("Pooja Nair");
+  const row = page.locator("tbody tr", { hasText: "Pooja Nair" });
+  await row.getByRole("button", { name: "Select", exact: true }).click();
+
+  const edit = page.locator(".alumni-edit-card");
+  await edit.getByLabel("Status").selectOption("interested");
+  await edit.getByLabel("Drive type").selectOption("both");
+  await edit.getByLabel("Response / notes").fill("Happy to introduce the campus team.");
+  await edit.getByLabel("Referral details").fill("Asked for the 2027 brochure.");
+  await edit.getByPlaceholder("Company alumni can help bring").fill("Google");
+  await edit.getByPlaceholder("HR/recruiter name, email, etc.").fill("Google Campus Team");
+  await edit.getByRole("button", { name: "Save outreach update" }).click();
+
+  await expect(page.locator(".admin-message.success")).toContainText("Alumni outreach updated.");
+  await expect(row.locator(".status-badge")).toContainText("Interested");
+  await expect(row).toContainText("Google");
+  await expect(row).toContainText("Happy to introduce the campus team.");
+});
+
+test("TPO applies bulk status and type to all visible alumni contacts", async ({ page }) => {
+  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await page.goto("/admin/alumni");
+  await page.getByRole("button", { name: /^Not contacted \(/ }).click();
+
+  const rows = page.locator(".alumni-table tbody tr");
+  const count = await rows.count();
+  expect(count).toBeGreaterThan(0);
+
+  await page.getByRole("checkbox", { name: "Select all visible contacts" }).check();
+  const bulkBar = page.locator(".alumni-bulk-bar");
+  await expect(bulkBar).toContainText(`${count} selected`);
+  await page.getByLabel("Bulk status").selectOption("responded");
+  await page.getByLabel("Bulk outreach type").selectOption("internship");
+  await bulkBar.getByRole("button", { name: "Apply to selected" }).click();
+  await expect(page.locator(".admin-message.success")).toContainText(`Updated ${count} contact(s).`);
+
+  await page.getByRole("button", { name: /^Responded \(/ }).click();
+  await expect(rows.first().locator(".status-badge")).toContainText("Responded");
+  await expect(rows.first()).toContainText("Internship");
+});
