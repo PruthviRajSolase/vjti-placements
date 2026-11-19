@@ -609,6 +609,12 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 
 > **Working agreement:** after every task, add a dated entry here describing what was done, which files changed, and how it was verified. Keep older entries; never rewrite history.
 
+### 2026-11-19 — Full-product QA sweep (bug fixes)
+
+- Ran an end-to-end QA pass over every route and role on throwaway databases: public pages, filters, details, prep insights, student bookmarks/account/notifications/submission/drive tracking, the review workflow (approve, request changes, resubmit, publish) and the TPO/TPOI admin tools (stats, companies + CSV, branches, drives, alumni outreach, staff creation, live role revocation, audit search). A temporary six-test Playwright harness covered all of it and was deleted after the run; the permanent suites are unchanged.
+- Fixed a real bug in `src/pages/AdminPage.jsx`: `saveCompany` passed an already-started `api()` promise to `run()`, which calls `action()`, so **Add company** / **Update** failed with `M is not a function` even though the API itself worked. `run()` now returns a success flag and the company form is cleared only after a successful save.
+- Verified: `npm run lint` clean, `npm test` 48/48, and the full QA harness 6/6 in Edge, including TPOI staff creation, immediate revocation in a second browser session and audit-log search.
+
 ### 2026-11-19 — Prep insights from approved write-ups (Phase 11)
 
 - Added `server/insights.js`: counts each tag at most once per **approved** experience, ranks topics by frequency/share, marks a theme "common" at ≥ half the write-ups (minimum two), and builds a five-item checklist from the highest-ranked actionable topics. A curated `TOPIC_ADVICE` map supplies category, advice and a concrete next action; unknown tags fall back to generic guidance and process-only tags (`On-campus`, `3 Rounds`) are excluded from the checklist. `server/content.js` now calls `buildPrepInsights(publicExperiences())` and returns the result as `prepInsights` in `GET /api/content` — pending submissions and private identities never enter the calculation.

@@ -67,6 +67,7 @@ function AdminPage() {
   }, [raw, year, branchNames]);
 
   // Shared save flow: write -> reload admin data -> refresh public data.
+  // `action` is a thunk so the request only fires here, after busy is set.
   async function run(action, successText) {
     setBusy(true);
     setMessage(null);
@@ -75,8 +76,10 @@ function AdminPage() {
       await loadRaw();
       await refresh();
       setMessage({ type: "success", text: successText });
+      return true;
     } catch (err) {
       setMessage({ type: "error", text: err.message });
+      return false;
     } finally {
       setBusy(false);
     }
@@ -90,7 +93,7 @@ function AdminPage() {
     );
   }
 
-  function saveCompany(event) {
+  async function saveCompany(event) {
     event.preventDefault();
     const body = {
       year,
@@ -100,11 +103,13 @@ function AdminPage() {
       hired: Number(companyForm.hired),
       branches: companyForm.branches.split(",").map((b) => b.trim()).filter(Boolean),
     };
-    const request = companyForm.id
-      ? api(`/admin/companies/${companyForm.id}`, { method: "PUT", body })
-      : api("/admin/companies", { method: "POST", body });
-
-    run(request, "Company saved.").then(() => setCompanyForm(emptyCompany));
+    const saved = await run(
+      () => (companyForm.id
+        ? api(`/admin/companies/${companyForm.id}`, { method: "PUT", body })
+        : api("/admin/companies", { method: "POST", body })),
+      "Company saved."
+    );
+    if (saved) setCompanyForm(emptyCompany);
   }
 
   function editCompany(company) {
