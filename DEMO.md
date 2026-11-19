@@ -1,6 +1,6 @@
 # DEMO.md — TPO presentation runbook
 
-This is the **presenter's script** for showing the placement portal to the TPO. It assumes no prior context and takes about **6–7 minutes** plus questions (§1–§4 are the core; §3b is a short student-convenience pass; §5 is the staff-controls closer; §5b is notifications/company CSV import; §5c is alumni outreach with bulk actions). Keep `README.md` (and `DEVELOPMENT.md` for deeper detail) open in another tab for technical questions — this file is only about what to click and what to say.
+This is the **presenter's script** for showing the placement portal to the TPO. It assumes no prior context and takes about **8–9 minutes** plus questions (§1–§4 are the core; §3b is a short student-convenience pass; §3c is the unplaced-student drives/application pass; §5 is the staff-controls closer; §5b is notifications/company CSV import; §5c is alumni outreach with bulk actions). Keep `README.md` (and `DEVELOPMENT.md` for deeper detail) open in another tab for technical questions — this file is only about what to click and what to say.
 
 ---
 
@@ -19,6 +19,7 @@ npm run dev:full       # starts API (:3001) AND web (:5173) together
 - It also gives the student **two saved companies** (Microsoft and J.P. Morgan Chase & Co.), so the **Saved** page in §3b has content immediately.
 - The bell in the header starts with sample notifications: staff see two unread submissions, the student sees one unread approval and the contributor one already-read review note (§5b). Reseeding clears old notifications first, so the badge is predictable.
 - `seed:demo` also inserts sample **alumni outreach contacts** in different states (contacted/interested/referred/no-response, including **Meera Iyer** as not contacted), so §5c has data to select, bulk-update and track.
+- It also seeds **three upcoming drives** (Microsoft, J.P. Morgan Chase & Co., Tata Motors) and **two private student applications** (Applied and Online assessment), so §3c has content immediately.
 - **Gotcha:** if `/api/content` in the browser shows HTML instead of JSON, the Vite dev server is stale. Stop it and rerun `npm run dev:full` (see §7).
 
 ### Demo accounts
@@ -27,7 +28,7 @@ npm run dev:full       # starts API (:3001) AND web (:5173) together
 |---|---|---|---|
 | TPO staff | `tpo@vjti.ac.in` | `Tpo123!` | **Main hero** — admin panel |
 | TPO in-charge | `tpoi@vjti.ac.in` | `ChangeMe123!` | Super-admin — staff controls & audit (§5) |
-| Student | `student@vjti.ac.in` | `Student123!` | Role-guard check + saved companies / account (§3b) |
+| Student | `student@vjti.ac.in` | `Student123!` | Role-guard check, saved companies / account (§3b) and the application pipeline (§3c) |
 | Contributor | `contributor@vjti.ac.in` | `Contributor123!` | Placed student (mention only) |
 | Authors | `aditya@` / `priya@` / `rahul@vjti.ac.in` | `Author123!` | Owners of the 3 public write-ups |
 
@@ -120,9 +121,26 @@ You are still signed in as the **student**. These two screens are the "little th
 
 ---
 
+## 3c. Upcoming drives + application pipeline — what an unplaced student does next (60 seconds)
+
+Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) — §3b ended with a sign-out. This is the answer to *"I've seen last year's stats — what do I do this week?"*
+
+1. Click **Drives** in the nav. Three drives are already published with package, location, deadline countdown and eligibility pills.
+   > "This is the live board, not last year's history. The TPO publishes one record here and every student sees the same deadline and eligibility."
+2. Type `tata` in **Search drives** → only **Tata Motors** remains. Clear the search, tick **Only drives for my batch** → all three still show because Asha is IT/2027 and each drive includes her batch or is open to all. Say that this filter reads the account's branch/year from the session, not from the browser.
+3. Microsoft and J.P. Morgan already say **Tracking ✓** (seeded applications). Click **+ Track application** on **Tata Motors** → the app creates a private row on the server and opens `/my-applications` with a green *"Now tracking Tata Motors"* notice.
+4. The board has columns **Applied → Online assessment → Interview → Offer** (plus Rejected/Withdrawn when used). On the **J.P. Morgan Chase & Co.** card, change **Stage** to `Interview`, type a private note like `Technical round confirmed.`, click **Save** → the card moves columns.
+   > "Each student owns their own pipeline. The notes are private — they are stored against my account and the API refuses to read or change anyone else's row."
+5. **Sign out**, sign in as `contributor@vjti.ac.in` / `Contributor123!`, open `/my-applications` → the board is empty. Sign back out. That proves the rows are per user, not a shared list.
+6. (Optional, 30 seconds) Sign in as `tpo@vjti.ac.in` / `Tpo123!`, open **Admin → Placement drives**. Point at the **Applicants** and **Offers** columns (Tata now has one applicant), then publish a test drive with deadline `2026-12-31`, eligible branch `Information Technology` and year `2027`. The green confirmation says eligible students were notified; sign in as the student again and the bell shows a **New drive** message linking to `/drives`.
+
+> "Students get a concrete next action and a private tracker; TPO gets one publication point with audit entries and targeted alerts instead of a WhatsApp forward."
+
+---
+
 ## 4. The differentiator — submit → review → publish live (90 seconds)
 
-Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) after the §3b sign-out. If you skipped §3b, you are already signed in.
+Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) after the §3c sign-out. If you skipped §3b/§3c, sign in now.
 
 1. Click **My experiences** in the nav. There's a seeded Amazon write-up with an amber **Awaiting review** badge and an **Anonymous** chip.
 
@@ -241,10 +259,10 @@ Sign in as `tpo@vjti.ac.in` / `Tpo123!` if needed (end of §5b left you signed i
 
 ## 6. Close — the ask (30 seconds)
 
-> "So: one place for verified numbers, staff-controlled updates, a trusted path for student experiences, and a way for TPO to reach alumni to bring companies for campus drives. This is a demo on sample data, running locally. If it looks useful, I'd like to know which part your office would actually use first, and what data you'd want imported for a pilot."
+> "So: one place for verified numbers, staff-controlled updates, a trusted path for student experiences, upcoming drives with a private application tracker for students who aren't placed yet, and a way for TPO to reach alumni to bring companies for campus drives. This is a demo on sample data, running locally. If it looks useful, I'd like to know which part your office would actually use first, and what data you'd want imported for a pilot."
 
 Then ask two concrete questions:
-1. **"Which screen would your team touch most — stats, companies, review queue, or alumni outreach?"**
+1. **"Which screen would your team touch most — stats, companies, review queue, drives, or alumni outreach?"**
 2. **"What would you need to see before calling it a pilot?"** — if they mention an existing spreadsheet, point back to §5b (company CSV import) and §5c (alumni CSV import + outreach tracking/bulk actions).
 
 Write the answers down. They decide what gets built next.
@@ -268,6 +286,9 @@ Write the answers down. They decide what gets built next.
 | Save button does nothing / shows a sign-in link | You are signed out. Sign in first — bookmarks are per user and the button becomes a ★ toggle. |
 | Account page says "Current password is incorrect" | That is correct behaviour if you typed the wrong old password. Use `Student123!` for the seeded student, or reseed with `npm run seed:demo`. |
 | The bell has no unread badge | You are signed out, you already clicked **Mark all as read**, or you are the contributor (whose seeded note is already read). Run `npm run seed:demo` to restore the sample notifications. |
+| `/drives` looks empty | Run `npm run seed:demo` — it inserts three drives. Also check the status filter isn't set to **Closed** or that the search box isn't still filtering. |
+| "Track application" says *You are already tracking this drive* | That drive's Microsoft/J.P. Morgan seeded application already exists for the demo student. Use **Tracking ✓** to open the board, or track Tata Motors instead. |
+| A drive publish shows no student notification | Notifications are targeted by branch + graduation year only. Use eligible branch `Information Technology` and year `2027` for the demo student, or leave both blank for everyone. |
 | CSV import says "Missing CSV column" | The first line must be exactly `name,role,package,hired,branches` (order does not matter, names do). The error lists the expected header. |
 | CSV import reports "Line 2: …" errors | Check that `package` is a number ≥ 0, `hired` is a whole number ≥ 0, and no company name is duplicated. No rows were written — fix the file and try again. |
 | CSV import says "Choose a CSV file first" | Paste rows into the text box or choose a `.csv` file before clicking **Import into {year}** (companies) or **Import contacts** (alumni). |
@@ -291,7 +312,8 @@ After the presentation, restore the sample state with `npm run seed:demo` and re
 - **Bookmark/account API:** `GET`/`POST`/`DELETE /api/bookmarks` (scoped to `req.user.id`, real slugs only), `PUT /api/me` (display fields only — `email` and `role` are ignored), `POST /api/me/password` (current password required). All five refuse anonymous callers with 401.
 - **Notification/import API:** `GET /api/notifications` and `POST /api/notifications/:id/read` / `read-all` (every row scoped to `req.user.id`); `POST /api/admin/companies/import` (tpo/tpoi) validates the whole CSV, returns per-line `details` on failure, and upserts by `(year, slug)` on success. Submit/resubmit/review handlers create the notifications server-side.
 - **Alumni outreach API:** `GET /api/admin/alumni`, `POST /api/admin/alumni/import` (upsert by email, outreach state preserved), `PUT /api/admin/alumni/:id` and `PUT /api/admin/alumni/bulk` (tpo/tpoi, audited). Outreach sending is mailto/copy in this MVP (no SMTP).
-- **Audit:** every submission, edit, review, staff write, CSV/company/alumni import, outreach update/bulk action, role change, profile edit and password change records who did it and when (`audit_log` table), readable at `/admin/audit`.
-- **Testing:** `npm test` runs 43 automated API integration tests and `npm run test:ui` runs 10 Playwright browser flows, both on throwaway databases — demo data is never touched. `npm run lint` is clean. Locally the browser suite uses Edge via `PLAYWRIGHT_CHANNEL=msedge`; CI uses Chromium.
+- **Audit:** every submission, edit, review, staff write, CSV/company/alumni import, outreach update/bulk action, drive create/update/delete, application create/update/delete, role change, profile edit and password change records who did it and when (`audit_log` table), readable at `/admin/audit`.
+- **Drives/application API:** `GET /api/drives` is public; `GET`/`POST`/`PUT`/`DELETE /api/applications` are session-scoped (one private row per user + drive, statuses `applied`/`oa`/`interview`/`offer`/`rejected`/`withdrawn`); `GET`/`POST`/`PUT`/`DELETE /api/admin/drives` are tpo/tpoi-only. Publishing audits `create_drive` and notifies only students whose branch/year match; every application change is audited too.
+- **Testing:** `npm test` runs 46 automated API integration tests and `npm run test:ui` runs 13 Playwright browser flows, both on throwaway databases — demo data is never touched. `npm run lint` is clean. Locally the browser suite uses Edge via `PLAYWRIGHT_CHANNEL=msedge`; CI uses Chromium.
 - **Deployment:** `npm run build && npm start` serves the API and the built React app from one Express process on `:3001`, including deep-link fallback for routes like `/admin`.
 - **Known limitations:** the 4 high `npm audit` advisories are dev-tooling only (`picomatch` ReDoS via Vite); no patched version exists upstream, and the production Express server is unaffected. Don't expose the Vite dev server to an untrusted network.

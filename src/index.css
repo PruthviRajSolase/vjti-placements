@@ -2065,8 +2065,84 @@ a.user-chip:hover { opacity: 0.85; }
 :root[data-theme="dark"] .status-badge.status-not_interested { background: #3a1d1d; color: #ffb4a9; }
 :root[data-theme="dark"] .status-badge.status-no_response { background: #343a40; color: #ced4da; }
 
+/* 23. Upcoming drives + application pipeline */
+.drive-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.drive-filters select,
+.application-card select,
+.application-card textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.drive-mine-toggle { display: inline-flex; align-items: center; gap: 6px; }
+.drive-branch-hint { margin: 0; color: var(--text-soft); font-size: 0.85rem; }
+.drive-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.drive-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.drive-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.drive-card-head h2 { margin: 0; font-size: 1.2rem; }
+.drive-role { margin: 4px 0 0; color: var(--text-soft); }
+.drive-deadline {
+  flex: none;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.drive-deadline.urgent { background: #fdecea; color: #a11206; }
+:root[data-theme="dark"] .drive-deadline.urgent { background: #3a1d1d; color: #ffb4a9; }
+.drive-facts { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; color: var(--text-soft); font-size: 0.9rem; }
+.drive-description { margin: 0; }
+.drive-eligibility { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.drive-eligibility > span:first-child { color: var(--text-soft); font-size: 0.85rem; }
+.drive-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.drive-actions .btn-secondary.is-tracked { border-color: var(--good); color: var(--good); }
+.drive-hint { color: var(--text-soft); font-size: 0.9rem; }
+
+.pipeline-board { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px; }
+.pipeline-column {
+  flex: 1 1 260px;
+  min-width: 240px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface-alt, var(--surface));
+  border: 1px solid var(--border);
+}
+.pipeline-column h2 { margin: 0 0 10px; font-size: 1rem; }
+.pipeline-count { color: var(--accent); }
+.application-card { display: grid; gap: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.application-card h3 { margin: 0; font-size: 1rem; }
+.application-role, .application-meta { margin: 0; color: var(--text-soft); font-size: 0.85rem; }
+.application-card label { display: grid; gap: 4px; font-size: 0.8rem; color: var(--text-soft); }
+.application-actions { display: flex; gap: 8px; }
+.application-closed { margin: 0; color: var(--mid); font-size: 0.8rem; }
+.application-link { font-size: 0.85rem; }
+
 @media (max-width: 760px) {
   .notification-label { display: none; }
+  .drive-grid { grid-template-columns: 1fr; }
+  .pipeline-board { flex-direction: column; }
+  .pipeline-column { width: 100%; }
+  .drive-card-head { flex-direction: column; }
   .csv-file-label input { max-width: 170px; }
   .alumni-actions { flex-direction: column; align-items: stretch; }
   .alumni-bulk-bar,

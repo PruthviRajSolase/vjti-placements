@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/PruthviRajSolase/vjti-placements/actions/workflows/ci.yml/badge.svg)](https://github.com/PruthviRajSolase/vjti-placements/actions/workflows/ci.yml)
 
-An unofficial, student-run placement portal demo for **Veermata Jijabai Technological Institute (VJTI), Mumbai**. Students can browse placement statistics, visiting companies and interview experiences; placement staff manage that content and review submitted write-ups.
+An unofficial, student-run placement portal demo for **Veermata Jijabai Technological Institute (VJTI), Mumbai**. Students can browse placement statistics, visiting companies and interview experiences, see upcoming drives and track their applications privately; placement staff manage that content and review submitted write-ups.
 
 > All numbers and experiences in the UI are **sample data for presentations**, not official TPO records. The application is not affiliated with or endorsed by VJTI.
 
@@ -15,6 +15,7 @@ An unofficial, student-run placement portal demo for **Veermata Jijabai Technolo
 - TPO admin panel: edit stats and companies, import companies from CSV, manage roles, view audit log
 - Private saved companies, account settings and a notification inbox
 - Alumni outreach: contact import, mailto/copy templates, status tracking and bulk actions
+- Upcoming drives with deadlines and eligibility filters, plus a private student application pipeline (Applied → OA → Interview → Offer)
 - Dark mode, responsive layout and a global demo-data disclaimer
 
 ## Tech stack
@@ -23,7 +24,7 @@ An unofficial, student-run placement portal demo for **Veermata Jijabai Technolo
 | --- | --- |
 | Frontend | React 19, Vite 7, React Router 7, plain CSS with custom properties |
 | Backend | Express 5, Node's built-in `node:sqlite`, JWT in an httpOnly cookie, bcryptjs |
-| Tests | Node `node:test` (43 API tests), Playwright (10 browser flows) |
+| Tests | Node `node:test` (46 API tests), Playwright (13 browser flows) |
 | Tooling | ESLint 10, GitHub Actions CI, npm scripts |
 
 ## Getting started
@@ -75,8 +76,8 @@ Restart Vite after editing `vite.config.js` — a stale dev server can serve `in
 | `npm run build` | Production build into `dist/` |
 | `npm start` | Serve the API and built SPA from one Express process |
 | `npm run preview` | Preview the production build locally |
-| `npm test` | 43 API integration tests against a throwaway database |
-| `npm run test:ui` | Build, then run 10 Playwright flows against a throwaway database |
+| `npm test` | 46 API integration tests against a throwaway database |
+| `npm run test:ui` | Build, then run 13 Playwright flows against a throwaway database |
 | `npm run lint` | ESLint across source, server, tests and config |
 | `npm run seed`, `npm run seed:demo` | Seed the first admin / reset presentation data |
 

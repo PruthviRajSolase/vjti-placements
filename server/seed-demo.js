@@ -22,7 +22,7 @@ console.log("Seeding demo content...");
 db.exec(
   `DELETE FROM experiences; DELETE FROM companies; DELETE FROM branch_stats;
    DELETE FROM stats; DELETE FROM saved_companies; DELETE FROM notifications;
-   DELETE FROM alumni_contacts;`
+   DELETE FROM alumni_contacts; DELETE FROM applications; DELETE FROM drives;`
 );
 
 const accounts = [
@@ -280,6 +280,45 @@ insertAlumni.run(
   "Google", "no_response", "placement", "2026-10-28 14:00:00", "2026-11-20 14:00:00",
   "No reply yet to initial placement outreach.",
   null, null, null
+);
+
+// Upcoming drives and a small private application pipeline for the student.
+const insertDrive = db.prepare(
+  `INSERT INTO drives
+     (company, role, package_lpa, location, eligibility_branches, graduation_years,
+      registration_deadline, drive_date, apply_link, description, status, created_by)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)`
+);
+const driveOne = Number(insertDrive.run(
+  "Microsoft", "Software Engineer", 12.5, "Mumbai / Remote",
+  JSON.stringify(["Computer Engineering", "Information Technology"]), JSON.stringify(["2026", "2027"]),
+  "2026-12-05", "2026-12-12", "https://careers.microsoft.com/",
+  "Campus placement drive for final-year engineering students. Online assessment followed by two technical rounds.",
+  tpo
+).lastInsertRowid);
+insertDrive.run(
+  "J.P. Morgan Chase & Co.", "Analyst", 9.75, "Mumbai",
+  JSON.stringify(["Computer Engineering", "Information Technology", "Electronics Engineering"]), JSON.stringify(["2027"]),
+  "2026-11-28", "2026-12-03", "https://www.jpmorgan.com/careers",
+  "Internship + placement pipeline for 2027 graduates. Shortlisting based on resume and academics.",
+  tpo
+).lastInsertRowid;
+insertDrive.run(
+  "Tata Motors", "Graduate Engineer Trainee", 7.0, "Pune",
+  JSON.stringify([]), JSON.stringify(["2026", "2027"]),
+  "2026-12-18", "2027-01-08", "https://www.tatamotors.com/careers/",
+  "Open to all engineering branches. Written test, technical interview and HR discussion.",
+  tpo
+).lastInsertRowid;
+
+const insertApplication = db.prepare(
+  `INSERT INTO applications (user_id, drive_id, status, notes) VALUES (?, ?, ?, ?)`
+);
+insertApplication.run(student, driveOne, "applied", "Submitted resume on the portal. OA prep pending.");
+insertApplication.run(
+  student,
+  db.prepare("SELECT id FROM drives WHERE company = ?").get("J.P. Morgan Chase & Co.").id,
+  "oa", "Online assessment scheduled — focus on aptitude and SQL."
 );
 
 db.prepare(

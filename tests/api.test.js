@@ -1045,3 +1045,151 @@ describe("alumni outreach", () => {
     assert.equal(after.responseNote, "TPOI reviewed the lead.");
   });
 });
+
+describe("drives and applications", () => {
+  test("public drives load and staff drive routes are gated", async () => {
+    const list = await request("/api/drives");
+    assert.equal(list.status, 200);
+    assert.ok(list.data.drives.length >= 3);
+    const microsoft = list.data.drives.find((drive) => drive.company === "Microsoft");
+    assert.ok(microsoft);
+    assert.equal(microsoft.registrationDeadline, "2026-12-05");
+    assert.deepEqual(microsoft.eligibilityBranches, ["Computer Engineering", "Information Technology"]);
+
+    assert.equal((await request("/api/admin/drives")).status, 401);
+    assert.equal((await request("/api/admin/drives", { cookie: session.student })).status, 403);
+    assert.equal((await request("/api/admin/drives", { method: "POST", body: {} })).status, 401);
+    assert.equal((await request("/api/admin/drives", {
+      method: "POST", cookie: session.student, body: {},
+    })).status, 403);
+  });
+
+  test("TPO publishes, edits and removes drives with validation, audit and targeted alerts", async () => {
+    const countFor = async (cookie) => (await request("/api/notifications", { cookie })).data.notifications.length;
+    const studentBefore = await countFor(session.student);
+    const contributorBefore = await countFor(session.contributor);
+
+    assert.equal((await request("/api/admin/drives", {
+      method: "POST", cookie: session.tpo, body: { role: "Engineer" },
+    })).status, 400);
+    assert.equal((await request("/api/admin/drives", {
+      method: "POST", cookie: session.tpo,
+      body: { company: "Bad Date", role: "Engineer", registrationDeadline: "12/05/2026" },
+    })).status, 400);
+    assert.equal((await request("/api/admin/drives", {
+      method: "POST", cookie: session.tpo,
+      body: { company: "Bad Status", role: "Engineer", status: "draft" },
+    })).status, 400);
+
+    const created = await request("/api/admin/drives", {
+      method: "POST", cookie: session.tpo,
+      body: {
+        company: "Test Drive Corp", role: "Graduate Engineer", package: 8.5,
+        eligibilityBranches: ["Computer Engineering"], graduationYears: ["2027"],
+        registrationDeadline: "2026-12-20", driveDate: "2026-12-28",
+        applyLink: "https://example.com/apply", description: "Demo drive.", status: "open",
+      },
+    });
+    assert.equal(created.status, 201);
+    assert.deepEqual(created.data.drive.eligibilityBranches, ["Computer Engineering"]);
+    assert.deepEqual(created.data.drive.graduationYears, ["2027"]);
+    assert.equal(created.data.drive.applicantCount, 0);
+
+    // The student is CS/2027 after the profile test; the contributor is CS/2026.
+    assert.equal(await countFor(session.student), studentBefore + 1);
+    assert.equal(await countFor(session.contributor), contributorBefore);
+
+    const adminList = await request("/api/admin/drives", { cookie: session.tpo });
+    const row = adminList.data.drives.find((drive) => drive.company === "Test Drive Corp");
+    assert.ok(row);
+
+    const edited = await request(`/api/admin/drives/${row.id}`, {
+      method: "PUT", cookie: session.tpo,
+      body: { ...created.data.drive, status: "closed", package: 9 },
+    });
+    assert.equal(edited.status, 200);
+    assert.equal(edited.data.drive.status, "closed");
+    const publicList = await request("/api/drives");
+    assert.equal(publicList.data.drives.find((drive) => drive.id === row.id).status, "closed");
+
+    assert.equal((await request(`/api/admin/drives/${row.id}`, {
+      method: "POST", cookie: session.tpo, body: {},
+    })).status, 404);
+    assert.equal((await request("/api/admin/drives/999999", {
+      method: "PUT", cookie: session.tpo, body: { company: "X", role: "Y" },
+    })).status, 404);
+
+    assert.equal((await request(`/api/admin/drives/${row.id}`, {
+      method: "DELETE", cookie: session.tpo,
+    })).status, 200);
+    assert.equal((await request(`/api/admin/drives/${row.id}`, {
+      method: "DELETE", cookie: session.tpo,
+    })).status, 404);
+
+    const audit = await request("/api/admin/audit", { cookie: session.tpoi });
+    for (const action of ["create_drive", "update_drive", "delete_drive"]) {
+      assert.ok(audit.data.entries.some((e) => e.action === action && e.actor.email === "tpo@vjti.ac.in"));
+    }
+  });
+
+  test("applications are private, scoped and validated", async () => {
+    assert.equal((await request("/api/applications")).status, 401);
+
+    const mine = await request("/api/applications", { cookie: session.student });
+    assert.equal(mine.status, 200);
+    assert.equal(mine.data.applications.length, 2);
+    assert.equal((await request("/api/applications", { cookie: session.contributor })).data.applications.length, 0);
+
+    const drives = (await request("/api/drives")).data.drives;
+    const microsoft = drives.find((drive) => drive.company === "Microsoft");
+    const tata = drives.find((drive) => drive.company === "Tata Motors");
+    assert.ok(microsoft && tata);
+
+    assert.equal((await request("/api/applications", {
+      method: "POST", cookie: session.student, body: { driveId: microsoft.id },
+    })).status, 409);
+    assert.equal((await request("/api/applications", {
+      method: "POST", cookie: session.student, body: { driveId: 999999 },
+    })).status, 404);
+    assert.equal((await request("/api/applications", {
+      method: "POST", cookie: session.student, body: {},
+    })).status, 400);
+    assert.equal((await request("/api/applications", {
+      method: "POST", cookie: session.student, body: { driveId: tata.id, status: "bogus" },
+    })).status, 400);
+
+    const contributed = await request("/api/applications", {
+      method: "POST", cookie: session.contributor, body: { driveId: tata.id, notes: "Interested in Pune." },
+    });
+    assert.equal(contributed.status, 201);
+    const foreignId = contributed.data.application.id;
+    assert.equal((await request(`/api/applications/${foreignId}`, {
+      method: "PUT", cookie: session.student, body: { status: "offer" },
+    })).status, 404);
+    assert.equal((await request(`/api/applications/${foreignId}`, {
+      method: "DELETE", cookie: session.student,
+    })).status, 404);
+
+    const ownId = mine.data.applications.find((item) => item.company === "Microsoft").id;
+    const updated = await request(`/api/applications/${ownId}`, {
+      method: "PUT", cookie: session.student,
+      body: { status: "interview", notes: "Technical round on Friday." },
+    });
+    assert.equal(updated.status, 200);
+    assert.equal(updated.data.application.status, "interview");
+    const after = await request("/api/applications", { cookie: session.student });
+    assert.equal(after.data.applications.find((item) => item.id === ownId).notes, "Technical round on Friday.");
+
+    assert.equal((await request(`/api/applications/${ownId}`, {
+      method: "DELETE", cookie: session.student,
+    })).status, 200);
+    assert.equal((await request(`/api/applications/${ownId}`, {
+      method: "DELETE", cookie: session.student,
+    })).status, 404);
+
+    const audit = await request("/api/admin/audit", { cookie: session.tpoi });
+    for (const action of ["create_application", "update_application", "delete_application"]) {
+      assert.ok(audit.data.entries.some((e) => e.action === action));
+    }
+  });
+});

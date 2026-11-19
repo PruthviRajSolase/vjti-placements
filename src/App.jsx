@@ -13,6 +13,8 @@ import RequireAuth from "./components/RequireAuth.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import CompaniesPage from "./pages/CompaniesPage.jsx";
 import CompanyPage from "./pages/CompanyPage.jsx";
+import DrivesPage from "./pages/DrivesPage.jsx";
+import MyApplicationsPage from "./pages/MyApplicationsPage.jsx";
 import ExperienceDetailPage from "./pages/ExperienceDetailPage.jsx";
 import SignInPage from "./pages/SignInPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
@@ -20,6 +22,7 @@ import ReviewQueuePage from "./pages/ReviewQueuePage.jsx";
 import AdminUsersPage from "./pages/AdminUsersPage.jsx";
 import AuditLogPage from "./pages/AuditLogPage.jsx";
 import AdminAlumniPage from "./pages/AdminAlumniPage.jsx";
+import AdminDrivesPage from "./pages/AdminDrivesPage.jsx";
 import SubmitExperiencePage from "./pages/SubmitExperiencePage.jsx";
 import MyExperiencesPage from "./pages/MyExperiencesPage.jsx";
 import SavedCompaniesPage from "./pages/SavedCompaniesPage.jsx";
@@ -117,6 +120,15 @@ function App() {
             element={<CompaniesPage year={year} onYearChange={setYear} />}
           />
           <Route path="/company/:slug" element={<CompanyPage />} />
+          <Route path="/drives" element={<DrivesPage />} />
+          <Route
+            path="/my-applications"
+            element={
+              <RequireRole roles={["student", "contributor"]}>
+                <MyApplicationsPage />
+              </RequireRole>
+            }
+          />
           <Route path="/experience/:id" element={<ExperienceDetailPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route
@@ -204,6 +216,14 @@ function App() {
             element={
               <RequireRole roles={["tpo", "tpoi"]}>
                 <AdminAlumniPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/admin/drives"
+            element={
+              <RequireRole roles={["tpo", "tpoi"]}>
+                <AdminDrivesPage />
               </RequireRole>
             }
           />

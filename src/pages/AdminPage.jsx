@@ -199,6 +199,11 @@ function AdminPage() {
       )}
 
       <div className="admin-shortcuts">
+        <Link className="admin-shortcut" to="/admin/drives">
+          <strong>Placement drives</strong>
+          <small>Publish upcoming drives, deadlines and eligibility; see applicant counts.</small>
+          <span aria-hidden="true">Manage drives →</span>
+        </Link>
         <Link className="admin-shortcut" to="/admin/reviews">
           <strong>Experience review queue</strong>
           <small>Approve, reject or request changes on student write-ups.</small>

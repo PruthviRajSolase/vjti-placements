@@ -48,6 +48,12 @@ function Header({ user, onSignOut, theme, onToggleTheme }) {
         >
           Companies
         </NavLink>
+        <NavLink
+          to="/drives"
+          className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+        >
+          Drives
+        </NavLink>
         {/* Signed-in users get a private shortlist; students can track their
             write-ups; staff get review + content links. These are shortcuts
             only — the API re-checks the session and role. */}
@@ -72,6 +78,14 @@ function Header({ user, onSignOut, theme, onToggleTheme }) {
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
+          </NavLink>
+        )}
+        {["student", "contributor"].includes(user?.role) && (
+          <NavLink
+            to="/my-applications"
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+          >
+            My applications
           </NavLink>
         )}
         {["student", "contributor"].includes(user?.role) && (

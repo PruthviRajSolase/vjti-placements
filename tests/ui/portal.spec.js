@@ -247,3 +247,57 @@ test("TPO applies bulk status and type to all visible alumni contacts", async ({
   await expect(rows.first().locator(".status-badge")).toContainText("Responded");
   await expect(rows.first()).toContainText("Internship");
 });
+
+test("drives can be filtered and a student can track one", async ({ page }) => {
+  await page.goto("/drives");
+  await expect(page.getByRole("heading", { name: "Upcoming drives" })).toBeVisible();
+  await expect(page.locator(".drive-card")).toHaveCount(3);
+
+  await page.getByRole("searchbox", { name: "Search drives" }).fill("tata");
+  await expect(page.locator(".drive-card")).toHaveCount(1);
+  await expect(page.locator(".drive-card")).toContainText("Tata Motors");
+
+  await signIn(page, "student@vjti.ac.in", "Student123!");
+  await page.goto("/drives");
+  await page.getByRole("searchbox", { name: "Search drives" }).fill("tata");
+  await page.getByRole("button", { name: "+ Track application" }).click();
+
+  await expect(page).toHaveURL(/\/my-applications$/);
+  await expect(page.locator(".admin-message.success")).toContainText("Now tracking Tata Motors");
+  await expect(page.locator(".application-card", { hasText: "Tata Motors" })).toBeVisible();
+});
+
+test("a student moves an application forward with private notes", async ({ page }) => {
+  await signIn(page, "student@vjti.ac.in", "Student123!");
+  await page.goto("/my-applications");
+  const card = page.locator(".application-card", { hasText: "J.P. Morgan Chase & Co." });
+  await card.getByLabel("Stage for J.P. Morgan Chase & Co.").selectOption("interview");
+  await card.getByLabel("Notes for J.P. Morgan Chase & Co.").fill("Technical round confirmed.");
+  await card.getByRole("button", { name: "Save" }).click();
+
+  await expect(page.locator(".admin-message.success")).toContainText("Application updated.");
+  const interview = page.locator(".pipeline-column", { has: page.getByRole("heading", { name: /^Interview/ }) });
+  await expect(interview.locator(".application-card", { hasText: "J.P. Morgan Chase & Co." })).toBeVisible();
+});
+
+test("TPO publishes a drive and it appears on the public page", async ({ page }) => {
+  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await page.goto("/admin");
+  await page.getByRole("link", { name: /Placement drives/ }).click();
+  await expect(page).toHaveURL(/\/admin\/drives$/);
+
+  const form = page.locator("form.admin-card").first();
+  await form.getByLabel("Company").fill("UI Drive Corp");
+  await form.getByLabel("Role").fill("Graduate Engineer");
+  await form.getByLabel("Registration deadline").fill("2026-12-31");
+  await form.getByLabel("Eligible branches (comma separated)").fill("Information Technology");
+  await form.getByLabel("Graduation years (comma separated)").fill("2027");
+  await form.getByRole("button", { name: "Publish drive" }).click();
+
+  await expect(page.locator(".admin-message.success")).toContainText("Published UI Drive Corp");
+  await expect(page.locator("tbody tr", { hasText: "UI Drive Corp" })).toBeVisible();
+
+  await page.goto("/drives");
+  await page.getByRole("searchbox", { name: "Search drives" }).fill("UI Drive Corp");
+  await expect(page.locator(".drive-card", { hasText: "UI Drive Corp" })).toBeVisible();
+});

@@ -41,9 +41,9 @@ npm run dev:api      # backend only -> http://localhost:3001/api/health
 npm run build        # production build into dist/
 npm run preview      # preview the production build locally
 npm start            # production: ONE Express process serves API + built SPA on :3001
-npm test             # 43 API integration tests (isolated temp database)
+npm test             # 46 API integration tests (isolated temp database)
 npm run lint         # ESLint across src/, server/, tests/ and config files
-npm run test:ui      # build + 10 Playwright browser tests (isolated temp database)
+npm run test:ui      # build + 13 Playwright browser tests (isolated temp database)
 ```
 
 - `npm run test:ui` drives **Edge** on this Windows machine via `PLAYWRIGHT_CHANNEL=msedge`; CI uses bundled Chromium. In PowerShell: `$env:PLAYWRIGHT_CHANNEL='msedge'; npm run test:ui`. It builds first, then serves the production app on port **3107** with a throwaway SQLite DB, so demo data is never touched.
@@ -62,7 +62,7 @@ npm run test:ui      # build + 10 Playwright browser tests (isolated temp databa
   | Experience authors | `aditya@` / `priya@` / `rahul@vjti.ac.in` | `Author123!` |
 
 - Sign-up accepts only `@vjti.ac.in` email addresses and creates a `student` account; TPO promotes verified students to `contributor`.
-- `seed:demo` gives the student two saved companies (so **Saved** has content on first open), sample notifications (two unread submissions for staff, one unread approval for the student and one already-read review note for the contributor), and sample alumni outreach contacts in different states. Reseeding clears old notifications and alumni contacts first.
+- `seed:demo` gives the student two saved companies (so **Saved** has content on first open), sample notifications (two unread submissions for staff, one unread approval for the student and one already-read review note for the contributor), sample alumni outreach contacts in different states, three upcoming drives and two private student applications. Reseeding clears old notifications, alumni contacts, applications and drives first.
 - Set `JWT_SECRET` in the environment for anything beyond local development.
 - **Deploying:** run `npm run build` then `npm start`. Express serves `dist/` and the API from one origin on `:3001`; deep links such as `/admin` fall back to `index.html`, while unknown `/api/*` paths stay JSON 404s. `public/_redirects` gives the same SPA fallback on static hosts (e.g. Netlify). Use `API_PORT` to change the port.
 - `DB_PATH` overrides the SQLite file location; `npm test` uses it to run against a throwaway database so demo data is never touched.
@@ -84,7 +84,7 @@ npm run test:ui      # build + 10 Playwright browser tests (isolated temp databa
 | Backend | Node + Express 5 on port 3001; Node's built-in `node:sqlite` (no native build) |
 | Auth | bcryptjs hashes + jsonwebtoken signed token in an httpOnly, SameSite=Lax cookie; user reloaded from DB per request |
 | Data | SQLite at `server/data/placements.db`; `src/data.js` remains only as the demo seed's source of sample content |
-| Tests | `npm test` — 43 Node `node:test` API checks + `npm run test:ui` — 10 Playwright browser flows, both on isolated temp DBs |
+| Tests | `npm test` — 46 Node `node:test` API checks + `npm run test:ui` — 13 Playwright browser flows, both on isolated temp DBs |
 | Lint / CI | ESLint 10 flat config (`eslint.config.js`) + `.github/workflows/ci.yml` (lint, API tests, build, browser tests) |
 | Browser automation | `@playwright/test` 1.65 — Edge channel locally, Chromium in CI |
 | Version control | Git + GitHub: `PruthviRajSolase/vjti-placements`, default branch `main`; `.github/workflows/ci.yml` runs on pushes and PRs |
@@ -111,8 +111,8 @@ D:\Placement
 ├── scripts/
 │   └── serve-ui-test.js           # starts built app on :3107 with a throwaway DB
 ├── tests/
-│   ├── api.test.js                # 37 HTTP integration tests on a throwaway DB (npm test)
-│   └── ui/portal.spec.js          # 10 Playwright browser flows (npm run test:ui)
+│   ├── api.test.js                # 46 HTTP integration tests on a throwaway DB (npm test)
+│   └── ui/portal.spec.js          # 13 Playwright browser flows (npm run test:ui)
 ├── vanilla-version/               # ARCHIVED Steps 1–6, plain HTML/CSS/JS
 │   ├── index.html
 │   ├── style.css
@@ -122,12 +122,12 @@ D:\Placement
 │   ├── index.js                   # routes + production static/SPA fallback
 │   ├── start.js                   # production entry point (NODE_ENV=production)
 │   ├── db.js                      # node:sqlite connection, DB_PATH override, publicUser()
-│   ├── schema.sql                 # users, experiences, audit_log, stats, companies, branch_stats, saved_companies, notifications, alumni_contacts
+│   ├── schema.sql                 # users, experiences, audit_log, stats, companies, branch_stats, saved_companies, notifications, alumni_contacts, drives, applications
 │   ├── auth.js                    # JWT cookie, requireAuth / requireRole / optionalAuth
 │   ├── content.js                 # shapes public/staff content + approved-only detail lookup
 │   ├── csv.js                     # RFC-4180-ish CSV parser for staff/company and alumni imports
 │   ├── seed.js                    # creates only the first TPOI
-│   ├── seed-demo.js               # presentation data + 7 demo accounts + 2 bookmarks + sample notifications + sample alumni contacts
+│   ├── seed-demo.js               # presentation data + 7 accounts + 2 bookmarks + notifications + alumni contacts + 3 drives + 2 applications
 │   └── data/placements.db         # generated, gitignored
 └── src/
     ├── main.jsx                   # ErrorBoundary + BrowserRouter + Auth/Bookmarks/Content/Notifications providers
@@ -138,11 +138,13 @@ D:\Placement
     ├── ContentContext.jsx         # GET /api/content + refresh() after admin saves
     ├── NotificationsContext.jsx   # GET /api/notifications + unread count + mark-read actions (Phase 8)
     ├── data.js                    # sample data — imported by seed-demo.js only
-    ├── index.css                  # complete stylesheet (incl. admin + saved/account styles)
+    ├── index.css                  # complete stylesheet (incl. admin, account, alumni and drive/pipeline styles)
     ├── pages/
     │   ├── HomePage.jsx           # composition of the homepage sections
     │   ├── CompaniesPage.jsx      # /companies grid
     │   ├── CompanyPage.jsx        # /company/:slug dynamic detail page
+    │   ├── DrivesPage.jsx         # /drives — public upcoming drives, filters and tracking
+    │   ├── MyApplicationsPage.jsx # /my-applications — private application pipeline board
     │   ├── ExperienceDetailPage.jsx # /experience/:id — full approved write-up
     │   ├── SignInPage.jsx         # /signin real login/register with demo credentials
     │   ├── AdminPage.jsx          # /admin TPO panel: stats, companies (incl. CSV import), branch %
@@ -150,6 +152,7 @@ D:\Placement
     │   ├── AdminUsersPage.jsx     # /admin/users — roles, contributor grants, staff creation (TPOI)
     │   ├── AuditLogPage.jsx       # /admin/audit — TPOI-only readable audit trail
     │   ├── AdminAlumniPage.jsx    # /admin/alumni — TPO outreach to alumni (import, mailto/copy, tracking, bulk actions)
+    │   ├── AdminDrivesPage.jsx    # /admin/drives — TPO drive CRUD with applicant/offer counts
     │   ├── SubmitExperiencePage.jsx # /submit + /submit/:id — write/resubmit a reviewable write-up
     │   ├── MyExperiencesPage.jsx  # /my-experiences — student submission tracker + feedback
     │   ├── SavedCompaniesPage.jsx # /saved — private shortlist from /api/bookmarks
@@ -160,7 +163,7 @@ D:\Placement
         ├── ErrorBoundary.jsx      # catch render crashes, show reload/retry fallback
         ├── RequireRole.jsx        # cosmetic route guard (server is the real gate)
         ├── RequireAuth.jsx        # thin wrapper for any signed-in page
-        ├── Header.jsx             # brand, nav (+ Saved/Admin links), notification bell, auth slot, theme toggle
+        ├── Header.jsx             # brand, nav (+ Drives/My applications/Saved/Admin links), notification bell, auth slot, theme toggle
         ├── Footer.jsx
         ├── Hero.jsx               # title + year tabs
         ├── YearTabs.jsx           # reusable 2024/2025/2026 selector
@@ -291,6 +294,14 @@ D:\Placement
 - **Tracking:** per-contact status (`not_contacted`, `contacted`, `responded`, `interested`, `referred`, `not_interested`, `no_response`), outreach type, last contacted/follow-up dates, current company, response notes and referral details (company/contact/notes). **Mark contacted now** timestamps the outreach and promotes `not_contacted → contacted` when appropriate.
 - **Bulk actions:** multi-select (including select-all visible), **copy selected emails**, and bulk **apply** (status/type/follow-up) or **mark contacted now** via `PUT /api/admin/alumni/bulk` (transactional, audited as `bulk_alumni_outreach`; import/update audited as `import_alumni` / `update_alumni_outreach`). `seed:demo` includes sample alumni contacts in different outreach states.
 
+### 4.16 Upcoming drives + private application pipeline (Phase 10)
+- `/drives` is public: company, role, package, location, registration deadline, drive date, apply link and eligibility pills (branches + graduation years), with search by company/role/branch, open/closed/all filtering and an optional "Only drives for my batch" toggle for signed-in users. Countdown badges highlight deadlines under three days.
+- "Track application" is a real `POST /api/applications` call (not just a link). It creates a private row for the signed-in user and navigates to `/my-applications` with a success notice; already-tracked drives show **Tracking ✓** and link to the board instead.
+- `/my-applications` is a private kanban-style board grouped by stage: `applied`, `oa`, `interview`, `offer`, `rejected`, `withdrawn`. Saving a card issues `PUT /api/applications/:id` for its status and notes; Remove issues `DELETE /api/applications/:id` after confirmation. Every query is scoped by `req.user.id`, so another student's card cannot be read or changed by guessing an id.
+- `/admin/drives` (TPO/TPOI) publishes, edits and deletes drives, sees applicant and offer counts per drive, and can close a drive without deleting it. All writes append to `audit_log` (`create_drive`, `update_drive`, `delete_drive`).
+- Publishing a drive calls `notifyEligibleStudents()`: students/contributors whose `branch` and `graduation_year` match are notified through the existing private inbox; an empty eligibility list means everyone. The alert links to `/drives`.
+- This feature deliberately reuses existing infrastructure: role guards, notifications, audit logging and per-user scoping. It gives unplaced students a concrete "what to do next" view while giving TPO a single publication point instead of circulating messages.
+
 ---
 
 ## 5. Routes
@@ -300,6 +311,8 @@ D:\Placement
 | `/` | `HomePage` | Hero, stats, companies table with filters, branch table, experiences |
 | `/companies` | `CompaniesPage` | Year tabs + company card grid |
 | `/company/:slug` | `CompanyPage` | Multi-year detail for one company |
+| `/drives` | `DrivesPage` | Public upcoming drives, deadlines, eligibility filters and tracking |
+| `/my-applications` | `MyApplicationsPage` (behind `RequireRole`, student/contributor) | Private application pipeline with stage and notes editing |
 | `/experience/:id` | `ExperienceDetailPage` | Full approved write-up (public, server-gated) |
 | `/signin` | `SignInPage` | Real sign-in / registration against the API |
 | `/submit` | `SubmitExperiencePage` | Student/contributor writes a submission (always pending) |
@@ -311,6 +324,7 @@ D:\Placement
 | `/admin` | `AdminPage` (behind `RequireRole`) | TPO-only stats, company and branch editor |
 | `/admin/reviews` | `ReviewQueuePage` (behind `RequireRole`) | TPO review queue: approve, reject, request changes |
 | `/admin/alumni` | `AdminAlumniPage` (behind `RequireRole`, `tpo`/`tpoi`) | Alumni outreach: CSV import, mailto/copy templates, tracking and bulk actions |
+| `/admin/drives` | `AdminDrivesPage` (behind `RequireRole`, `tpo`/`tpoi`) | Publish/edit/close/delete drives; see applicant and offer counts |
 | `/admin/users` | `AdminUsersPage` (behind `RequireRole`) | Roles, contributor grants, staff account creation |
 | `/admin/audit` | `AuditLogPage` (behind `RequireRole`, TPOI only) | Readable audit trail |
 | `*` | `NotFoundPage` | 404 catch-all |
@@ -327,6 +341,9 @@ D:\Placement
 | `user`, `loading` | `AuthContext` | Shared by Header, SignInPage, RequireRole, AccountPage; source of truth is the server session cookie, rechecked via `/auth/me` on load; `updateUser()` applies a saved profile immediately |
 | `bookmarks`, `isSaved`, `toggle`, `refresh` | `BookmarksContext` | Shared shortlist from `GET /api/bookmarks`; cleared on sign-out, reloaded on sign-in; one toggle updates every card and the Saved page |
 | `notifications`, `unreadCount`, `markRead`, `markAllRead`, `refresh` | `NotificationsContext` | Private inbox from `GET /api/notifications`; drives the header badge and `/notifications`; reloaded on sign-in and tab focus |
+| `drives`, `tracked`, `search`, `status`, `onlyMine`, `busyId` | `DrivesPage` | Public drive list plus the signed-in user's tracked ids; filters are local because the list is small; `track()` posts an application before navigating |
+| `items`, `drafts`, `message`, `busyId` | `MyApplicationsPage` | Private application rows and unsaved stage/note drafts, keyed by application id; reloaded after each save/delete |
+| `drives`, `form`, `editingId`, `message`, `busy` | `AdminDrivesPage` | Staff drive list and the publish/edit form; local drafts only, with one success/error message |
 | `content`, `loading`, `error`, `refresh` | `ContentContext` | Shared by all public pages + AdminPage; one `GET /api/content`, refreshed after admin writes |
 | `theme` | `App` | Shared with Header; mirrored to `<html data-theme>` and persisted after explicit toggles |
 | `search`, `branch` | `CompaniesSection` | Local to the homepage table |
@@ -364,6 +381,8 @@ Rule in use: **lift state up** when more than one component needs it; otherwise 
 | `saved_companies` | `id`, `user_id`, `slug`, `company_name`, `created_at` | Private per-user shortlist, unique on `(user_id, slug)`, cascades on user delete |
 | `notifications` | `id`, `user_id`, `type`, `title`, `body`, `link`, `read_at`, `created_at` | Private per-user messages for submission/review events; unread rows sort first |
 | `alumni_contacts` | `id`, `full_name`, `email` (unique), contact/batch/placed/current-company fields, `outreach_status`, `outreach_type`, `last_contacted_at`, `follow_up_at`, notes/referral fields | TPO-managed alumni outreach contacts and response/referral tracking (staff-only, not user accounts) |
+| `drives` | `id`, `company`, `role`, `package_lpa`, `location`, `eligibility_branches` (JSON), `graduation_years` (JSON), `registration_deadline`, `drive_date`, `apply_link`, `description`, `status` (`open`/`closed`), `created_by` | Upcoming drives published by TPO staff; indexed by status/deadline |
+| `applications` | `id`, `user_id`, `drive_id`, `status`, `notes`, timestamps | Private per-student pipeline, unique on `(user_id, drive_id)`; both foreign keys cascade on delete |
 
 **API content object** (`server/content.js` → `GET /api/content`), shaped to match what the old React components expected:
 
@@ -391,6 +410,8 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 
 **Alumni outreach API (tpo/tpoi):** `GET /api/admin/alumni` lists contacts and outreach/referral state; `POST /api/admin/alumni/import` accepts `{ csv }`, validates every row, and upserts by email (contact fields updated, outreach state preserved) returning `{ ok, imported, created, updated }` or 400 with `details`; `PUT /api/admin/alumni/:id` updates outreach tracking/referral fields; `PUT /api/admin/alumni/bulk` applies status/type/follow-up and/or `markContacted` to selected contacts transactionally. Writes are audited (`import_alumni`, `update_alumni_outreach`, `bulk_alumni_outreach`). Outreach sending is mailto/copy-driven (no SMTP endpoint).
 
+**Drives/applications API:** `GET /api/drives` is public and returns drives ordered by status then registration deadline; `GET /api/applications` returns only the session user's rows, joined to drive fields. `POST /api/applications` accepts `{ driveId, status?, notes? }` and refuses missing/closed/unknown drives and duplicates (400/404/409). `PUT /api/applications/:id` accepts `{ status?, notes? }`; `DELETE /api/applications/:id` removes only the caller's row. Statuses are `applied`, `oa`, `interview`, `offer`, `rejected`, `withdrawn`. Staff endpoints are `GET`/`POST`/`PUT`/`DELETE /api/admin/drives` (tpo/tpoi); admin list and create/edit responses include `applicantCount` and `offerCount`. Publishing writes `create_drive` to the audit log and sends targeted `drive` notifications; all drive/application writes are audited.
+
 ---
 
 ## 8. Design system & styling
@@ -403,6 +424,7 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 - Phase 6 styles are in section 20: `.company-card` as a positioned `<article>` with a full-size `.company-card-link` and a floating `.bookmark-btn`; `.floating`, `.saved` and `:disabled` states; `.company-detail-actions`; `.saved-list` / `.saved-item` / `.saved-link` / `.saved-hint`; `.account-form` / `.field-hint` / `.form-success` plus a dark-theme success notice and mobile fallbacks.
 - Phase 8 styles are in section 21: `.notification-link` / `.notification-badge` in the header, `.notification-toolbar` / `.notification-list` / `.notification-item.unread` / `.notification-dot` / `.notification-actions`, and the `.csv-import-card` controls (`.csv-format`, `.csv-controls`, `.csv-file-label`, `.csv-paste-label`) plus `.admin-message-details` for per-row validation errors.
 - Alumni outreach styles are in section 22: outreach composer/template controls, status pills/badges, `.alumni-bulk-bar` / bulk controls, selected-row highlighting and responsive fallbacks.
+- Drives/pipeline styles are in section 23: `.drive-filters` / `.drive-mine-toggle`, `.drive-grid` / `.drive-card` / `.drive-deadline.urgent`, `.drive-eligibility` pills, and `.pipeline-board` / `.pipeline-column` / `.application-card` with stacked labels and mobile fallbacks.
 
 ---
 
@@ -432,30 +454,34 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 | Phase 6 | Private saved companies, account settings, server-scoped bookmarks | `server/schema.sql`, `server/index.js`, `src/BookmarksContext.jsx`, `src/components/BookmarkButton.jsx`, `src/pages/SavedCompaniesPage.jsx`, `src/pages/AccountPage.jsx` |
 | Phase 7 | Browser smoke tests, ESLint and CI pipeline | `playwright.config.js`, `eslint.config.js`, `.github/workflows/ci.yml`, `tests/ui/portal.spec.js` |
 | Phase 8 | In-app notifications + staff CSV import | `server/csv.js`, `server/schema.sql`, `server/index.js`, `src/NotificationsContext.jsx`, `src/pages/NotificationsPage.jsx`, `src/pages/AdminPage.jsx` |
+| Phase 9 | Alumni outreach (post-Phase 8) | `server/schema.sql`, `server/index.js`, `server/csv.js`, `src/pages/AdminAlumniPage.jsx`, `tests/api.test.js`, `tests/ui/portal.spec.js` |
+| Phase 10 | Upcoming drives + private application pipeline | `server/schema.sql`, `server/index.js`, `server/seed-demo.js`, `src/pages/DrivesPage.jsx`, `src/pages/MyApplicationsPage.jsx`, `src/pages/AdminDrivesPage.jsx`, `tests/api.test.js`, `tests/ui/portal.spec.js` |
 
 ---
 
 ## 11. Current status & known limitations
 
 **Working (demo slice):**
-- All routes (including `/notifications` and `/admin/alumni`); year switching; stats, company search/branch filters, branch table, company detail pages and the filterable write-up library now read from `GET /api/content`.
+- All routes (including `/drives`, `/my-applications`, `/notifications` and `/admin/alumni`); year switching; stats, company search/branch filters, branch table, company detail pages and the filterable write-up library now read from `GET /api/content`.
 - Real accounts: college-email registration, bcrypt login, httpOnly cookie session restored via `/auth/me`, working sign-out.
 - Server-enforced permissions: 401 without a session, 403 for students on every admin route (verified by HTTP smoke test).
 - TPO admin panel: edit stats, add/edit/delete companies, set branch percentages; saves immediately refresh public pages.
 - `npm run seed:demo` recreates realistic data and all presentation accounts.
 - Phase 3: student submission + editing, own-submission tracker, and a staff review queue with real identities, named/anonymous choice, approve/reject/request-changes and student-visible feedback. Approval updates the public site immediately.
 - Phase 4: TPOI can create staff accounts and change roles; TPO can grant contributor; role changes revoke access on the next request. Readable audit log for TPOI.
-- Quality pass: `npm test` runs 43 isolated API integration tests, `npm run test:ui` runs 10 real-browser flows against the built app, `npm run lint` is clean, and `.github/workflows/ci.yml` wires them together; a React error boundary prevents blank screens; `npm start` serves the API + built SPA from one Express process with deep-link fallback.
+- Quality pass: `npm test` runs 46 isolated API integration tests, `npm run test:ui` runs 13 real-browser flows against the built app, `npm run lint` is clean, and `.github/workflows/ci.yml` wires them together; a React error boundary prevents blank screens; `npm start` serves the API + built SPA from one Express process with deep-link fallback.
 - Phase 5: public write-up library with shareable search/company/year/topic filters and approved-only detail pages (`/experience/:id`); privacy enforced by both the list and detail endpoints.
 - Phase 6: private company shortlist and account settings. Bookmarks are scoped by `req.user.id`, only real company slugs can be saved, profile edits cannot change email/role, and password changes require the current password. Demo seed includes two student bookmarks.
 - Phase 8: private notification inbox (bell + unread badge) for submission and review events; staff CSV import with full-row validation, per-line error details and upsert-by-`(year, slug)`. All notification reads/writes are scoped by `req.user.id`, and import is tpo/tpoi-only.
 - Alumni outreach (post-Phase 8): TPO/TPOI can import alumni contacts (CSV, upsert by email), compose personalized placement/internship outreach via **mailto/copy** (no SMTP), track status/follow-ups/notes/referrals, and run **bulk actions** (select visible, copy emails, bulk apply, mark contacted). APIs are staff-only and audited; `seed:demo` includes sample contacts.
-- Dark mode, responsive layout, 404 page, demo banner; `npm run build` succeeds (76 modules, CSS 32.62 kB, JS 347.11 kB).
+- Phase 10: public upcoming drives with deadline/eligibility filters and targeted publish notifications; private per-student application pipeline with stage/notes editing; TPO drive CRUD with applicant/offer counts. All writes are audited and all student reads/writes are scoped by `req.user.id`; `seed:demo` includes three drives and two student applications.
+- Dark mode, responsive layout, 404 page, demo banner; `npm run build` succeeds (79 modules, CSS 35.26 kB, JS 362.58 kB).
 
 **Not built / limitations:**
 - Search is per section — there is no single global search across stats, companies and write-ups.
 - Alumni outreach uses **mailto/copy + manual tracking** (no SMTP/in-app sending, delivery logs, or automated follow-up reminders). Referred companies/contacts are tracked as notes/fields, not converted into company/drive records.
-- Browser coverage is a 10-flow smoke suite, not exhaustive or visual-regression tested. Notifications update on sign-in and tab focus rather than live polling. CI is configured and now runs on GitHub because the folder is a git repository.
+- Browser coverage is a 13-flow smoke suite, not exhaustive or visual-regression tested. Notifications update on sign-in and tab focus rather than live polling. CI is configured and now runs on GitHub because the folder is a git repository.
+- Drives show eligibility and filter by it, but tracking a drive is not hard-gated by branch/batch; the TPO still owns eligibility decisions. There is no aggregate funnel/dashboard yet — `applicantCount` and `offerCount` are the only staff-side metrics.
 - Vite dev server must be restarted after editing `vite.config.js` (stale proxy serves `index.html` for `/api/*`).
 - `npm audit` reports 4 high-severity advisories from `picomatch` (via `fdir`/`tinyglobby`/Vite). They affect **dev tooling only** — the Express production server has no vulnerable dependency. No patched `picomatch` version exists upstream; older Vite majors were checked and trade this for more serious dev-server advisories, so Vite 7.3.8 was kept deliberately. Do not expose the Vite dev server to an untrusted network.
 - Minor behaviour difference from vanilla: homepage search text is not reset when the year changes (harmless with the current branch data).
@@ -466,10 +492,12 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 
 Candidate next steps, in no particular order:
 
-1. **Alumni outreach upgrades:** real SMTP/in-app sending (logs, sender config), follow-up reminders/due-today view + notifications, CSV export of outreach/referrals, and converting a referral into a company/drive record.
-2. Optionally add live notification polling / push and expand the browser suite beyond smoke flows.
-3. Revisit `npm audit` when `picomatch` ships a fix.
-4. ~~**Automated tests for alumni outreach and bulk actions**~~ **DONE (2026-11-19)** · ~~**Alumni outreach MVP (import, mailto/copy, tracking, bulk actions)**~~ **DONE (post-Phase 8)** · ~~**Notifications + CSV import**~~ **DONE (Phase 8)** · ~~**Browser tests + linter/CI**~~ **DONE (Phase 7)** · ~~**Student conveniences**~~ **DONE (Phase 6)** · ~~**Experience detail pages and filters**~~ **DONE (Phase 5)** · ~~**Quality pass**~~ **DONE** · ~~**Dark mode toggle**~~ **DONE** · ~~**Real backend / API / TPO admin / review workflow / staff controls**~~ **DONE (Phases 1–4)**.
+1. **TPO dashboard:** live funnel counts from `applications` (applied → OA → interview → offer), upcoming deadlines, pending reviews and unplaced-by-branch — using real per-student placement status instead of typed-in percentages.
+2. **"What to prepare" view:** rank tags from approved experiences into per-company/role prep topics so interview-prepping students get an actionable checklist.
+3. **Alumni outreach upgrades:** real SMTP/in-app sending (logs, sender config), follow-up reminders/due-today view + notifications, CSV export of outreach/referrals, and converting a referral into a company/drive record.
+4. Optionally add live notification polling / push and expand the browser suite beyond smoke flows.
+5. Revisit `npm audit` when `picomatch` ships a fix.
+6. ~~**Upcoming drives + private application pipeline**~~ **DONE (Phase 10)** · ~~**Automated tests for alumni outreach and bulk actions**~~ **DONE (2026-11-19)** · ~~**Alumni outreach MVP (import, mailto/copy, tracking, bulk actions)**~~ **DONE (post-Phase 8)** · ~~**Notifications + CSV import**~~ **DONE (Phase 8)** · ~~**Browser tests + linter/CI**~~ **DONE (Phase 7)** · ~~**Student conveniences**~~ **DONE (Phase 6)** · ~~**Experience detail pages and filters**~~ **DONE (Phase 5)** · ~~**Quality pass**~~ **DONE** · ~~**Dark mode toggle**~~ **DONE** · ~~**Real backend / API / TPO admin / review workflow / staff controls**~~ **DONE (Phases 1–4)**.
 
 ---
 
@@ -488,9 +516,9 @@ This is the **real build** the static demo is being converted into: a placement 
 | Role | Who | Permissions |
 |---|---|---|
 | `visitor` | not signed in | Read published stats, companies and approved experiences |
-| `student` | signed up with a `@vjti.ac.in` email | Everything a visitor can do + submit experiences, edit own open submissions, track feedback, receive private review notifications, save companies and manage own profile/password |
-| `contributor` | placed student, verified and granted by TPO | Same submission and notification rights as `student`, plus recognition as a verified senior author |
-| `tpo` | placement staff | CRUD placement data (including CSV import), review/approve/reject experiences, grant/revoke `contributor` |
+| `student` | signed up with a `@vjti.ac.in` email | Everything a visitor can do + submit experiences, edit own open submissions, track feedback, receive private review notifications, save companies, track private drives/applications and manage own profile/password |
+| `contributor` | placed student, verified and granted by TPO | Same submission, notification and application rights as `student`, plus recognition as a verified senior author |
+| `tpo` | placement staff | CRUD placement data (including CSV import), publish/manage drives and see aggregate applicant counts, review/approve/reject experiences, grant/revoke `contributor` |
 | `tpoi` | head of placement (super admin) | Everything + create staff accounts, manage roles, view audit log |
 
 **Locked decisions:** Node + Express + SQLite backend · TPOI is super-admin above TPO moderators · students choose named or anonymous publication (TPO always sees real identity) · open sign-up with college email, TPO grants contributor status after verification.
@@ -518,6 +546,8 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 - `saved_companies` (Phase 6) — `id`, `user_id`, `slug`, `company_name`, `created_at`; unique per `(user_id, slug)` so shortlists are private and idempotent. Profile/password edits update `users.full_name` / `branch` / `graduation_year` / `password_hash` only; `email` and `role` stay under staff control.
 - `notifications` (Phase 8) — `id`, `user_id`, `type`, `title`, `body`, `link`, `read_at`, `created_at`; one row per recipient per event, cascading on user delete. Every read/write is scoped to the session user; staff get `submission` rows and authors get `review` rows.
 - `alumni_contacts` (post-Phase 8) — `id`, `full_name`, `email` (unique), contact/batch/placed/current-company fields, `outreach_status`, `outreach_type`, `last_contacted_at`, `follow_up_at`, response/referral fields, timestamps. TPO-managed outreach records (not user accounts); imports upsert by email and writes are audited.
+- `drives` (Phase 10) — `id`, `company`, `role`, `package_lpa`, `location`, `eligibility_branches` / `graduation_years` (JSON arrays), `registration_deadline`, `drive_date`, `apply_link`, `description`, `status`, `created_by`, timestamps. Published by TPO/TPOI; publication alerts matching students.
+- `applications` (Phase 10) — `id`, `user_id`, `drive_id`, `status`, `notes`, timestamps; unique per `(user_id, drive_id)`. Private per student; `user_id` and `drive_id` cascade on delete.
 
 ### 13.5 Architecture
 
@@ -542,12 +572,21 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 | 7 | Browser smoke tests, ESLint and CI pipeline | ✅ Done — Playwright, ESLint 10, GitHub Actions |
 | 8 | Notifications, CSV import, deeper browser coverage | ✅ Done — private inbox + validated staff CSV import |
 | 9 | Alumni outreach (post-Phase 8) | ✅ Done — TPO-initiated alumni contact import, mailto/copy outreach, tracking/referrals, bulk actions |
+| 10 | Upcoming drives + private application pipeline | ✅ Done — public drive list, TPO publication, targeted alerts, private student pipeline |
 
 ---
 
 ## 14. Changelog & development log
 
 > **Working agreement:** after every task, add a dated entry here describing what was done, which files changed, and how it was verified. Keep older entries; never rewrite history.
+
+### 2026-11-19 — Upcoming drives + private application pipeline
+
+- Added `drives` and `applications` tables to `server/schema.sql` (JSON eligibility arrays, status CHECKs, unique `(user_id, drive_id)`, cascading deletes and indexes). `server/seed-demo.js` now replaces drive/application rows on reseed and inserts three upcoming drives plus two private applications for the student.
+- Added API routes in `server/index.js`: public `GET /api/drives`; session-scoped `GET`/`POST`/`PUT`/`DELETE /api/applications`; and tpo/tpoi `GET`/`POST`/`PUT`/`DELETE /api/admin/drives` with validation, `applicantCount`/`offerCount`, audit entries (`create_drive`, `update_drive`, `delete_drive`, `create_application`, `update_application`, `delete_application`) and branch/year-targeted publish notifications. Added `jsonArray`, `stringList` and `adminDrive` helpers.
+- Added `src/pages/DrivesPage.jsx` (search, open/closed/all and batch filters, deadline countdown, real "Track application" POST), `src/pages/MyApplicationsPage.jsx` (private stage board with notes), and `src/pages/AdminDrivesPage.jsx` (publish/edit/delete/close with counts). Wired `/drives`, `/my-applications` and `/admin/drives` in `src/App.jsx`, added Header/Admin links and section 23 styles in `src/index.css`.
+- Added three API tests (gating/validation, staff CRUD + audit + targeted alerts, private/scoped application CRUD) and three Playwright flows (filtering + tracking, stage/note update, TPO publish → public page). Updated `README.md`, `DEMO.md` and this file with routes, API/data-model notes, status and new counts.
+- Verified: `npm run lint` clean; `npm test` **46/46 pass** (11 suites, isolated temp DB); `$env:PLAYWRIGHT_CHANNEL='msedge'; npm run test:ui` **13/13 pass** in Edge on a throwaway DB; `npm run build` succeeds (79 modules, CSS 35.26 kB, JS 362.58 kB). One initial API test assumption was corrected because a prior profile test changes the student's branch to Computer Engineering; one invalid UI assertion targeting a checkbox as a textbox was removed before the browser run.
 
 ### 2026-11-19 — Alumni outreach test coverage
 

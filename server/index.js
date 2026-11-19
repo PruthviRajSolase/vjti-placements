@@ -146,6 +146,21 @@ const number = (value, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+// Eligibility columns hold JSON arrays, like companies.branches does.
+function jsonArray(value) {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function stringList(value) {
+  const items = Array.isArray(value) ? value : String(value || "").split(",");
+  return [...new Set(items.map((item) => text(item, 80)).filter(Boolean))].slice(0, 30);
+}
+
 // ------------------------------------------- Phase 6: bookmarks + my account
 // All four routes need only a session; every query is scoped to req.user.id,
 // so no caller can read or remove someone else's saved companies.
@@ -958,6 +973,234 @@ app.post("/api/admin/experiences/:id/review", ...admin, (req, res) => {
   notify(existing.user_id, "review", decision.title, decision.body, decision.link);
 
   res.json({ ok: true, status });
+});
+
+// ------------------------------------------------ upcoming drives + pipeline
+const APPLICATION_STATUSES = new Set(["applied", "oa", "interview", "offer", "rejected", "withdrawn"]);
+const DRIVE_STATUSES = new Set(["open", "closed"]);
+
+function shapeDrive(row) {
+  return {
+    id: row.id,
+    company: row.company,
+    role: row.role,
+    package: row.package_lpa,
+    location: row.location || "",
+    eligibilityBranches: jsonArray(row.eligibility_branches),
+    graduationYears: jsonArray(row.graduation_years),
+    registrationDeadline: row.registration_deadline || "",
+    driveDate: row.drive_date || "",
+    applyLink: row.apply_link || "",
+    description: row.description || "",
+    status: row.status,
+    applicantCount: row.applicantCount ?? null,
+    offerCount: row.offerCount ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+function adminDrive(id) {
+  const row = db.prepare(
+    `SELECT d.*,
+            (SELECT COUNT(*) FROM applications a WHERE a.drive_id = d.id) AS applicantCount,
+            (SELECT COUNT(*) FROM applications a WHERE a.drive_id = d.id AND a.status = 'offer') AS offerCount
+     FROM drives d WHERE d.id = ?`
+  ).get(id);
+  return shapeDrive(row);
+}
+
+function readDriveFields(body) {
+  const company = text(body?.company, 120);
+  const role = text(body?.role, 120);
+  if (!company || !role) return { error: "Company and role are required." };
+
+  const packageLpa = body?.package === "" || body?.package === null || body?.package === undefined
+    ? null : number(body.package, -1);
+  if (packageLpa !== null && (!Number.isFinite(packageLpa) || packageLpa < 0)) {
+    return { error: "Package must be a positive number." };
+  }
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  const registrationDeadline = text(body?.registrationDeadline, 30);
+  const driveDate = text(body?.driveDate, 30);
+  if (registrationDeadline && !datePattern.test(registrationDeadline)) {
+    return { error: "Registration deadline must use YYYY-MM-DD." };
+  }
+  if (driveDate && !datePattern.test(driveDate)) {
+    return { error: "Drive date must use YYYY-MM-DD." };
+  }
+
+  const status = body?.status === undefined || body?.status === "" ? "open" : text(body.status, 20);
+  if (!DRIVE_STATUSES.has(status)) return { error: "Unknown drive status." };
+
+  return {
+    fields: {
+      company,
+      role,
+      packageLpa,
+      location: text(body?.location, 120) || null,
+      eligibilityBranches: JSON.stringify(stringList(body?.eligibilityBranches)),
+      graduationYears: JSON.stringify(stringList(body?.graduationYears)),
+      registrationDeadline: registrationDeadline || null,
+      driveDate: driveDate || null,
+      applyLink: text(body?.applyLink, 500) || null,
+      description: text(body?.description, 2000) || null,
+      status,
+    },
+  };
+}
+
+// Only students whose branch and graduation year match the drive are alerted;
+// an empty eligibility list means the drive is open to everyone.
+function notifyEligibleStudents(drive) {
+  const students = db.prepare(
+    "SELECT id, branch, graduation_year FROM users WHERE role IN ('student', 'contributor')"
+  ).all();
+  for (const person of students) {
+    const branchOk = drive.eligibilityBranches.length === 0
+      || (person.branch && drive.eligibilityBranches.includes(person.branch));
+    const yearOk = drive.graduationYears.length === 0
+      || (person.graduation_year && drive.graduationYears.includes(person.graduation_year));
+    if (branchOk && yearOk) {
+      notify(person.id, "drive", `New drive: ${drive.company}`,
+        `${drive.role} — registrations close ${drive.registrationDeadline || "soon"}.`, "/drives");
+    }
+  }
+}
+
+// Public: upcoming drives. Applications stay private to their owner.
+app.get("/api/drives", (_req, res) => {
+  const drives = db.prepare(
+    `SELECT * FROM drives
+     ORDER BY status DESC,
+              CASE WHEN registration_deadline IS NULL OR registration_deadline = '' THEN 1 ELSE 0 END,
+              registration_deadline ASC, id DESC`
+  ).all().map(shapeDrive);
+  res.json({ drives });
+});
+
+app.get("/api/applications", requireAuth, (req, res) => {
+  const applications = db.prepare(
+    `SELECT a.id, a.drive_id AS driveId, a.status, a.notes,
+            a.created_at AS createdAt, a.updated_at AS updatedAt,
+            d.company, d.role, d.package_lpa AS package, d.registration_deadline AS registrationDeadline,
+            d.drive_date AS driveDate, d.apply_link AS applyLink, d.status AS driveStatus
+     FROM applications a JOIN drives d ON d.id = a.drive_id
+     WHERE a.user_id = ? ORDER BY a.updated_at DESC, a.id DESC`
+  ).all(req.user.id);
+  res.json({ applications });
+});
+
+app.post("/api/applications", requireAuth, (req, res) => {
+  const driveId = Number(req.body?.driveId);
+  if (!Number.isInteger(driveId) || driveId <= 0) {
+    return res.status(400).json({ error: "Choose a drive to track." });
+  }
+  const drive = db.prepare("SELECT id, status FROM drives WHERE id = ?").get(driveId);
+  if (!drive) return res.status(404).json({ error: "Drive not found." });
+  if (drive.status !== "open") return res.status(400).json({ error: "This drive is closed." });
+
+  const status = text(req.body?.status, 20) || "applied";
+  if (!APPLICATION_STATUSES.has(status)) {
+    return res.status(400).json({ error: "Unknown application status." });
+  }
+  if (db.prepare("SELECT id FROM applications WHERE user_id = ? AND drive_id = ?").get(req.user.id, driveId)) {
+    return res.status(409).json({ error: "You are already tracking this drive." });
+  }
+
+  const result = db.prepare(
+    `INSERT INTO applications (user_id, drive_id, status, notes) VALUES (?, ?, ?, ?)`
+  ).run(req.user.id, driveId, status, text(req.body?.notes, 2000) || null);
+  audit(req, "create_application", `drive:${driveId}`);
+  res.status(201).json({ application: { id: Number(result.lastInsertRowid), driveId, status } });
+});
+
+app.put("/api/applications/:id", requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  const existing = db.prepare("SELECT * FROM applications WHERE id = ? AND user_id = ?").get(id, req.user.id);
+  if (!existing) return res.status(404).json({ error: "Application not found." });
+
+  const status = req.body?.status === undefined ? existing.status : text(req.body.status, 20);
+  if (!APPLICATION_STATUSES.has(status)) {
+    return res.status(400).json({ error: "Unknown application status." });
+  }
+  const notes = Object.prototype.hasOwnProperty.call(req.body || {}, "notes")
+    ? text(req.body.notes, 2000) || null : existing.notes;
+
+  db.prepare(
+    `UPDATE applications SET status = ?, notes = ?, updated_at = datetime('now') WHERE id = ?`
+  ).run(status, notes, id);
+  audit(req, "update_application", `application:${id}`);
+  res.json({ application: { id, status, notes } });
+});
+
+app.delete("/api/applications/:id", requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  const result = db.prepare("DELETE FROM applications WHERE id = ? AND user_id = ?").run(id, req.user.id);
+  if (result.changes === 0) return res.status(404).json({ error: "Application not found." });
+  audit(req, "delete_application", `application:${id}`);
+  res.json({ ok: true });
+});
+
+// Staff drive management. Writes are audited; publishing a drive alerts the
+// students it is aimed at through the existing notification inbox.
+app.get("/api/admin/drives", ...admin, (_req, res) => {
+  const drives = db.prepare(
+    `SELECT d.*,
+            (SELECT COUNT(*) FROM applications a WHERE a.drive_id = d.id) AS applicantCount,
+            (SELECT COUNT(*) FROM applications a WHERE a.drive_id = d.id AND a.status = 'offer') AS offerCount
+     FROM drives d ORDER BY id DESC`
+  ).all().map(shapeDrive);
+  res.json({ drives });
+});
+
+app.post("/api/admin/drives", ...admin, (req, res) => {
+  const parsed = readDriveFields(req.body);
+  if (parsed.error) return res.status(400).json({ error: parsed.error });
+  const f = parsed.fields;
+  const result = db.prepare(
+    `INSERT INTO drives
+       (company, role, package_lpa, location, eligibility_branches, graduation_years,
+        registration_deadline, drive_date, apply_link, description, status, created_by)
+     VALUES (@company, @role, @packageLpa, @location, @eligibilityBranches, @graduationYears,
+             @registrationDeadline, @driveDate, @applyLink, @description, @status, @createdBy)`
+  ).run({ ...f, createdBy: req.user.id });
+
+  audit(req, "create_drive", `${f.company}:${f.role}`);
+  notifyEligibleStudents({
+    company: f.company, role: f.role,
+    eligibilityBranches: jsonArray(f.eligibilityBranches),
+    graduationYears: jsonArray(f.graduationYears),
+    registrationDeadline: f.registrationDeadline,
+  });
+  res.status(201).json({ drive: adminDrive(Number(result.lastInsertRowid)) });
+});
+
+app.put("/api/admin/drives/:id", ...admin, (req, res) => {
+  const id = Number(req.params.id);
+  const existing = db.prepare("SELECT id FROM drives WHERE id = ?").get(id);
+  if (!existing) return res.status(404).json({ error: "Drive not found." });
+  const parsed = readDriveFields(req.body);
+  if (parsed.error) return res.status(400).json({ error: parsed.error });
+  const f = parsed.fields;
+  db.prepare(
+    `UPDATE drives SET company = @company, role = @role, package_lpa = @packageLpa,
+       location = @location, eligibility_branches = @eligibilityBranches,
+       graduation_years = @graduationYears, registration_deadline = @registrationDeadline,
+       drive_date = @driveDate, apply_link = @applyLink, description = @description,
+       status = @status, updated_at = datetime('now')
+     WHERE id = @id`
+  ).run({ ...f, id });
+  audit(req, "update_drive", `drive:${id}`);
+  res.json({ drive: adminDrive(id) });
+});
+
+app.delete("/api/admin/drives/:id", ...admin, (req, res) => {
+  const id = Number(req.params.id);
+  const drive = db.prepare("SELECT company FROM drives WHERE id = ?").get(id);
+  if (!drive) return res.status(404).json({ error: "Drive not found." });
+  db.prepare("DELETE FROM drives WHERE id = ?").run(id);
+  audit(req, "delete_drive", `${id}:${drive.company}`);
+  res.json({ ok: true });
 });
 
 // Unknown API paths must stay JSON, even when the SPA fallback is active.

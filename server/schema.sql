@@ -139,3 +139,41 @@ CREATE TABLE IF NOT EXISTS alumni_contacts (
 
 CREATE INDEX IF NOT EXISTS idx_alumni_outreach_status ON alumni_contacts(outreach_status);
 CREATE INDEX IF NOT EXISTS idx_alumni_grad_year ON alumni_contacts(graduation_year);
+
+-- Upcoming placement/internship drives published by the TPO. Eligibility is
+-- stored as JSON arrays, matching the JSON columns used for companies.
+CREATE TABLE IF NOT EXISTS drives (
+  id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+  company               TEXT NOT NULL,
+  role                  TEXT NOT NULL,
+  package_lpa           REAL,
+  location              TEXT,
+  eligibility_branches  TEXT NOT NULL DEFAULT '[]',
+  graduation_years      TEXT NOT NULL DEFAULT '[]',
+  registration_deadline TEXT,
+  drive_date            TEXT,
+  apply_link            TEXT,
+  description           TEXT,
+  status                TEXT NOT NULL DEFAULT 'open'
+                        CHECK (status IN ('open', 'closed')),
+  created_by            INTEGER REFERENCES users(id),
+  created_at            TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at            TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_drives_status ON drives(status, registration_deadline);
+
+-- Private per-student application pipeline. One row per user + drive.
+CREATE TABLE IF NOT EXISTS applications (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  drive_id   INTEGER NOT NULL REFERENCES drives(id) ON DELETE CASCADE,
+  status     TEXT NOT NULL DEFAULT 'applied'
+             CHECK (status IN ('applied', 'oa', 'interview', 'offer', 'rejected', 'withdrawn')),
+  notes      TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (user_id, drive_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_applications_user ON applications(user_id);
