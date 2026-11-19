@@ -30,9 +30,26 @@ test("public pages load API content and filters update the lists", async ({ page
     name: "Search interview experiences",
   });
   await experienceSearch.fill("dsa");
-  await expect(page.getByText(/Showing 1 of 3 write-ups/)).toBeVisible();
+  await expect(page.getByText(/Showing 4 of 6 write-ups/)).toBeVisible();
   await page.getByRole("button", { name: "Clear filters" }).first().click();
-  await expect(page.getByText(/Showing 3 of 3 write-ups/)).toBeVisible();
+  await expect(page.getByText(/Showing 6 of 6 write-ups/)).toBeVisible();
+});
+
+test("prep insights rank common themes from approved experiences", async ({ page }) => {
+  await page.goto("/prep-insights");
+  await expect(page.getByRole("heading", { name: "Preparation insights" })).toBeVisible();
+  await expect(page.getByText(/Based on 6 approved write-ups/)).toBeVisible();
+
+  const dsa = page.locator(".insight-topic", {
+    has: page.getByRole("heading", { name: "DSA" }),
+  });
+  await expect(dsa).toContainText("4 of 6");
+  await expect(dsa).toContainText("67%");
+  await expect(page.locator(".prep-checklist")).toContainText("DSA");
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "What seniors say to prepare" })).toBeVisible();
+  await expect(page.locator(".insight-card-grid")).toContainText("DSA");
 });
 
 test("signed-in bookmarks are private and can be toggled from cards and detail pages", async ({ page }) => {

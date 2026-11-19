@@ -105,7 +105,7 @@ describe("public API", () => {
 
   test("public experiences are approved only and carry no real identity", async () => {
     const { data } = await request("/api/content");
-    assert.equal(data.experiences.length, 3);
+    assert.equal(data.experiences.length, 6);
     for (const experience of data.experiences) {
       assert.doesNotMatch(JSON.stringify(experience), /email|realName|reviewNote|@vjti/);
     }
@@ -120,7 +120,7 @@ describe("public API", () => {
 describe("public experience detail", () => {
   test("cards carry stable ids and filterable fields", async () => {
     const { data } = await request("/api/content");
-    assert.equal(data.experiences.length, 3);
+    assert.equal(data.experiences.length, 6);
     for (const experience of data.experiences) {
       assert.equal(typeof experience.id, "number");
       assert.ok(experience.id > 0);
@@ -154,6 +154,46 @@ describe("public experience detail", () => {
     assert.equal((await request(`/api/experiences/${pending.id}`)).status, 404);
     assert.equal((await request("/api/experiences/999999")).status, 404);
     assert.equal((await request("/api/experiences/not-a-number")).status, 404);
+  });
+});
+
+describe("prep insights from approved experiences", () => {
+  test("ranks common themes with actionable advice", async () => {
+    const { data } = await request("/api/content");
+    const insights = data.prepInsights;
+    assert.ok(insights);
+    assert.equal(insights.totalExperiences, 6);
+    assert.ok(insights.topicCount >= 10);
+    assert.ok(insights.commonCount >= 6);
+
+    const dsa = insights.topics.find((topic) => topic.tag === "DSA");
+    assert.ok(dsa);
+    assert.equal(dsa.count, 4);
+    assert.equal(dsa.share, 67);
+    assert.equal(dsa.category, "Technical");
+    assert.ok(dsa.companies.includes("Microsoft"));
+    assert.ok(dsa.advice.length > 40);
+    assert.ok(dsa.action.length > 20);
+    assert.equal(dsa.actionable, true);
+
+    const onCampus = insights.topics.find((topic) => topic.tag === "On-campus");
+    assert.equal(onCampus.count, 6);
+    assert.equal(onCampus.actionable, false);
+    assert.ok(insights.commonTopics.some((topic) => topic.tag === "DSA"));
+    assert.ok(!insights.commonTopics.some((topic) => topic.tag === "Core Mechanical"));
+
+    assert.equal(insights.checklist.length, 5);
+    assert.ok(insights.checklist.every((item) => item.action && /write-ups/.test(item.why)));
+    assert.doesNotMatch(JSON.stringify(insights), /@vjti|realName|reviewNote|author_email/);
+  });
+
+  test("only cites public write-ups and never pending companies", async () => {
+    const { data } = await request("/api/content");
+    const publicIds = new Set(data.experiences.map((experience) => experience.id));
+    for (const topic of data.prepInsights.topics) {
+      for (const id of topic.experienceIds) assert.ok(publicIds.has(id));
+      assert.ok(!topic.companies.some((company) => ["Amazon", "Barclays"].includes(company)));
+    }
   });
 });
 

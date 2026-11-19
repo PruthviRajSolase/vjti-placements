@@ -164,7 +164,7 @@ const insertExperience = db.prepare(
 
 for (const [index, exp] of EXPERIENCES.entries()) {
   insertExperience.run(
-    userId(authorEmails[index]),
+    userId(authorEmails[index % authorEmails.length]),
     exp.company,
     exp.heading.split("—").pop().trim(),
     exp.author.year,

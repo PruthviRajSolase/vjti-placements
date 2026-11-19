@@ -79,24 +79,48 @@ export const EXPERIENCES = [
     company: "J.P. Morgan Chase & Co.",
     heading: "J.P. Morgan Chase & Co. — SDE Intern + PPO",
     excerpt:
-      "Two rounds: a DSA round (2 medium Leetcode-style questions) and a tech-HR round discussing my resume projects. The interviewers were friendly and pushed me to think aloud...",
-    tags: ["DSA", "Resume Projects", "On-campus"],
+      "Two rounds: a DSA round (2 medium Leetcode-style questions) and a tech-HR round discussing my resume projects. The interviewers were friendly and pushed me to think aloud, so practising verbally helped more than silent solving.",
+    tags: ["DSA", "Resume Projects", "Behavioral", "On-campus"],
     author: { name: "Aditya S.", branch: "Computer Engineering", year: "2026" },
   },
   {
     company: "Microsoft",
     heading: "Microsoft — Software Engineer",
     excerpt:
-      "Online assessment first (2 coding questions in 90 minutes), then 3 interview rounds focusing on data structures, system design basics and behavioral questions...",
-    tags: ["Online Assessment", "3 Rounds", "On-campus"],
+      "Online assessment first (2 coding questions in 90 minutes), then 3 interview rounds focusing on data structures, system design basics and behavioral questions. I revised my projects the night before and that paid off.",
+    tags: ["Online Assessment", "DSA", "System Design", "Behavioral", "On-campus"],
     author: { name: "Priya K.", branch: "Information Technology", year: "2026" },
   },
   {
     company: "Larsen & Toubro",
     heading: "Larsen & Toubro — GET (Mechanical)",
     excerpt:
-      "Written test on core mechanical concepts followed by a technical interview about manufacturing processes and my B.Tech project on CNC automation...",
-    tags: ["Core Mechanical", "Written Test", "On-campus"],
+      "Written test on core mechanical concepts followed by a technical interview about manufacturing processes and my B.Tech project on CNC automation. Knowing why I chose each component mattered more than the final result.",
+    tags: ["Core Mechanical", "Written Test", "Aptitude", "Resume Projects", "On-campus"],
+    author: { name: "Rahul M.", branch: "Mechanical Engineering", year: "2026" },
+  },
+  {
+    company: "Cisco Systems",
+    heading: "Cisco Systems — Software Engineer",
+    excerpt:
+      "OA had two DSA questions, then rounds on system design, SQL and behavioural scenarios. Timed mock interviews helped me stay calm and explain trade-offs without jumping straight to code.",
+    tags: ["Online Assessment", "DSA", "System Design", "SQL", "Behavioral", "On-campus"],
+    author: { name: "Aditya S.", branch: "Computer Engineering", year: "2026" },
+  },
+  {
+    company: "Morgan Stanley",
+    heading: "Morgan Stanley — Technology Analyst",
+    excerpt:
+      "Aptitude and SQL written test, followed by two technical rounds on OOPS, puzzles and a deep dive into my internship project. The final HR round tested clarity and willingness to learn.",
+    tags: ["Aptitude", "SQL", "Resume Projects", "HR Interview", "On-campus"],
+    author: { name: "Priya K.", branch: "Information Technology", year: "2026" },
+  },
+  {
+    company: "Goldman Sachs",
+    heading: "Goldman Sachs — Analyst",
+    excerpt:
+      "Written aptitude and puzzle round, followed by a technical interview on DSA basics, SQL joins and a group discussion. My resume projects were the main talking point in every round.",
+    tags: ["Aptitude", "Written Test", "DSA", "SQL", "Resume Projects", "Behavioral", "On-campus"],
     author: { name: "Rahul M.", branch: "Mechanical Engineering", year: "2026" },
   },
 ];

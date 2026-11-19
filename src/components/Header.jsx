@@ -54,6 +54,12 @@ function Header({ user, onSignOut, theme, onToggleTheme }) {
         >
           Drives
         </NavLink>
+        <NavLink
+          to="/prep-insights"
+          className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+        >
+          Prep insights
+        </NavLink>
         {/* Signed-in users get a private shortlist; students can track their
             write-ups; staff get review + content links. These are shortcuts
             only — the API re-checks the session and role. */}

@@ -9,6 +9,7 @@ import StatsSection from "../components/StatsSection.jsx";
 import CompaniesSection from "../components/CompaniesSection.jsx";
 import BranchSection from "../components/BranchSection.jsx";
 import ExperiencesSection from "../components/ExperiencesSection.jsx";
+import PrepInsightsSection from "../components/PrepInsightsSection.jsx";
 
 function HomePage({ year, onYearChange }) {
   return (
@@ -18,6 +19,7 @@ function HomePage({ year, onYearChange }) {
       <CompaniesSection year={year} />
       <BranchSection year={year} />
       <ExperiencesSection />
+      <PrepInsightsSection />
     </>
   );
 }

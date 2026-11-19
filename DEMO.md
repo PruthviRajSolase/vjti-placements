@@ -1,6 +1,6 @@
 # DEMO.md — TPO presentation runbook
 
-This is the **presenter's script** for showing the placement portal to the TPO. It assumes no prior context and takes about **8–9 minutes** plus questions (§1–§4 are the core; §3b is a short student-convenience pass; §3c is the unplaced-student drives/application pass; §5 is the staff-controls closer; §5b is notifications/company CSV import; §5c is alumni outreach with bulk actions). Keep `README.md` (and `DEVELOPMENT.md` for deeper detail) open in another tab for technical questions — this file is only about what to click and what to say.
+This is the **presenter's script** for showing the placement portal to the TPO. It assumes no prior context and takes about **9–10 minutes** plus questions (§1–§4 are the core; §4b is the "what to prepare" pass; §3b is a short student-convenience pass; §3c is the unplaced-student drives/application pass; §5 is the staff-controls closer; §5b is notifications/company CSV import; §5c is alumni outreach with bulk actions). Keep `README.md` (and `DEVELOPMENT.md` for deeper detail) open in another tab for technical questions — this file is only about what to click and what to say.
 
 ---
 
@@ -15,6 +15,7 @@ npm run dev:full       # starts API (:3001) AND web (:5173) together
 - Open **http://localhost:5173/** in the browser you will present from.
 - Confirm the demo banner is visible at the top: *"Demo build — all statistics and experiences shown here are sample data, not official TPO records."*
 - Open `http://localhost:3001/api/content` in a second tab to prove the data comes from a database, not a hardcoded file.
+- `seed:demo` also inserts **six approved write-ups** (J.P. Morgan, Microsoft, L&T, Cisco, Morgan Stanley, Goldman Sachs) so the **Prep insights** page and the experience filters have a meaningful ranking. They are owned by the three seeded author accounts.
 - `seed:demo` also inserts **two pending submissions** — an anonymous Amazon one from the student and a named Barclays one from a contributor — so the review queue is never empty.
 - It also gives the student **two saved companies** (Microsoft and J.P. Morgan Chase & Co.), so the **Saved** page in §3b has content immediately.
 - The bell in the header starts with sample notifications: staff see two unread submissions, the student sees one unread approval and the contributor one already-read review note (§5b). Reseeding clears old notifications first, so the badge is predictable.
@@ -30,7 +31,7 @@ npm run dev:full       # starts API (:3001) AND web (:5173) together
 | TPO in-charge | `tpoi@vjti.ac.in` | `ChangeMe123!` | Super-admin — staff controls & audit (§5) |
 | Student | `student@vjti.ac.in` | `Student123!` | Role-guard check, saved companies / account (§3b) and the application pipeline (§3c) |
 | Contributor | `contributor@vjti.ac.in` | `Contributor123!` | Placed student (mention only) |
-| Authors | `aditya@` / `priya@` / `rahul@vjti.ac.in` | `Author123!` | Owners of the 3 public write-ups |
+| Authors | `aditya@` / `priya@` / `rahul@vjti.ac.in` | `Author123!` | Owners of the six public write-ups |
 
 All of these are created by `npm run seed:demo`; none are real people.
 
@@ -45,9 +46,9 @@ Click through the **public homepage** (`/`):
 1. Point at the four stat cards (512 placed, ₹58 LPA highest, etc.).
 2. Scroll to **Companies — 2026**; type `micro` in the search box → list narrows to Microsoft; click the **IT** pill → filters combine.
 3. Click **Microsoft** → the detail page shows every year this company visited and its packages.
-4. Scroll to **Interview Experiences** → three write-ups with names and branches.
-5. Type `dsa` in **Search** → only the J.P. Morgan write-up remains. Click **Clear filters**.
-6. Choose **Microsoft** in the Company dropdown, then the **On-campus** topic pill → filters combine; point at the "Showing 1 of 3 write-ups" count. Mention that the filters live in the URL, so this view is shareable.
+4. Scroll to **Interview Experiences** → six write-ups with names and branches.
+5. Type `dsa` in **Search** → four write-ups remain (J.P. Morgan, Microsoft, Cisco, Goldman Sachs). Click **Clear filters**.
+6. Choose **Microsoft** in the Company dropdown, then the **On-campus** topic pill → filters combine; point at the "Showing 1 of 6 write-ups" count. Mention that the filters live in the URL, so this view is shareable.
 7. Click the card → the detail page shows the full write-up, clickable topic chips and related write-ups. Click **← All experiences** → the same filtered view comes back.
 8. Switch year tabs 2026 → 2025 → 2024.
 
@@ -154,13 +155,13 @@ Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) after th
    - Body: `OA had two coding questions in 90 minutes, then three interview rounds on DSA, system design and behavioural questions. Timed mock interviews helped the most.`
    - Tags: `Online Assessment, System Design, On-campus`
    - Choose **Anonymous** — point at the note: *"the TPO still sees your real name."*
-3. Click **Submit for review**. The tracker shows the new item as **Awaiting review**; the public homepage still shows only the three approved write-ups.
+3. Click **Submit for review**. The tracker shows the new item as **Awaiting review**; the public homepage still shows only the six approved write-ups.
 4. **Sign out**, then sign in as `tpo@vjti.ac.in` / `Tpo123!`. Click **Reviews** in the nav.
 5. Point at the dashed identity panel on the anonymous submissions: **"Submitted by Asha Patil · student@vjti.ac.in"**.
 
    > "This is the trust bit. The student asked for anonymity, so juniors see ‘Anonymous senior’ — but the TPO always knows who wrote it."
 
-6. Click **Approve & publish** on the Google submission. Green confirmation appears. Click **Home** → the new write-up is on the public page with the **Anonymous senior** byline, while the queue still shows the real name.
+6. Click **Approve & publish** on the Google submission. Green confirmation appears. Click **Home** → the new write-up is on the public page with the **Anonymous senior** byline, while the queue still shows the real name. If you scroll to **What seniors say to prepare**, the counts have already picked up the new tags — that is §4b.
 7. (Optional, 30 seconds) On the Barclays item, type a note and click **Request changes**. Sign in as `contributor@vjti.ac.in` / `Contributor123!`, open **My experiences** → the item now shows **Changes requested** and the exact feedback. Edit it → it goes back to **Awaiting review**.
 
 > "One review click publishes; a rejection or change request is a real two-way conversation with the student, not a silent deletion. Nothing reaches the public site without staff approval."
@@ -168,6 +169,25 @@ Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) after th
 **What's next if they ask:** *"Who manages the managers?"* — that's built too. Show §5.
 
 If asked **"How do students become contributors?"** — they register with a `@vjti.ac.in` email and the TPO verifies they were actually placed, then promotes the account. In this demo both students and contributors can submit; contributors are the verified senior authors.
+
+---
+
+## 4b. What to prepare — common themes from the experiences (60 seconds)
+
+No extra sign-in: this page is public, and you are still signed in as TPO from §4. This is the answer to *"I've read the experiences — what should I actually study?"*
+
+1. Scroll to the bottom of the homepage: **What seniors say to prepare** shows the top three actionable themes with counts and a one-line action each, e.g. *"Mentioned in 4 of 7 write-ups"*. Point out that the counts include the Google write-up you just approved.
+2. Click **Full prep plan →** (or the **Prep insights** nav link) → `/prep-insights`.
+   - The three stat cards read **7 approved write-ups**, distinct themes and common themes.
+   - **Your prep checklist** is the five most repeated *actionable* themes with a concrete next step each.
+   - **All themes** shows a frequency bar per theme, the companies that mentioned it, and links to the source write-ups (`#id`) or a pre-filtered experience list.
+3. Point at **DSA**: `4 of 7 · 57%`, seen at J.P. Morgan, Microsoft, Cisco and Goldman Sachs. Click one `#id` link → the approved write-up it came from.
+4. Scroll to a process tag like **On-campus**: it appears at the top of the ranking but is marked as a process fact, not a prep task, so it is excluded from the checklist.
+5. Say the trust line: *"Only approved write-ups feed this. The Amazon and Barclays submissions still waiting in the review queue cannot influence a single number, and no real name or email is exposed."*
+
+> "The TPO doesn't write this list by hand. Every approval recomputes the ranking from the tags students actually used, so the advice stays current as more seniors contribute. It is frequency — what keeps coming up — not a guarantee, so it tells a student where to start rather than what to memorise."
+
+**If you skipped §4:** the same page reads **6 approved write-ups** and DSA shows `4 of 6 · 67%`. Everything else is identical.
 
 ---
 
@@ -259,10 +279,10 @@ Sign in as `tpo@vjti.ac.in` / `Tpo123!` if needed (end of §5b left you signed i
 
 ## 6. Close — the ask (30 seconds)
 
-> "So: one place for verified numbers, staff-controlled updates, a trusted path for student experiences, upcoming drives with a private application tracker for students who aren't placed yet, and a way for TPO to reach alumni to bring companies for campus drives. This is a demo on sample data, running locally. If it looks useful, I'd like to know which part your office would actually use first, and what data you'd want imported for a pilot."
+> "So: one place for verified numbers, staff-controlled updates, a trusted path for student experiences, a 'what to prepare' view built from those approved experiences, upcoming drives with a private application tracker for students who aren't placed yet, and a way for TPO to reach alumni to bring companies for campus drives. This is a demo on sample data, running locally. If it looks useful, I'd like to know which part your office would actually use first, and what data you'd want imported for a pilot."
 
 Then ask two concrete questions:
-1. **"Which screen would your team touch most — stats, companies, review queue, drives, or alumni outreach?"**
+1. **"Which screen would your team touch most — stats, companies, review queue, drives, prep insights, or alumni outreach?"**
 2. **"What would you need to see before calling it a pilot?"** — if they mention an existing spreadsheet, point back to §5b (company CSV import) and §5c (alumni CSV import + outreach tracking/bulk actions).
 
 Write the answers down. They decide what gets built next.
@@ -286,6 +306,7 @@ Write the answers down. They decide what gets built next.
 | Save button does nothing / shows a sign-in link | You are signed out. Sign in first — bookmarks are per user and the button becomes a ★ toggle. |
 | Account page says "Current password is incorrect" | That is correct behaviour if you typed the wrong old password. Use `Student123!` for the seeded student, or reseed with `npm run seed:demo`. |
 | The bell has no unread badge | You are signed out, you already clicked **Mark all as read**, or you are the contributor (whose seeded note is already read). Run `npm run seed:demo` to restore the sample notifications. |
+| `/prep-insights` is empty or shows a theme you didn't expect | The page needs at least one **approved** write-up. Run `npm run seed:demo`; pending submissions are ignored by design. Counts change after §4 because the Google write-up was approved. |
 | `/drives` looks empty | Run `npm run seed:demo` — it inserts three drives. Also check the status filter isn't set to **Closed** or that the search box isn't still filtering. |
 | "Track application" says *You are already tracking this drive* | That drive's Microsoft/J.P. Morgan seeded application already exists for the demo student. Use **Tracking ✓** to open the board, or track Tata Motors instead. |
 | A drive publish shows no student notification | Notifications are targeted by branch + graduation year only. Use eligible branch `Information Technology` and year `2027` for the demo student, or leave both blank for everyone. |
@@ -314,6 +335,7 @@ After the presentation, restore the sample state with `npm run seed:demo` and re
 - **Alumni outreach API:** `GET /api/admin/alumni`, `POST /api/admin/alumni/import` (upsert by email, outreach state preserved), `PUT /api/admin/alumni/:id` and `PUT /api/admin/alumni/bulk` (tpo/tpoi, audited). Outreach sending is mailto/copy in this MVP (no SMTP).
 - **Audit:** every submission, edit, review, staff write, CSV/company/alumni import, outreach update/bulk action, drive create/update/delete, application create/update/delete, role change, profile edit and password change records who did it and when (`audit_log` table), readable at `/admin/audit`.
 - **Drives/application API:** `GET /api/drives` is public; `GET`/`POST`/`PUT`/`DELETE /api/applications` are session-scoped (one private row per user + drive, statuses `applied`/`oa`/`interview`/`offer`/`rejected`/`withdrawn`); `GET`/`POST`/`PUT`/`DELETE /api/admin/drives` are tpo/tpoi-only. Publishing audits `create_drive` and notifies only students whose branch/year match; every application change is audited too.
-- **Testing:** `npm test` runs 46 automated API integration tests and `npm run test:ui` runs 13 Playwright browser flows, both on throwaway databases — demo data is never touched. `npm run lint` is clean. Locally the browser suite uses Edge via `PLAYWRIGHT_CHANNEL=msedge`; CI uses Chromium.
+- **Prep insights:** `prepInsights` is computed in `server/insights.js` from the public `experiences` array in the same `GET /api/content` response — no extra request. Tags are counted once per approved write-up; a theme is "common" at ≥ half the write-ups (minimum two); the checklist is the five highest-ranked actionable themes. Pending submissions, private names, emails and staff notes never enter the calculation. The advice copy is curated per tag, and unknown tags get generic guidance.
+- **Testing:** `npm test` runs 48 automated API integration tests and `npm run test:ui` runs 14 Playwright browser flows, both on throwaway databases — demo data is never touched. `npm run lint` is clean. Locally the browser suite uses Edge via `PLAYWRIGHT_CHANNEL=msedge`; CI uses Chromium.
 - **Deployment:** `npm run build && npm start` serves the API and the built React app from one Express process on `:3001`, including deep-link fallback for routes like `/admin`.
-- **Known limitations:** the 4 high `npm audit` advisories are dev-tooling only (`picomatch` ReDoS via Vite); no patched version exists upstream, and the production Express server is unaffected. Don't expose the Vite dev server to an untrusted network.
+- **Known limitations:** prep insights are tag-frequency advice, not AI or TPO-verified guidance, and free-text tag variants are counted separately. The 4 high `npm audit` advisories are dev-tooling only (`picomatch` ReDoS via Vite); no patched version exists upstream, and the production Express server is unaffected. Don't expose the Vite dev server to an untrusted network.

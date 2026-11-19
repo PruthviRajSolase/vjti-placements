@@ -16,6 +16,7 @@ import CompanyPage from "./pages/CompanyPage.jsx";
 import DrivesPage from "./pages/DrivesPage.jsx";
 import MyApplicationsPage from "./pages/MyApplicationsPage.jsx";
 import ExperienceDetailPage from "./pages/ExperienceDetailPage.jsx";
+import PrepInsightsPage from "./pages/PrepInsightsPage.jsx";
 import SignInPage from "./pages/SignInPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
 import ReviewQueuePage from "./pages/ReviewQueuePage.jsx";
@@ -130,6 +131,7 @@ function App() {
             }
           />
           <Route path="/experience/:id" element={<ExperienceDetailPage />} />
+          <Route path="/prep-insights" element={<PrepInsightsPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route
             path="/submit"

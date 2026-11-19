@@ -41,9 +41,9 @@ npm run dev:api      # backend only -> http://localhost:3001/api/health
 npm run build        # production build into dist/
 npm run preview      # preview the production build locally
 npm start            # production: ONE Express process serves API + built SPA on :3001
-npm test             # 46 API integration tests (isolated temp database)
+npm test             # 48 API integration tests (isolated temp database)
 npm run lint         # ESLint across src/, server/, tests/ and config files
-npm run test:ui      # build + 13 Playwright browser tests (isolated temp database)
+npm run test:ui      # build + 14 Playwright browser tests (isolated temp database)
 ```
 
 - `npm run test:ui` drives **Edge** on this Windows machine via `PLAYWRIGHT_CHANNEL=msedge`; CI uses bundled Chromium. In PowerShell: `$env:PLAYWRIGHT_CHANNEL='msedge'; npm run test:ui`. It builds first, then serves the production app on port **3107** with a throwaway SQLite DB, so demo data is never touched.
@@ -62,7 +62,7 @@ npm run test:ui      # build + 13 Playwright browser tests (isolated temp databa
   | Experience authors | `aditya@` / `priya@` / `rahul@vjti.ac.in` | `Author123!` |
 
 - Sign-up accepts only `@vjti.ac.in` email addresses and creates a `student` account; TPO promotes verified students to `contributor`.
-- `seed:demo` gives the student two saved companies (so **Saved** has content on first open), sample notifications (two unread submissions for staff, one unread approval for the student and one already-read review note for the contributor), sample alumni outreach contacts in different states, three upcoming drives and two private student applications. Reseeding clears old notifications, alumni contacts, applications and drives first.
+- `seed:demo` gives the student two saved companies (so **Saved** has content on first open), sample notifications (two unread submissions for staff, one unread approval for the student and one already-read review note for the contributor), sample alumni outreach contacts in different states, six approved write-ups (used by prep insights), three upcoming drives and two private student applications. Reseeding clears old notifications, alumni contacts, applications and drives first.
 - Set `JWT_SECRET` in the environment for anything beyond local development.
 - **Deploying:** run `npm run build` then `npm start`. Express serves `dist/` and the API from one origin on `:3001`; deep links such as `/admin` fall back to `index.html`, while unknown `/api/*` paths stay JSON 404s. `public/_redirects` gives the same SPA fallback on static hosts (e.g. Netlify). Use `API_PORT` to change the port.
 - `DB_PATH` overrides the SQLite file location; `npm test` uses it to run against a throwaway database so demo data is never touched.
@@ -84,7 +84,7 @@ npm run test:ui      # build + 13 Playwright browser tests (isolated temp databa
 | Backend | Node + Express 5 on port 3001; Node's built-in `node:sqlite` (no native build) |
 | Auth | bcryptjs hashes + jsonwebtoken signed token in an httpOnly, SameSite=Lax cookie; user reloaded from DB per request |
 | Data | SQLite at `server/data/placements.db`; `src/data.js` remains only as the demo seed's source of sample content |
-| Tests | `npm test` — 46 Node `node:test` API checks + `npm run test:ui` — 13 Playwright browser flows, both on isolated temp DBs |
+| Tests | `npm test` — 48 Node `node:test` API checks + `npm run test:ui` — 14 Playwright browser flows, both on isolated temp DBs |
 | Lint / CI | ESLint 10 flat config (`eslint.config.js`) + `.github/workflows/ci.yml` (lint, API tests, build, browser tests) |
 | Browser automation | `@playwright/test` 1.65 — Edge channel locally, Chromium in CI |
 | Version control | Git + GitHub: `PruthviRajSolase/vjti-placements`, default branch `main`; `.github/workflows/ci.yml` runs on pushes and PRs |
@@ -111,8 +111,8 @@ D:\Placement
 ├── scripts/
 │   └── serve-ui-test.js           # starts built app on :3107 with a throwaway DB
 ├── tests/
-│   ├── api.test.js                # 46 HTTP integration tests on a throwaway DB (npm test)
-│   └── ui/portal.spec.js          # 13 Playwright browser flows (npm run test:ui)
+│   ├── api.test.js                # 48 HTTP integration tests on a throwaway DB (npm test)
+│   └── ui/portal.spec.js          # 14 Playwright browser flows (npm run test:ui)
 ├── vanilla-version/               # ARCHIVED Steps 1–6, plain HTML/CSS/JS
 │   ├── index.html
 │   ├── style.css
@@ -124,10 +124,11 @@ D:\Placement
 │   ├── db.js                      # node:sqlite connection, DB_PATH override, publicUser()
 │   ├── schema.sql                 # users, experiences, audit_log, stats, companies, branch_stats, saved_companies, notifications, alumni_contacts, drives, applications
 │   ├── auth.js                    # JWT cookie, requireAuth / requireRole / optionalAuth
-│   ├── content.js                 # shapes public/staff content + approved-only detail lookup
+│   ├── content.js                 # shapes public/staff content + approved-only detail lookup + prepInsights
+│   ├── insights.js                # ranks approved experience tags into prep themes and advice
 │   ├── csv.js                     # RFC-4180-ish CSV parser for staff/company and alumni imports
 │   ├── seed.js                    # creates only the first TPOI
-│   ├── seed-demo.js               # presentation data + 7 accounts + 2 bookmarks + notifications + alumni contacts + 3 drives + 2 applications
+│   ├── seed-demo.js               # presentation data + 7 accounts + 2 bookmarks + notifications + alumni contacts + 6 approved write-ups + 3 drives + 2 applications
 │   └── data/placements.db         # generated, gitignored
 └── src/
     ├── main.jsx                   # ErrorBoundary + BrowserRouter + Auth/Bookmarks/Content/Notifications providers
@@ -137,8 +138,8 @@ D:\Placement
     ├── BookmarksContext.jsx       # GET /api/bookmarks + per-user save/remove state
     ├── ContentContext.jsx         # GET /api/content + refresh() after admin saves
     ├── NotificationsContext.jsx   # GET /api/notifications + unread count + mark-read actions (Phase 8)
-    ├── data.js                    # sample data — imported by seed-demo.js only
-    ├── index.css                  # complete stylesheet (incl. admin, account, alumni and drive/pipeline styles)
+    ├── data.js                    # sample data — imported by seed-demo.js only (6 approved write-ups)
+    ├── index.css                  # complete stylesheet (incl. admin, account, alumni, drives and prep-insight styles)
     ├── pages/
     │   ├── HomePage.jsx           # composition of the homepage sections
     │   ├── CompaniesPage.jsx      # /companies grid
@@ -146,6 +147,7 @@ D:\Placement
     │   ├── DrivesPage.jsx         # /drives — public upcoming drives, filters and tracking
     │   ├── MyApplicationsPage.jsx # /my-applications — private application pipeline board
     │   ├── ExperienceDetailPage.jsx # /experience/:id — full approved write-up
+    │   ├── PrepInsightsPage.jsx   # /prep-insights — ranked themes + checklist from approved write-ups
     │   ├── SignInPage.jsx         # /signin real login/register with demo credentials
     │   ├── AdminPage.jsx          # /admin TPO panel: stats, companies (incl. CSV import), branch %
     │   ├── ReviewQueuePage.jsx    # /admin/reviews staff review queue with real identities
@@ -163,7 +165,7 @@ D:\Placement
         ├── ErrorBoundary.jsx      # catch render crashes, show reload/retry fallback
         ├── RequireRole.jsx        # cosmetic route guard (server is the real gate)
         ├── RequireAuth.jsx        # thin wrapper for any signed-in page
-        ├── Header.jsx             # brand, nav (+ Drives/My applications/Saved/Admin links), notification bell, auth slot, theme toggle
+        ├── Header.jsx             # brand, nav (+ Prep insights/Drives/My applications/Saved/Admin links), notification bell, auth slot, theme toggle
         ├── Footer.jsx
         ├── Hero.jsx               # title + year tabs
         ├── YearTabs.jsx           # reusable 2024/2025/2026 selector
@@ -172,7 +174,8 @@ D:\Placement
         ├── CompanyCard.jsx        # one tile in the /companies grid, with Save button
         ├── BookmarkButton.jsx     # shared save/remove toggle for cards, detail and Saved page
         ├── BranchSection.jsx      # branch-wise table from API content
-        └── ExperiencesSection.jsx # approved write-ups + search/company/year/topic filters
+        ├── ExperiencesSection.jsx # approved write-ups + search/company/year/topic filters
+        └── PrepInsightsSection.jsx # homepage preview of common prep themes
 ```
 
 ---
@@ -186,7 +189,7 @@ D:\Placement
 - `STATS_BY_YEAR` — students placed, highest package, average package, companies visited, for 2024 / 2025 / 2026.
 - `COMPANIES_BY_YEAR` — 8 companies (2026), 5 (2025), 4 (2024). Fields: `name`, `role`, `package` (LPA number), `hired`, `branches[]`.
 - `BRANCH_STATS_BY_YEAR` — 7 engineering branches × 3 years with placement percentages.
-- `EXPERIENCES` — 3 write-ups: `company`, `heading`, `excerpt`, `tags[]`, `author { name, branch, year }`.
+- `EXPERIENCES` — 6 approved write-ups: `company`, `heading`, `excerpt`, `tags[]`, `author { name, branch, year }`. Tags are the raw material for prep insights.
 - `slugify(name)` — `"J.P. Morgan Chase & Co."` → `"jp_morgan_chase_co"` (lowercase, `&` → `and`, non-alphanumeric runs → `_`, trim).
 - `COMPANIES_BY_SLUG` — startup-built index: `slug → { year → company }`, which powers the dynamic detail route without repeated searches.
 
@@ -201,6 +204,7 @@ D:\Placement
   - company names link to `/company/<slug>`
 - **BranchSection** — placement % table; values ≥ 90% are bolded.
 - **ExperiencesSection** — the public write-up library: cards with excerpt/tags/author, hover lift animation, plus search and company/year/topic filters (filters live in the URL query string so a view is shareable). Cards link to `/experience/:id`.
+- **PrepInsightsSection** — a preview of the three most repeated actionable themes with counts and a link to `/prep-insights`.
 
 ### 4.3 Companies page (`/companies`)
 - Intro with year tabs (shared state with the homepage).
@@ -240,7 +244,7 @@ D:\Placement
 - Explicit user choices persist in `localStorage` under `vjti-placements-theme`; all storage access is try/catch-guarded.
 
 ### 4.9 Content API + TPO admin panel — Phase 2
-- `GET /api/content` returns the entire public data set in one request: `currentYear`, `stats`, `companiesByYear`, `companiesBySlug`, `branchStatsByYear`, `experiences` (approved only).
+- `GET /api/content` returns the entire public data set in one request: `currentYear`, `stats`, `companiesByYear`, `companiesBySlug`, `branchStatsByYear`, `experiences` (approved only) and `prepInsights` (derived from those experiences only).
 - `ContentProvider` shares that object and exposes `refresh()`, called after every admin save so public pages update without a manual reload.
 - `GET /api/admin/content` returns raw rows (with ids) for editing; all admin routes run `requireAuth` + `requireRole("tpo", "tpoi")`.
 - Write endpoints: `PUT /api/admin/stats/:year`, `POST /api/admin/companies`, `PUT /api/admin/companies/:id`, `DELETE /api/admin/companies/:id`, `PUT /api/admin/branch-stats/:year`. Every write also inserts an `audit_log` row.
@@ -302,6 +306,12 @@ D:\Placement
 - Publishing a drive calls `notifyEligibleStudents()`: students/contributors whose `branch` and `graduation_year` match are notified through the existing private inbox; an empty eligibility list means everyone. The alert links to `/drives`.
 - This feature deliberately reuses existing infrastructure: role guards, notifications, audit logging and per-user scoping. It gives unplaced students a concrete "what to do next" view while giving TPO a single publication point instead of circulating messages.
 
+### 4.17 Prep insights from student experiences (Phase 11)
+- `server/insights.js` counts each tag once per **approved** experience and produces `topics` (tag, count, share %, category, companies, source ids, advice/action), `commonTopics` (≥ half the write-ups), and a five-item `checklist`. `buildPrepInsights()` is fed the already-public `publicExperiences()` rows, so pending write-ups and private identities can never influence it.
+- Advice is a curated map keyed by the tags seniors actually submit (`DSA`, `Online Assessment`, `Resume Projects`, `Behavioral`, `SQL`, `Aptitude`, `System Design`, `Core Mechanical`, `HR Interview`, `On-campus`, …). Unknown tags still surface with a generic "find a write-up and mirror its plan" prompt; process-only tags like `On-campus` are marked `actionable: false` and excluded from the checklist.
+- `/prep-insights` renders the checklist, frequency bars for every theme, the companies that mentioned it, and links back to the source write-ups or a pre-filtered experience list. The homepage section previews the top three themes. Both read `content.prepInsights` from `ContentContext`; no extra request and no client-side recomputation.
+- `seed:demo` now has six approved write-ups so the ranking is meaningful: `On-campus` 6/6, `DSA` 4/6, `Resume Projects` 4/6, `Behavioral` 4/6, `SQL` 3/6, `Aptitude` 3/6. Approving a new experience refreshes the ranking automatically because `ContentContext.refresh()` reloads `/api/content`.
+
 ---
 
 ## 5. Routes
@@ -314,6 +324,7 @@ D:\Placement
 | `/drives` | `DrivesPage` | Public upcoming drives, deadlines, eligibility filters and tracking |
 | `/my-applications` | `MyApplicationsPage` (behind `RequireRole`, student/contributor) | Private application pipeline with stage and notes editing |
 | `/experience/:id` | `ExperienceDetailPage` | Full approved write-up (public, server-gated) |
+| `/prep-insights` | `PrepInsightsPage` | Ranked preparation themes and checklist from approved write-ups |
 | `/signin` | `SignInPage` | Real sign-in / registration against the API |
 | `/submit` | `SubmitExperiencePage` | Student/contributor writes a submission (always pending) |
 | `/submit/:id` | `SubmitExperiencePage` | Student edits their own pending submission |
@@ -344,7 +355,7 @@ D:\Placement
 | `drives`, `tracked`, `search`, `status`, `onlyMine`, `busyId` | `DrivesPage` | Public drive list plus the signed-in user's tracked ids; filters are local because the list is small; `track()` posts an application before navigating |
 | `items`, `drafts`, `message`, `busyId` | `MyApplicationsPage` | Private application rows and unsaved stage/note drafts, keyed by application id; reloaded after each save/delete |
 | `drives`, `form`, `editingId`, `message`, `busy` | `AdminDrivesPage` | Staff drive list and the publish/edit form; local drafts only, with one success/error message |
-| `content`, `loading`, `error`, `refresh` | `ContentContext` | Shared by all public pages + AdminPage; one `GET /api/content`, refreshed after admin writes |
+| `content`, `loading`, `error`, `refresh` | `ContentContext` | Shared by all public pages + AdminPage; one `GET /api/content` (including derived `prepInsights`), refreshed after admin writes |
 | `theme` | `App` | Shared with Header; mirrored to `<html data-theme>` and persisted after explicit toggles |
 | `search`, `branch` | `CompaniesSection` | Local to the homepage table |
 | `mode`, `name`, `email`, `password`, `error` | `SignInPage` | Local form state |
@@ -396,7 +407,18 @@ Rule in use: **lift state up** when more than one component needs it; otherwise 
   experiences: [
     { id, company, role, placementYear, heading, excerpt, tags[],
       author: { name, branch, year } }
-  ]
+  ],
+  prepInsights: {
+    totalExperiences, topicCount, commonCount,
+    topics: [
+      { tag, category, count, share, companies[], experienceIds[],
+        advice, action, actionable }
+    ],
+    commonTopics: [...],   // count >= half of totalExperiences
+    checklist: [           // top 5 actionable topics
+      { tag, category, why, action, companies[], experienceIds[] }
+    ]
+  }
 }
 ```
 
@@ -409,6 +431,8 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 **Phase 8 API:** `GET /api/notifications` → `{ notifications: [{ id, type, title, body, link, readAt, createdAt }], unreadCount }` (max 50, newest/unread first); `POST /api/notifications/:id/read` marks one row read and 404s when it is not the caller's; `POST /api/notifications/read-all` clears only the caller's unread rows. `POST /api/admin/companies/import` (tpo/tpoi) accepts `{ year, csv }` and returns `{ ok, imported, created, updated }` after validating and upserting every row; validation failures are HTTP 400 with `{ error, details: ["Line 2: …", …] }`. Notifications are created by the submit/resubmit/review handlers, not by the browser.
 
 **Alumni outreach API (tpo/tpoi):** `GET /api/admin/alumni` lists contacts and outreach/referral state; `POST /api/admin/alumni/import` accepts `{ csv }`, validates every row, and upserts by email (contact fields updated, outreach state preserved) returning `{ ok, imported, created, updated }` or 400 with `details`; `PUT /api/admin/alumni/:id` updates outreach tracking/referral fields; `PUT /api/admin/alumni/bulk` applies status/type/follow-up and/or `markContacted` to selected contacts transactionally. Writes are audited (`import_alumni`, `update_alumni_outreach`, `bulk_alumni_outreach`). Outreach sending is mailto/copy-driven (no SMTP endpoint).
+
+**Prep insights API:** `prepInsights` is computed in `server/insights.js` from the public `experiences` array in the same `/api/content` response. A tag is counted at most once per write-up; `share` is rounded to a whole percent, `commonTopics` need at least half the write-ups (and at least two), and `checklist` takes the five highest-count actionable topics. Only company names, public ids and tags are emitted — no author identity or private note. The excerpt constant is 179 characters plus an ellipsis so card previews stay ≤ 180.
 
 **Drives/applications API:** `GET /api/drives` is public and returns drives ordered by status then registration deadline; `GET /api/applications` returns only the session user's rows, joined to drive fields. `POST /api/applications` accepts `{ driveId, status?, notes? }` and refuses missing/closed/unknown drives and duplicates (400/404/409). `PUT /api/applications/:id` accepts `{ status?, notes? }`; `DELETE /api/applications/:id` removes only the caller's row. Statuses are `applied`, `oa`, `interview`, `offer`, `rejected`, `withdrawn`. Staff endpoints are `GET`/`POST`/`PUT`/`DELETE /api/admin/drives` (tpo/tpoi); admin list and create/edit responses include `applicantCount` and `offerCount`. Publishing writes `create_drive` to the audit log and sends targeted `drive` notifications; all drive/application writes are audited.
 
@@ -425,6 +449,7 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 - Phase 8 styles are in section 21: `.notification-link` / `.notification-badge` in the header, `.notification-toolbar` / `.notification-list` / `.notification-item.unread` / `.notification-dot` / `.notification-actions`, and the `.csv-import-card` controls (`.csv-format`, `.csv-controls`, `.csv-file-label`, `.csv-paste-label`) plus `.admin-message-details` for per-row validation errors.
 - Alumni outreach styles are in section 22: outreach composer/template controls, status pills/badges, `.alumni-bulk-bar` / bulk controls, selected-row highlighting and responsive fallbacks.
 - Drives/pipeline styles are in section 23: `.drive-filters` / `.drive-mine-toggle`, `.drive-grid` / `.drive-card` / `.drive-deadline.urgent`, `.drive-eligibility` pills, and `.pipeline-board` / `.pipeline-column` / `.application-card` with stacked labels and mobile fallbacks.
+- Prep insight styles are in section 24: `.insight-card-grid` / `.insight-card` / `.insight-rank`, `.insight-stats`, `.prep-checklist` / `.checklist-index`, `.insight-topic-grid` / `.insight-topic` / `.insight-bar`, and mobile stacking rules.
 
 ---
 
@@ -456,6 +481,7 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 | Phase 8 | In-app notifications + staff CSV import | `server/csv.js`, `server/schema.sql`, `server/index.js`, `src/NotificationsContext.jsx`, `src/pages/NotificationsPage.jsx`, `src/pages/AdminPage.jsx` |
 | Phase 9 | Alumni outreach (post-Phase 8) | `server/schema.sql`, `server/index.js`, `server/csv.js`, `src/pages/AdminAlumniPage.jsx`, `tests/api.test.js`, `tests/ui/portal.spec.js` |
 | Phase 10 | Upcoming drives + private application pipeline | `server/schema.sql`, `server/index.js`, `server/seed-demo.js`, `src/pages/DrivesPage.jsx`, `src/pages/MyApplicationsPage.jsx`, `src/pages/AdminDrivesPage.jsx`, `tests/api.test.js`, `tests/ui/portal.spec.js` |
+| Phase 11 | Prep insights from approved write-ups | `server/insights.js`, `server/content.js`, `src/components/PrepInsightsSection.jsx`, `src/pages/PrepInsightsPage.jsx`, `tests/api.test.js`, `tests/ui/portal.spec.js` |
 
 ---
 
@@ -469,18 +495,20 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 - `npm run seed:demo` recreates realistic data and all presentation accounts.
 - Phase 3: student submission + editing, own-submission tracker, and a staff review queue with real identities, named/anonymous choice, approve/reject/request-changes and student-visible feedback. Approval updates the public site immediately.
 - Phase 4: TPOI can create staff accounts and change roles; TPO can grant contributor; role changes revoke access on the next request. Readable audit log for TPOI.
-- Quality pass: `npm test` runs 46 isolated API integration tests, `npm run test:ui` runs 13 real-browser flows against the built app, `npm run lint` is clean, and `.github/workflows/ci.yml` wires them together; a React error boundary prevents blank screens; `npm start` serves the API + built SPA from one Express process with deep-link fallback.
+- Quality pass: `npm test` runs 48 isolated API integration tests, `npm run test:ui` runs 14 real-browser flows against the built app, `npm run lint` is clean, and `.github/workflows/ci.yml` wires them together; a React error boundary prevents blank screens; `npm start` serves the API + built SPA from one Express process with deep-link fallback.
 - Phase 5: public write-up library with shareable search/company/year/topic filters and approved-only detail pages (`/experience/:id`); privacy enforced by both the list and detail endpoints.
 - Phase 6: private company shortlist and account settings. Bookmarks are scoped by `req.user.id`, only real company slugs can be saved, profile edits cannot change email/role, and password changes require the current password. Demo seed includes two student bookmarks.
 - Phase 8: private notification inbox (bell + unread badge) for submission and review events; staff CSV import with full-row validation, per-line error details and upsert-by-`(year, slug)`. All notification reads/writes are scoped by `req.user.id`, and import is tpo/tpoi-only.
 - Alumni outreach (post-Phase 8): TPO/TPOI can import alumni contacts (CSV, upsert by email), compose personalized placement/internship outreach via **mailto/copy** (no SMTP), track status/follow-ups/notes/referrals, and run **bulk actions** (select visible, copy emails, bulk apply, mark contacted). APIs are staff-only and audited; `seed:demo` includes sample contacts.
 - Phase 10: public upcoming drives with deadline/eligibility filters and targeted publish notifications; private per-student application pipeline with stage/notes editing; TPO drive CRUD with applicant/offer counts. All writes are audited and all student reads/writes are scoped by `req.user.id`; `seed:demo` includes three drives and two student applications.
-- Dark mode, responsive layout, 404 page, demo banner; `npm run build` succeeds (79 modules, CSS 35.26 kB, JS 362.58 kB).
+- Phase 11: public `/prep-insights` page plus a homepage preview that turn tags from approved write-ups into a ranked "what to prepare" checklist, with counts, frequency bars, source companies/ids and a curated next action per theme. The ranking is derived server-side from `publicExperiences()` only, so pending submissions and private identities never influence it.
+- Dark mode, responsive layout, 404 page, demo banner; `npm run build` succeeds (81 modules, CSS 37.91 kB, JS 367.89 kB).
 
 **Not built / limitations:**
 - Search is per section — there is no single global search across stats, companies and write-ups.
 - Alumni outreach uses **mailto/copy + manual tracking** (no SMTP/in-app sending, delivery logs, or automated follow-up reminders). Referred companies/contacts are tracked as notes/fields, not converted into company/drive records.
-- Browser coverage is a 13-flow smoke suite, not exhaustive or visual-regression tested. Notifications update on sign-in and tab focus rather than live polling. CI is configured and now runs on GitHub because the folder is a git repository.
+- Browser coverage is a 14-flow smoke suite, not exhaustive or visual-regression tested. Notifications update on sign-in and tab focus rather than live polling. CI is configured and now runs on GitHub because the folder is a git repository.
+- Prep insights are **tag-frequency advice**, not AI-generated or TPO-verified guidance. Tags are free text, so synonyms/spelling variants split a theme (`Behavioral`/`behavioural` share one advice entry but not one count); a theme is ranked by how many write-ups mention it, not by how strongly it affected the outcome. There is no per-company/per-role breakdown yet, and the advice copy is curated in `server/insights.js` — adding a new tag yields generic guidance until that map is extended.
 - Drives show eligibility and filter by it, but tracking a drive is not hard-gated by branch/batch; the TPO still owns eligibility decisions. There is no aggregate funnel/dashboard yet — `applicantCount` and `offerCount` are the only staff-side metrics.
 - Vite dev server must be restarted after editing `vite.config.js` (stale proxy serves `index.html` for `/api/*`).
 - `npm audit` reports 4 high-severity advisories from `picomatch` (via `fdir`/`tinyglobby`/Vite). They affect **dev tooling only** — the Express production server has no vulnerable dependency. No patched `picomatch` version exists upstream; older Vite majors were checked and trade this for more serious dev-server advisories, so Vite 7.3.8 was kept deliberately. Do not expose the Vite dev server to an untrusted network.
@@ -493,7 +521,7 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 Candidate next steps, in no particular order:
 
 1. **TPO dashboard:** live funnel counts from `applications` (applied → OA → interview → offer), upcoming deadlines, pending reviews and unplaced-by-branch — using real per-student placement status instead of typed-in percentages.
-2. **"What to prepare" view:** rank tags from approved experiences into per-company/role prep topics so interview-prepping students get an actionable checklist.
+2. **Prep insights upgrades:** per-company/per-role breakdowns, tag synonym normalization, and TPO review of the advice copy. The first version — a ranked, actionable checklist from approved write-up tags — is **DONE (Phase 11)**.
 3. **Alumni outreach upgrades:** real SMTP/in-app sending (logs, sender config), follow-up reminders/due-today view + notifications, CSV export of outreach/referrals, and converting a referral into a company/drive record.
 4. Optionally add live notification polling / push and expand the browser suite beyond smoke flows.
 5. Revisit `npm audit` when `picomatch` ships a fix.
@@ -507,7 +535,7 @@ This is the **real build** the static demo is being converted into: a placement 
 
 ### 13.1 Vision
 
-- **Students** see verified placement stats, companies that visited campus, and interview experiences from seniors who were actually placed.
+- **Students** see verified placement stats, companies that visited campus, interview experiences from seniors who were actually placed, and common preparation themes derived from those approved write-ups.
 - **Placed students** can contribute their own experience, but it is published only after staff review.
 - **TPO staff** own the data and the review queue; the **TPOI** owns the whole system (accounts, roles, permissions).
 
@@ -515,8 +543,8 @@ This is the **real build** the static demo is being converted into: a placement 
 
 | Role | Who | Permissions |
 |---|---|---|
-| `visitor` | not signed in | Read published stats, companies and approved experiences |
-| `student` | signed up with a `@vjti.ac.in` email | Everything a visitor can do + submit experiences, edit own open submissions, track feedback, receive private review notifications, save companies, track private drives/applications and manage own profile/password |
+| `visitor` | not signed in | Read published stats, companies, approved experiences and derived prep insights |
+| `student` | signed up with a `@vjti.ac.in` email | Everything a visitor can do + submit experiences, edit own open submissions, track feedback, receive private review notifications, save companies, track private drives/applications, read prep insights and manage own profile/password |
 | `contributor` | placed student, verified and granted by TPO | Same submission, notification and application rights as `student`, plus recognition as a verified senior author |
 | `tpo` | placement staff | CRUD placement data (including CSV import), publish/manage drives and see aggregate applicant counts, review/approve/reject experiences, grant/revoke `contributor` |
 | `tpoi` | head of placement (super admin) | Everything + create staff accounts, manage roles, view audit log |
@@ -573,12 +601,21 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 | 8 | Notifications, CSV import, deeper browser coverage | ✅ Done — private inbox + validated staff CSV import |
 | 9 | Alumni outreach (post-Phase 8) | ✅ Done — TPO-initiated alumni contact import, mailto/copy outreach, tracking/referrals, bulk actions |
 | 10 | Upcoming drives + private application pipeline | ✅ Done — public drive list, TPO publication, targeted alerts, private student pipeline |
+| 11 | Prep insights from approved write-ups | ✅ Done — ranked themes, five-item prep checklist and homepage preview |
 
 ---
 
 ## 14. Changelog & development log
 
 > **Working agreement:** after every task, add a dated entry here describing what was done, which files changed, and how it was verified. Keep older entries; never rewrite history.
+
+### 2026-11-19 — Prep insights from approved write-ups (Phase 11)
+
+- Added `server/insights.js`: counts each tag at most once per **approved** experience, ranks topics by frequency/share, marks a theme "common" at ≥ half the write-ups (minimum two), and builds a five-item checklist from the highest-ranked actionable topics. A curated `TOPIC_ADVICE` map supplies category, advice and a concrete next action; unknown tags fall back to generic guidance and process-only tags (`On-campus`, `3 Rounds`) are excluded from the checklist. `server/content.js` now calls `buildPrepInsights(publicExperiences())` and returns the result as `prepInsights` in `GET /api/content` — pending submissions and private identities never enter the calculation.
+- Expanded the demo seed from three to six approved write-ups (`src/data.js`) with realistic tag overlap (`On-campus` 6/6, `DSA` 4/6, `Resume Projects` 4/6, `Behavioral` 4/6, `SQL` 3/6, `Aptitude` 3/6); `server/seed-demo.js` cycles the three author accounts so every write-up has a real owner. The excerpt constant is now 179 characters plus an ellipsis to keep card previews at ≤180.
+- Added `src/components/PrepInsightsSection.jsx` (homepage preview of the top three themes), `src/pages/PrepInsightsPage.jsx` (`/prep-insights`: stats, checklist, all-theme frequency bars, source companies/ids and links to a pre-filtered experience list), the `/prep-insights` route and nav link in `src/App.jsx` / `src/components/Header.jsx`, and section 24 styles in `src/index.css`.
+- Added two API tests (ranking/advice/common-theme rules and public-source-only citations), one Playwright flow (prep page counts + homepage preview), and updated the experience counts/filters from 3 to 6. Updated `README.md`, `DEMO.md` and this file.
+- Verified: `npm run lint` clean; `npm test` **48/48 pass** (12 suites, isolated temp DB); `$env:PLAYWRIGHT_CHANNEL='msedge'; npm run test:ui` **14/14 pass** in Edge on a throwaway DB; `npm run build` succeeds (81 modules, CSS 37.91 kB, JS 367.89 kB). Two test adjustments were needed: the excerpt test assumed the old length (fixed by making the constant 179 + ellipsis), and the first browser assertion assumed DSA was the first checklist item (changed to assert checklist content instead of order).
 
 ### 2026-11-19 — Upcoming drives + private application pipeline
 

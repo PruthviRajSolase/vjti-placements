@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/PruthviRajSolase/vjti-placements/actions/workflows/ci.yml/badge.svg)](https://github.com/PruthviRajSolase/vjti-placements/actions/workflows/ci.yml)
 
-An unofficial, student-run placement portal demo for **Veermata Jijabai Technological Institute (VJTI), Mumbai**. Students can browse placement statistics, visiting companies and interview experiences, see upcoming drives and track their applications privately; placement staff manage that content and review submitted write-ups.
+An unofficial, student-run placement portal demo for **Veermata Jijabai Technological Institute (VJTI), Mumbai**. Students can browse placement statistics, visiting companies and interview experiences, see common preparation themes from placed seniors, check upcoming drives and track their applications privately; placement staff manage that content and review submitted write-ups.
 
 > All numbers and experiences in the UI are **sample data for presentations**, not official TPO records. The application is not affiliated with or endorsed by VJTI.
 
@@ -10,6 +10,7 @@ An unofficial, student-run placement portal demo for **Veermata Jijabai Technolo
 
 - Year-wise placement stats, company visit data, branch-wise percentages and a company detail view
 - Searchable, filterable library of approved interview experiences with shareable filters
+- Prep insights: ranked "what to prepare" themes derived from tags in approved student write-ups
 - Accounts with `@vjti.ac.in` sign-up, httpOnly cookie sessions and role-based permissions
 - Student experience submission, editing and review workflow (approve / request changes / reject), with named or anonymous publication
 - TPO admin panel: edit stats and companies, import companies from CSV, manage roles, view audit log
@@ -24,7 +25,7 @@ An unofficial, student-run placement portal demo for **Veermata Jijabai Technolo
 | --- | --- |
 | Frontend | React 19, Vite 7, React Router 7, plain CSS with custom properties |
 | Backend | Express 5, Node's built-in `node:sqlite`, JWT in an httpOnly cookie, bcryptjs |
-| Tests | Node `node:test` (46 API tests), Playwright (13 browser flows) |
+| Tests | Node `node:test` (48 API tests), Playwright (14 browser flows) |
 | Tooling | ESLint 10, GitHub Actions CI, npm scripts |
 
 ## Getting started
@@ -76,8 +77,8 @@ Restart Vite after editing `vite.config.js` — a stale dev server can serve `in
 | `npm run build` | Production build into `dist/` |
 | `npm start` | Serve the API and built SPA from one Express process |
 | `npm run preview` | Preview the production build locally |
-| `npm test` | 46 API integration tests against a throwaway database |
-| `npm run test:ui` | Build, then run 13 Playwright flows against a throwaway database |
+| `npm test` | 48 API integration tests against a throwaway database |
+| `npm run test:ui` | Build, then run 14 Playwright flows against a throwaway database |
 | `npm run lint` | ESLint across source, server, tests and config |
 | `npm run seed`, `npm run seed:demo` | Seed the first admin / reset presentation data |
 
@@ -116,4 +117,4 @@ DEVELOPMENT.md    Detailed technical notes and development log
 
 ## Known limitations
 
-There is no global search across sections, alumni outreach uses mailto/copy with manual tracking rather than SMTP, and the browser suite is a smoke test rather than exhaustive coverage. See [`DEVELOPMENT.md`](./DEVELOPMENT.md) for the full list.
+There is no global search across sections, alumni outreach uses mailto/copy with manual tracking rather than SMTP, and prep insights are tag-frequency advice rather than AI or TPO-verified guidance. The browser suite is a smoke test, not exhaustive coverage. See [`DEVELOPMENT.md`](./DEVELOPMENT.md) for the full list.

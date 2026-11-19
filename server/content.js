@@ -4,6 +4,7 @@
   already expect, so the public pages barely have to change.
 */
 import { db } from "./db.js";
+import { buildPrepInsights } from "./insights.js";
 
 export function slugify(name) {
   return name
@@ -62,7 +63,8 @@ function shapeExperience(row) {
 }
 
 // Card previews stay short; the full write-up lives behind the detail API.
-const EXCERPT_LENGTH = 180;
+// 179 + the trailing ellipsis keeps the card preview at 180 characters.
+const EXCERPT_LENGTH = 179;
 
 function publicByline(row) {
   return {
@@ -175,13 +177,16 @@ export function getPublicContent() {
   }
 
   const years = Object.keys(stats).sort().reverse();
+  const experiences = publicExperiences();
   return {
     currentYear: years[0] || "2026",
     stats,
     companiesByYear,
     companiesBySlug,
     branchStatsByYear,
-    experiences: publicExperiences(),
+    experiences,
+    // Derived only from the public rows above — never from pending submissions.
+    prepInsights: buildPrepInsights(experiences),
   };
 }
 
