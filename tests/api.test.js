@@ -1183,6 +1183,14 @@ describe("drives and applications", () => {
       method: "POST", cookie: session.tpo,
       body: { company: "Bad Status", role: "Engineer", status: "draft" },
     })).status, 400);
+    assert.equal((await request("/api/admin/drives", {
+      method: "POST", cookie: session.tpo,
+      body: { company: "Bad Link", role: "Engineer", applyLink: "javascript:alert(1)" },
+    })).status, 400);
+    assert.equal((await request("/api/admin/drives", {
+      method: "POST", cookie: session.tpo,
+      body: { company: "Bad Link", role: "Engineer", applyLink: "ftp://example.com/job" },
+    })).status, 400);
 
     const created = await request("/api/admin/drives", {
       method: "POST", cookie: session.tpo,

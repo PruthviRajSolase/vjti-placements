@@ -1084,6 +1084,19 @@ function readDriveFields(body) {
   const status = body?.status === undefined || body?.status === "" ? "open" : text(body.status, 20);
   if (!DRIVE_STATUSES.has(status)) return { error: "Unknown drive status." };
 
+  const applyLink = text(body?.applyLink, 500) || null;
+  if (applyLink) {
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(applyLink);
+    } catch {
+      return { error: "Apply link must be a valid http(s) URL." };
+    }
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      return { error: "Apply link must be a valid http(s) URL." };
+    }
+  }
+
   return {
     fields: {
       company,
@@ -1094,7 +1107,7 @@ function readDriveFields(body) {
       graduationYears: JSON.stringify(stringList(body?.graduationYears)),
       registrationDeadline: registrationDeadline || null,
       driveDate: driveDate || null,
-      applyLink: text(body?.applyLink, 500) || null,
+      applyLink,
       description: text(body?.description, 2000) || null,
       status,
     },
