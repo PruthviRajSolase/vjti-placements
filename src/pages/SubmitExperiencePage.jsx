@@ -9,6 +9,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import { useAuth } from "../AuthContext.jsx";
 import { useContent } from "../ContentContext.jsx";
+import { CANONICAL_TAGS } from "../tags.js";
 
 const emptyForm = {
   company: "",
@@ -134,9 +135,13 @@ function SubmitExperiencePage() {
           <label>
             Tags (comma separated)
             <input
-              type="text" maxLength={300} placeholder="DSA, System Design, On-campus"
+              type="text" maxLength={300} list="tag-suggestions"
+              placeholder="DSA, System Design, On-campus"
               value={form.tags} onChange={(e) => update("tags", e.target.value)}
             />
+            <datalist id="tag-suggestions">
+              {CANONICAL_TAGS.map((tag) => <option key={tag} value={tag} />)}
+            </datalist>
           </label>
         </div>
 

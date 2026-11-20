@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
+import { buildPrepInsights } from "../server/insights.js";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const tempDir = mkdtempSync(join(tmpdir(), "vjti-api-"));
@@ -201,6 +202,20 @@ describe("prep insights from approved experiences", () => {
       for (const id of topic.experienceIds) assert.ok(publicIds.has(id));
       assert.ok(!topic.companies.some((company) => ["Amazon", "Barclays"].includes(company)));
     }
+  });
+
+  test("normalizes tag case, whitespace, plurals and aliases to one canonical theme", () => {
+    const insights = buildPrepInsights([
+      { id: 1, company: "A", tags: ["dsa", " online   assessments ", "behavioural"] },
+      { id: 2, company: "B", tags: ["DSA", "Online Assessment", "Behavioral"] },
+    ]);
+    const dsa = insights.topics.find((topic) => topic.tag === "DSA");
+    const oa = insights.topics.find((topic) => topic.tag === "Online Assessment");
+    const behavioral = insights.topics.find((topic) => topic.tag === "Behavioral");
+    assert.equal(insights.topicCount, 3);
+    assert.equal(dsa?.count, 2);
+    assert.equal(oa?.count, 2);
+    assert.equal(behavioral?.count, 2);
   });
 });
 

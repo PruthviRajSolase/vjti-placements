@@ -7,6 +7,8 @@
   of GET /api/content and is shared by the homepage section and /prep-insights.
 */
 
+import { normalizeTag } from "../src/tags.js";
+
 // Advice is keyed by the tag seniors actually use when they submit. Unknown
 // tags still appear in the ranking with a generic prompt, so a new topic is
 // never silently dropped.
@@ -98,7 +100,8 @@ export function buildPrepInsights(experiences = []) {
   for (const experience of experiences) {
     const tags = [...new Set((experience.tags || [])
       .filter((tag) => typeof tag === "string" && tag.trim())
-      .map((tag) => tag.trim()))];
+      .map((tag) => normalizeTag(tag))
+      .filter(Boolean))];
 
     for (const tag of tags) {
       const key = tag.toLowerCase();

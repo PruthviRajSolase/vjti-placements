@@ -10,6 +10,7 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BRANCHES, normalizeBranch } from "../src/branches.js";
+import { normalizeTags } from "../src/tags.js";
 import { db, findUserById, publicUser, withTransaction } from "./db.js";
 import {
   slugify,
@@ -880,16 +881,16 @@ app.get("/api/admin/audit", ...superAdmin, (req, res) => {
 const submitter = [requireAuth, requireRole("student", "contributor")];
 
 function experienceFields(body) {
-  const tags = Array.isArray(body?.tags)
-    ? body.tags.map((tag) => text(tag, 40)).filter(Boolean).slice(0, 8)
-    : text(body?.tags, 300).split(",").map((tag) => tag.trim()).filter(Boolean).slice(0, 8);
+  const rawTags = Array.isArray(body?.tags)
+    ? body.tags.map((tag) => text(tag, 40))
+    : text(body?.tags, 300).split(",").map((tag) => tag.trim());
   return {
     company: text(body?.company, 120),
     role: text(body?.role, 120),
     placementYear: text(body?.placementYear, 4),
     heading: text(body?.heading, 160),
     body: typeof body?.body === "string" ? body.body.trim().slice(0, 5000) : "",
-    tags,
+    tags: normalizeTags(rawTags, 8),
     // Explicit choice only — never trust a client-supplied status.
     visibility: body?.visibility === "named" ? "named" : "anonymous",
   };
