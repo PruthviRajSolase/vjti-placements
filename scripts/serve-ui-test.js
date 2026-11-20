@@ -15,7 +15,7 @@ const dbDir = mkdtempSync(join(tmpdir(), "vjti-ui-"));
 
 process.env.DB_PATH = join(dbDir, "placements.db");
 process.env.API_PORT = port;
-process.env.NODE_ENV = "production";
+process.env.JWT_SECRET = "ui-test-secret-key-that-is-at-least-32-chars";
 
 let closing = false;
 function shutdown() {
@@ -29,5 +29,7 @@ process.on("SIGTERM", shutdown);
 process.on("exit", () => rmSync(dbDir, { recursive: true, force: true }));
 
 // Dynamic imports happen AFTER DB_PATH is set so db.js opens the temp file.
+// seed-demo refuses to run in production, so seed first and let start.js
+// switch the process into production mode for the server.
 await import("../server/seed-demo.js");
 await import("../server/start.js");

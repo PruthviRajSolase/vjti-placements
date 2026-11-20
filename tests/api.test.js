@@ -104,6 +104,12 @@ describe("public API", () => {
     assert.equal(content.data.currentYear, "2026");
   });
 
+  test("security headers include CSP and omit HSTS outside production", async () => {
+    const res = await fetch(base + "/api/health");
+    assert.ok(res.headers.get("content-security-policy"));
+    assert.equal(res.headers.get("strict-transport-security"), null);
+  });
+
   test("public experiences are approved only and carry no real identity", async () => {
     const { data } = await request("/api/content");
     assert.equal(data.experiences.length, 6);

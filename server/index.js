@@ -4,6 +4,7 @@
 */
 import express from "express";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import bcrypt from "bcryptjs";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -37,6 +38,22 @@ const here = dirname(fileURLToPath(import.meta.url));
 const distDir = join(here, "..", "dist");
 const distIndex = join(distDir, "index.html");
 
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "script-src": ["'self'"],
+      "style-src": ["'self'", "'unsafe-inline'"],
+      "img-src": ["'self'", "data:", "blob:"],
+      "connect-src": ["'self'"],
+      "font-src": ["'self'", "data:"],
+      "object-src": ["'none'"],
+      "base-uri": ["'self'"],
+      "frame-ancestors": ["'none'"],
+    },
+  },
+  hsts: process.env.NODE_ENV === "production",
+}));
 app.use(express.json());
 app.use(cookieParser());
 
