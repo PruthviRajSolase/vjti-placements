@@ -108,7 +108,7 @@ app.post("/api/auth/register", rateLimit("register"), async (req, res) => {
   db.prepare("INSERT INTO audit_log (actor_id, action, target) VALUES (?, 'register', ?)")
     .run(user.id, email);
 
-  setAuthCookie(res, user);
+  setAuthCookie(res, user.id, 0);
   res.status(201).json({ user });
 });
 
@@ -124,7 +124,7 @@ app.post("/api/auth/login", rateLimit("login"), async (req, res) => {
   }
 
   const user = publicUser(row);
-  setAuthCookie(res, user);
+  setAuthCookie(res, user.id, row.token_version ?? 0);
   res.json({ user });
 });
 
@@ -250,9 +250,12 @@ app.post("/api/me/password", requireAuth, rateLimit("password"), async (req, res
   if (next.length < 8) {
     return res.status(400).json({ error: "New password must be at least 8 characters." });
   }
+  const nextHash = await bcrypt.hash(next, 10);
   db.prepare(
-    "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?"
-  ).run(await bcrypt.hash(next, 10), req.user.id);
+    "UPDATE users SET password_hash = ?, token_version = token_version + 1, updated_at = datetime('now') WHERE id = ?"
+  ).run(nextHash, req.user.id);
+  const updated = db.prepare("SELECT token_version FROM users WHERE id = ?").get(req.user.id);
+  setAuthCookie(res, req.user.id, updated?.token_version ?? 0);
   audit(req, "change_password", req.user.email);
   res.json({ ok: true });
 });

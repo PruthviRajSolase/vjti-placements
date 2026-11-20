@@ -20,8 +20,8 @@ export const TOKEN_COOKIE = "vjti_token";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
-export function setAuthCookie(res, user) {
-  const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: "7d" });
+export function setAuthCookie(res, userId, tokenVersion = 0) {
+  const token = jwt.sign({ sub: userId, ver: tokenVersion }, JWT_SECRET, { expiresIn: "7d" });
   res.cookie(TOKEN_COOKIE, token, {
     httpOnly: true, // JavaScript cannot read it -> XSS can't steal the session
     sameSite: "lax", // basic CSRF protection: cookie not sent on cross-site POSTs
@@ -40,7 +40,11 @@ function userFromRequest(req) {
   if (!token) return null;
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    return publicUser(findUserById(payload.sub));
+    const row = findUserById(payload.sub);
+    if (!row) return null;
+    const tokenVersion = payload.ver ?? 0;
+    if ((row.token_version ?? 0) !== tokenVersion) return null;
+    return publicUser(row);
   } catch {
     return null;
   }

@@ -679,14 +679,17 @@ describe("saved companies and account settings", () => {
       body: { currentPassword: "Student123!", newPassword: "NewPass123!" },
     });
     assert.equal(changed.status, 200);
+    const refreshedCookie = changed.cookie.split(";")[0];
     assert.equal((await request("/api/auth/login", {
       method: "POST", body: { email: "student@vjti.ac.in", password: "Student123!" },
     })).status, 401);
     assert.equal((await request("/api/auth/login", {
       method: "POST", body: { email: "student@vjti.ac.in", password: "NewPass123!" },
     })).status, 200);
-    // The existing cookie stays valid because sessions track the user id.
-    assert.equal((await request("/api/bookmarks", { cookie: session.student })).status, 200);
+    // The old token is revoked; the password change reissues a cookie for this session.
+    assert.equal((await request("/api/bookmarks", { cookie: session.student })).status, 401);
+    assert.equal((await request("/api/bookmarks", { cookie: refreshedCookie })).status, 200);
+    session.student = refreshedCookie;
   });
 
   test("profile and password changes are recorded in the audit log", async () => {
