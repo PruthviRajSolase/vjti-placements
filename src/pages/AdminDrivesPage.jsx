@@ -5,10 +5,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import { BRANCHES } from "../branches.js";
 
 const EMPTY = {
   company: "", role: "", package: "", location: "",
-  eligibilityBranches: "", graduationYears: "",
+  eligibilityBranches: [], graduationYears: "",
   registrationDeadline: "", driveDate: "", applyLink: "", description: "", status: "open",
 };
 
@@ -38,7 +39,7 @@ export default function AdminDrivesPage() {
       role: drive.role,
       package: drive.package ?? "",
       location: drive.location || "",
-      eligibilityBranches: drive.eligibilityBranches.join(", "),
+      eligibilityBranches: drive.eligibilityBranches,
       graduationYears: drive.graduationYears.join(", "),
       registrationDeadline: drive.registrationDeadline || "",
       driveDate: drive.driveDate || "",
@@ -115,7 +116,17 @@ export default function AdminDrivesPage() {
             <label>Role<input required value={form.role} onChange={(e) => change("role", e.target.value)} /></label>
             <label>Package (LPA)<input type="number" min="0" step="0.25" value={form.package} onChange={(e) => change("package", e.target.value)} /></label>
             <label>Location<input value={form.location} onChange={(e) => change("location", e.target.value)} /></label>
-            <label>Eligible branches (comma separated)<input value={form.eligibilityBranches} onChange={(e) => change("eligibilityBranches", e.target.value)} /></label>
+            <label>Eligible branches
+              <select
+                multiple
+                value={form.eligibilityBranches}
+                onChange={(e) => change("eligibilityBranches", Array.from(e.target.selectedOptions, (option) => option.value))}
+              >
+                {BRANCHES.map((branch) => (
+                  <option key={branch} value={branch}>{branch}</option>
+                ))}
+              </select>
+            </label>
             <label>Graduation years (comma separated)<input value={form.graduationYears} onChange={(e) => change("graduationYears", e.target.value)} /></label>
             <label>Registration deadline<input type="date" value={form.registrationDeadline} onChange={(e) => change("registrationDeadline", e.target.value)} /></label>
             <label>Drive date<input type="date" value={form.driveDate} onChange={(e) => change("driveDate", e.target.value)} /></label>

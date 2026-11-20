@@ -285,6 +285,15 @@ describe("authentication", () => {
     });
     assert.equal(bad.status, 400);
 
+    const badBranch = await request("/api/auth/register", {
+      method: "POST",
+      body: {
+        fullName: "Bad Branch", email: "badbranch@vjti.ac.in",
+        password: "Password123!", branch: "Not A Branch",
+      },
+    });
+    assert.equal(badBranch.status, 400);
+
     const created = await request("/api/auth/register", {
       method: "POST",
       body: {
@@ -300,6 +309,16 @@ describe("authentication", () => {
       body: { fullName: "Dup", email: "newbie@vjti.ac.in", password: "Password123!" },
     });
     assert.equal(duplicate.status, 409);
+
+    const normalized = await request("/api/auth/register", {
+      method: "POST",
+      body: {
+        fullName: "Alias Student", email: "aliasbranch@vjti.ac.in",
+        password: "Password123!", branch: "IT",
+      },
+    });
+    assert.equal(normalized.status, 201);
+    assert.equal(normalized.data.user.branch, "Information Technology");
   });
 });
 
@@ -649,11 +668,16 @@ describe("saved companies and account settings", () => {
       method: "PUT", cookie: session.student, body: { fullName: "" },
     });
     assert.equal(emptyName.status, 400);
+    const badBranch = await request("/api/me", {
+      method: "PUT", cookie: session.student,
+      body: { fullName: "Asha Patil", branch: "Not A Branch" },
+    });
+    assert.equal(badBranch.status, 400);
 
     const saved = await request("/api/me", {
       method: "PUT", cookie: session.student,
       body: {
-        fullName: "Asha Patil (Final year)", branch: "Computer Engineering",
+        fullName: "Asha Patil (Final year)", branch: "CS",
         graduationYear: "2027", role: "tpo", email: "hacker@gmail.com",
       },
     });
@@ -1190,6 +1214,10 @@ describe("drives and applications", () => {
     assert.equal((await request("/api/admin/drives", {
       method: "POST", cookie: session.tpo,
       body: { company: "Bad Link", role: "Engineer", applyLink: "ftp://example.com/job" },
+    })).status, 400);
+    assert.equal((await request("/api/admin/drives", {
+      method: "POST", cookie: session.tpo,
+      body: { company: "Bad Branch", role: "Engineer", eligibilityBranches: ["Not A Branch"] },
     })).status, 400);
 
     const created = await request("/api/admin/drives", {

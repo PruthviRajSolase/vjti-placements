@@ -6,6 +6,7 @@
 */
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { BRANCHES } from "../branches.js";
 import { useAuth } from "../AuthContext.jsx";
 
 function AccountPage() {
@@ -94,13 +95,15 @@ function AccountPage() {
         </label>
         <label>
           Branch
-          <input
-            type="text"
+          <select
             value={profile.branch}
-            maxLength={80}
-            placeholder="e.g. Computer Engineering"
             onChange={(event) => setProfile({ ...profile, branch: event.target.value })}
-          />
+          >
+            <option value="">Select a branch</option>
+            {BRANCHES.map((item) => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </select>
         </label>
         <label>
           Graduation year

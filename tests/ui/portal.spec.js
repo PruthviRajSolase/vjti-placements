@@ -307,7 +307,7 @@ test("TPO publishes a drive and it appears on the public page", async ({ page })
   await form.getByLabel("Company").fill("UI Drive Corp");
   await form.getByLabel("Role").fill("Graduate Engineer");
   await form.getByLabel("Registration deadline").fill("2026-12-31");
-  await form.getByLabel("Eligible branches (comma separated)").fill("Information Technology");
+  await form.getByLabel("Eligible branches").selectOption("Information Technology");
   await form.getByLabel("Graduation years (comma separated)").fill("2027");
   await form.getByRole("button", { name: "Publish drive" }).click();
 

@@ -9,6 +9,7 @@
 */
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { BRANCHES } from "../branches.js";
 import { useAuth } from "../AuthContext.jsx";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -129,11 +130,16 @@ function SignInPage() {
               </div>
               <div className="field">
                 <label htmlFor="auth-branch">Branch (optional)</label>
-                <input
-                  id="auth-branch" type="text"
-                  placeholder="Information Technology" value={branch}
+                <select
+                  id="auth-branch"
+                  value={branch}
                   onChange={(event) => setBranch(event.target.value)}
-                />
+                >
+                  <option value="">Select a branch</option>
+                  {BRANCHES.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
               </div>
               <div className="field">
                 <label htmlFor="auth-year">Graduation year (optional)</label>

@@ -737,7 +737,8 @@ main > section, footer {
 
 .field label { font-size: 0.9rem; font-weight: 700; }
 
-.field input {
+.field input,
+.field select {
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -746,7 +747,8 @@ main > section, footer {
   font: inherit;             /* inputs don't inherit fonts by default */
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
   border-color: var(--accent);
@@ -882,7 +884,7 @@ main > section, footer {
   font-weight: 700;
 }
 
-.admin-fields input, .admin-branch-grid input, .admin-company-form input {
+.admin-fields input, .admin-fields select, .admin-branch-grid input, .admin-company-form input {
   padding: 9px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1027,7 +1029,7 @@ main > section, footer {
   gap: 16px;
 }
 
-.experience-form input, .experience-form textarea, .review-actions textarea {
+.experience-form input, .experience-form textarea, .experience-form select, .review-actions textarea {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);

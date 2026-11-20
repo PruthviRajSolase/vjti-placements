@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { BRANCHES, normalizeBranch } from "../src/branches.js";
 import { db, findUserById, publicUser } from "./db.js";
 import {
   slugify,
@@ -97,7 +98,9 @@ app.post("/api/auth/register", rateLimit("register"), async (req, res) => {
   const fullName = text(req.body?.fullName, 80);
   const email = text(req.body?.email, 120).toLowerCase();
   const password = typeof req.body?.password === "string" ? req.body.password : "";
-  const branch = text(req.body?.branch, 80);
+  const branchField = validatedBranch(req.body?.branch);
+  if (branchField.error) return res.status(400).json({ error: branchField.error });
+  const branch = branchField.value;
   const graduationYear = text(req.body?.graduationYear, 4);
 
   if (!fullName) {
@@ -208,6 +211,21 @@ function stringList(value) {
   return [...new Set(items.map((item) => text(item, 80)).filter(Boolean))].slice(0, 30);
 }
 
+function validatedBranch(value) {
+  const normalized = normalizeBranch(text(value, 80));
+  if (!normalized) return { value: null };
+  if (!BRANCHES.includes(normalized)) return { error: "Select a valid branch." };
+  return { value: normalized };
+}
+
+function validatedBranchList(value) {
+  const unique = [...new Set(stringList(value).map(normalizeBranch).filter(Boolean))];
+  if (unique.some((branch) => !BRANCHES.includes(branch))) {
+    return { error: "Select valid eligible branches." };
+  }
+  return { value: unique };
+}
+
 // ------------------------------------------- Phase 6: bookmarks + my account
 // All four routes need only a session; every query is scoped to req.user.id,
 // so no caller can read or remove someone else's saved companies.
@@ -239,7 +257,9 @@ app.delete("/api/bookmarks/:slug", requireAuth, (req, res) => {
 
 app.put("/api/me", requireAuth, (req, res) => {
   const fullName = text(req.body?.fullName, 80);
-  const branch = text(req.body?.branch, 80);
+  const branchField = validatedBranch(req.body?.branch);
+  if (branchField.error) return res.status(400).json({ error: branchField.error });
+  const branch = branchField.value;
   const graduationYear = text(req.body?.graduationYear, 4);
   if (!fullName) return res.status(400).json({ error: "Name is required." });
   if (graduationYear && !/^\d{4}$/.test(graduationYear)) {
@@ -1097,13 +1117,16 @@ function readDriveFields(body) {
     }
   }
 
+  const branchesField = validatedBranchList(body?.eligibilityBranches);
+  if (branchesField.error) return { error: branchesField.error };
+
   return {
     fields: {
       company,
       role,
       packageLpa,
       location: text(body?.location, 120) || null,
-      eligibilityBranches: JSON.stringify(stringList(body?.eligibilityBranches)),
+      eligibilityBranches: JSON.stringify(branchesField.value),
       graduationYears: JSON.stringify(stringList(body?.graduationYears)),
       registrationDeadline: registrationDeadline || null,
       driveDate: driveDate || null,
