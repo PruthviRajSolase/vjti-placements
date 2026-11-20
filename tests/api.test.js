@@ -13,6 +13,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DatabaseSync } from "node:sqlite";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const tempDir = mkdtempSync(join(tmpdir(), "vjti-api-"));
@@ -1231,5 +1232,64 @@ describe("drives and applications", () => {
     for (const action of ["create_application", "update_application", "delete_application"]) {
       assert.ok(audit.data.entries.some((e) => e.action === action));
     }
+  });
+});
+
+describe("database migrations", () => {
+  test("migrates an old-schema database and normalizes branches", () => {
+    const oldPath = join(tempDir, "old.db");
+    const oldDb = new DatabaseSync(oldPath);
+    oldDb.exec(`
+      PRAGMA foreign_keys = ON;
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        full_name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'student',
+        branch TEXT,
+        graduation_year TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE TABLE drives (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company TEXT NOT NULL,
+        role TEXT NOT NULL,
+        package_lpa REAL,
+        location TEXT,
+        eligibility_branches TEXT NOT NULL DEFAULT '[]',
+        graduation_years TEXT NOT NULL DEFAULT '[]',
+        registration_deadline TEXT,
+        drive_date TEXT,
+        apply_link TEXT,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'open',
+        created_by INTEGER,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT INTO users (full_name, email, password_hash, role, branch, graduation_year)
+        VALUES ('Old Student', 'old@vjti.ac.in', 'x', 'student', 'IT', '2027');
+      INSERT INTO drives (company, role, eligibility_branches, graduation_years)
+        VALUES ('Test Co', 'Engineer', '["IT","Mech"]', '["2027"]');
+    `);
+    oldDb.close();
+
+    execFileSync(process.execPath, ["--input-type=module", "-e", `
+      import { DatabaseSync } from "node:sqlite";
+      import "./server/db.js";
+      const db = new DatabaseSync(process.env.DB_PATH);
+      const version = db.prepare("PRAGMA user_version").get().user_version;
+      const user = db.prepare("SELECT branch, token_version FROM users WHERE email = ?").get("old@vjti.ac.in");
+      const drive = db.prepare("SELECT eligibility_branches FROM drives WHERE company = ?").get("Test Co");
+      if (version !== 2) throw new Error("version=" + version);
+      if (user.token_version !== 0) throw new Error("token=" + user.token_version);
+      if (user.branch !== "Information Technology") throw new Error("branch=" + user.branch);
+      if (drive.eligibility_branches !== JSON.stringify(["Information Technology","Mechanical Engineering"])) {
+        throw new Error("drive=" + drive.eligibility_branches);
+      }
+      db.close();
+    `], { cwd: root, env: { ...process.env, DB_PATH: oldPath }, stdio: "pipe" });
   });
 });
