@@ -155,7 +155,9 @@ export default function AdminDrivesPage() {
               <thead>
                 <tr>
                   <th scope="col">Company</th><th scope="col">Role</th><th scope="col">Deadline</th>
-                  <th scope="col">Applicants</th><th scope="col">Offers</th><th scope="col">Status</th><th scope="col">Actions</th>
+                  <th scope="col" title="Students tracking this drive in their pipeline">Tracking</th>
+                  <th scope="col" title="Offers reported by students, not official placement records">Self-reported offers</th>
+                  <th scope="col">Status</th><th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
