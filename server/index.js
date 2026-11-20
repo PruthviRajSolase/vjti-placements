@@ -10,7 +10,7 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BRANCHES, normalizeBranch } from "../src/branches.js";
-import { db, findUserById, publicUser } from "./db.js";
+import { db, findUserById, publicUser, withTransaction } from "./db.js";
 import {
   slugify,
   getPublicContent,
@@ -463,30 +463,32 @@ app.post("/api/admin/companies/import", ...admin, (req, res) => {
 
   let created = 0;
   let updated = 0;
-  for (const company of staged) {
-    const existing = db.prepare(
-      "SELECT id FROM companies WHERE year = ? AND slug = ?"
-    ).get(year, company.slug);
-    const values = [
-      company.name, company.slug, company.role,
-      company.packageLpa, company.hired, JSON.stringify(company.branches),
-    ];
-    if (existing) {
-      db.prepare(
-        `UPDATE companies SET name = ?, slug = ?, role = ?, package_lpa = ?,
-           hired = ?, branches = ?, updated_at = datetime('now') WHERE id = ?`
-      ).run(...values, existing.id);
-      updated += 1;
-    } else {
-      db.prepare(
-        `INSERT INTO companies (year, name, slug, role, package_lpa, hired, branches)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
-      ).run(year, ...values);
-      created += 1;
+  withTransaction(() => {
+    for (const company of staged) {
+      const existing = db.prepare(
+        "SELECT id FROM companies WHERE year = ? AND slug = ?"
+      ).get(year, company.slug);
+      const values = [
+        company.name, company.slug, company.role,
+        company.packageLpa, company.hired, JSON.stringify(company.branches),
+      ];
+      if (existing) {
+        db.prepare(
+          `UPDATE companies SET name = ?, slug = ?, role = ?, package_lpa = ?,
+             hired = ?, branches = ?, updated_at = datetime('now') WHERE id = ?`
+        ).run(...values, existing.id);
+        updated += 1;
+      } else {
+        db.prepare(
+          `INSERT INTO companies (year, name, slug, role, package_lpa, hired, branches)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).run(year, ...values);
+        created += 1;
+      }
     }
-  }
 
-  audit(req, "import_companies", `${year}: ${staged.length} rows`);
+    audit(req, "import_companies", `${year}: ${staged.length} rows`);
+  });
   res.json({ ok: true, imported: staged.length, created, updated });
 });
 
@@ -1013,18 +1015,7 @@ app.post("/api/admin/experiences/:id/review", ...admin, (req, res) => {
     "SELECT id, user_id, company, heading, status FROM experiences WHERE id = ?"
   ).get(id);
   if (!existing) return res.status(404).json({ error: "Submission not found." });
-  if (!["pending", "changes_requested"].includes(existing.status)) {
-    return res.status(409).json({ error: "This submission has already been reviewed." });
-  }
 
-  db.prepare(
-    `UPDATE experiences SET status = ?, review_note = ?, reviewed_by = ?,
-       reviewed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`
-  ).run(status, action === "approve" ? note || null : note, req.user.id, id);
-  audit(req, `review_${action}`, String(id));
-
-  // The author always sees the real outcome (and the reviewer's note), even
-  // when the write-up is anonymous to everyone else.
   const decision = {
     approve: {
       title: "Your experience was approved",
@@ -1042,7 +1033,21 @@ app.post("/api/admin/experiences/:id/review", ...admin, (req, res) => {
       link: "/my-experiences",
     },
   }[action];
-  notify(existing.user_id, "review", decision.title, decision.body, decision.link);
+
+  const reviewed = withTransaction(() => {
+    const result = db.prepare(
+      `UPDATE experiences SET status = ?, review_note = ?, reviewed_by = ?,
+         reviewed_at = datetime('now'), updated_at = datetime('now')
+       WHERE id = ? AND status IN ('pending', 'changes_requested')`
+    ).run(status, action === "approve" ? note || null : note, req.user.id, id);
+    if (result.changes !== 1) return false;
+    audit(req, `review_${action}`, String(id));
+    notify(existing.user_id, "review", decision.title, decision.body, decision.link);
+    return true;
+  });
+  if (!reviewed) {
+    return res.status(409).json({ error: "This submission has already been reviewed." });
+  }
 
   res.json({ ok: true, status });
 });
@@ -1245,22 +1250,24 @@ app.post("/api/admin/drives", ...admin, (req, res) => {
   const parsed = readDriveFields(req.body);
   if (parsed.error) return res.status(400).json({ error: parsed.error });
   const f = parsed.fields;
-  const result = db.prepare(
-    `INSERT INTO drives
-       (company, role, package_lpa, location, eligibility_branches, graduation_years,
-        registration_deadline, drive_date, apply_link, description, status, created_by)
-     VALUES (@company, @role, @packageLpa, @location, @eligibilityBranches, @graduationYears,
-             @registrationDeadline, @driveDate, @applyLink, @description, @status, @createdBy)`
-  ).run({ ...f, createdBy: req.user.id });
-
-  audit(req, "create_drive", `${f.company}:${f.role}`);
-  notifyEligibleStudents({
-    company: f.company, role: f.role,
-    eligibilityBranches: jsonArray(f.eligibilityBranches),
-    graduationYears: jsonArray(f.graduationYears),
-    registrationDeadline: f.registrationDeadline,
+  const driveId = withTransaction(() => {
+    const result = db.prepare(
+      `INSERT INTO drives
+         (company, role, package_lpa, location, eligibility_branches, graduation_years,
+          registration_deadline, drive_date, apply_link, description, status, created_by)
+       VALUES (@company, @role, @packageLpa, @location, @eligibilityBranches, @graduationYears,
+               @registrationDeadline, @driveDate, @applyLink, @description, @status, @createdBy)`
+    ).run({ ...f, createdBy: req.user.id });
+    audit(req, "create_drive", `${f.company}:${f.role}`);
+    notifyEligibleStudents({
+      company: f.company, role: f.role,
+      eligibilityBranches: jsonArray(f.eligibilityBranches),
+      graduationYears: jsonArray(f.graduationYears),
+      registrationDeadline: f.registrationDeadline,
+    });
+    return Number(result.lastInsertRowid);
   });
-  res.status(201).json({ drive: adminDrive(Number(result.lastInsertRowid)) });
+  res.status(201).json({ drive: adminDrive(driveId) });
 });
 
 app.put("/api/admin/drives/:id", ...admin, (req, res) => {
@@ -1270,15 +1277,17 @@ app.put("/api/admin/drives/:id", ...admin, (req, res) => {
   const parsed = readDriveFields(req.body);
   if (parsed.error) return res.status(400).json({ error: parsed.error });
   const f = parsed.fields;
-  db.prepare(
-    `UPDATE drives SET company = @company, role = @role, package_lpa = @packageLpa,
-       location = @location, eligibility_branches = @eligibilityBranches,
-       graduation_years = @graduationYears, registration_deadline = @registrationDeadline,
-       drive_date = @driveDate, apply_link = @applyLink, description = @description,
-       status = @status, updated_at = datetime('now')
-     WHERE id = @id`
-  ).run({ ...f, id });
-  audit(req, "update_drive", `drive:${id}`);
+  withTransaction(() => {
+    db.prepare(
+      `UPDATE drives SET company = @company, role = @role, package_lpa = @packageLpa,
+         location = @location, eligibility_branches = @eligibilityBranches,
+         graduation_years = @graduationYears, registration_deadline = @registrationDeadline,
+         drive_date = @driveDate, apply_link = @applyLink, description = @description,
+         status = @status, updated_at = datetime('now')
+       WHERE id = @id`
+    ).run({ ...f, id });
+    audit(req, "update_drive", `drive:${id}`);
+  });
   res.json({ drive: adminDrive(id) });
 });
 
@@ -1286,8 +1295,10 @@ app.delete("/api/admin/drives/:id", ...admin, (req, res) => {
   const id = Number(req.params.id);
   const drive = db.prepare("SELECT company FROM drives WHERE id = ?").get(id);
   if (!drive) return res.status(404).json({ error: "Drive not found." });
-  db.prepare("DELETE FROM drives WHERE id = ?").run(id);
-  audit(req, "delete_drive", `${id}:${drive.company}`);
+  withTransaction(() => {
+    db.prepare("DELETE FROM drives WHERE id = ?").run(id);
+    audit(req, "delete_drive", `${id}:${drive.company}`);
+  });
   res.json({ ok: true });
 });
 

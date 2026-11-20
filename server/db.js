@@ -92,3 +92,15 @@ export function publicUser(row) {
 export function findUserById(id) {
   return db.prepare("SELECT * FROM users WHERE id = ?").get(id);
 }
+
+export function withTransaction(fn) {
+  db.exec("BEGIN");
+  try {
+    const result = fn();
+    db.exec("COMMIT");
+    return result;
+  } catch (err) {
+    db.exec("ROLLBACK");
+    throw err;
+  }
+}
