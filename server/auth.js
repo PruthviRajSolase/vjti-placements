@@ -10,7 +10,12 @@
 import jwt from "jsonwebtoken";
 import { findUserById, publicUser } from "./db.js";
 
-export const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
+const configuredSecret = process.env.JWT_SECRET;
+if (process.env.NODE_ENV === "production" && (!configuredSecret || configuredSecret.length < 32)) {
+  throw new Error("JWT_SECRET must be set to at least 32 characters in production.");
+}
+
+export const JWT_SECRET = configuredSecret || "dev-only-change-me";
 export const TOKEN_COOKIE = "vjti_token";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;

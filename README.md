@@ -55,12 +55,12 @@ Created by `npm run seed:demo`:
 
 ### Configuration
 
-Environment variables are optional for local development:
+Environment variables are optional for local development. Copy [`.env.example`](./.env.example) as a starting point.
 
 | Variable | Purpose |
 | --- | --- |
-| `JWT_SECRET` | Set this for anything beyond local development |
-| `TPOI_EMAIL`, `TPOI_PASSWORD` | Credentials for the first in-charge created by `npm run seed` |
+| `JWT_SECRET` | Session signing secret. In production the server refuses to start if it is missing or shorter than 32 characters. |
+| `TPOI_EMAIL`, `TPOI_PASSWORD`, `TPOI_NAME` | Credentials for the first in-charge created by `npm run seed` |
 | `DB_PATH` | Override the SQLite file location (default `server/data/placements.db`) |
 | `API_PORT` | Change the API/production server port (default `3001`) |
 | `PLAYWRIGHT_CHANNEL` | Set to `msedge` to run browser tests in Edge on Windows |

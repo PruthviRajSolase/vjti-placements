@@ -1235,6 +1235,26 @@ describe("drives and applications", () => {
   });
 });
 
+describe("production JWT secret", () => {
+  test("requires a strong JWT_SECRET in production", () => {
+    assert.throws(() => execFileSync(process.execPath, ["--input-type=module", "-e",
+      "process.env.NODE_ENV='production'; delete process.env.JWT_SECRET; await import('./server/auth.js');"
+    ], { cwd: root, env: { ...process.env, NODE_ENV: "production" }, stdio: "pipe" }));
+
+    assert.throws(() => execFileSync(process.execPath, ["--input-type=module", "-e",
+      "process.env.NODE_ENV='production'; process.env.JWT_SECRET='short-secret'; await import('./server/auth.js');"
+    ], { cwd: root, env: { ...process.env, NODE_ENV: "production", JWT_SECRET: "short-secret" }, stdio: "pipe" }));
+
+    execFileSync(process.execPath, ["--input-type=module", "-e",
+      "process.env.NODE_ENV='production'; process.env.JWT_SECRET='a-very-long-secret-key-with-32-chars'; await import('./server/auth.js');"
+    ], {
+      cwd: root,
+      env: { ...process.env, NODE_ENV: "production", JWT_SECRET: "a-very-long-secret-key-with-32-chars" },
+      stdio: "pipe",
+    });
+  });
+});
+
 describe("database migrations", () => {
   test("migrates an old-schema database and normalizes branches", () => {
     const oldPath = join(tempDir, "old.db");
