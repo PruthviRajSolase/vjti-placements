@@ -9,6 +9,14 @@
 import bcrypt from "bcryptjs";
 import { db } from "./db.js";
 
+if (process.env.NODE_ENV === "production") {
+  const provided = process.env.TPOI_PASSWORD;
+  if (!provided || provided === "ChangeMe123!") {
+    console.error("Refusing to seed the default TPOI password in production. Set TPOI_PASSWORD to a strong, non-default value.");
+    process.exit(1);
+  }
+}
+
 const email = (process.env.TPOI_EMAIL || "tpoi@vjti.ac.in").toLowerCase();
 const password = process.env.TPOI_PASSWORD || "ChangeMe123!";
 const fullName = process.env.TPOI_NAME || "TPO In-Charge";

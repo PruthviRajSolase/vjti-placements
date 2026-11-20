@@ -1255,6 +1255,27 @@ describe("production JWT secret", () => {
   });
 });
 
+describe("production seed guards", () => {
+  test("seed refuses default or missing TPOI password in production", () => {
+    const seedDb = join(tempDir, "seed-prod.db");
+    const baseEnv = { ...process.env, NODE_ENV: "production", DB_PATH: seedDb };
+    delete baseEnv.TPOI_PASSWORD;
+
+    assert.throws(() => execFileSync(process.execPath, ["server/seed.js"], {
+      cwd: root, env: baseEnv, stdio: "pipe",
+    }));
+    assert.throws(() => execFileSync(process.execPath, ["server/seed.js"], {
+      cwd: root, env: { ...baseEnv, TPOI_PASSWORD: "ChangeMe123!" }, stdio: "pipe",
+    }));
+  });
+
+  test("seed-demo refuses to run in production", () => {
+    assert.throws(() => execFileSync(process.execPath, ["server/seed-demo.js"], {
+      cwd: root, env: { ...process.env, NODE_ENV: "production", DB_PATH: join(tempDir, "demo-prod.db") }, stdio: "pipe",
+    }));
+  });
+});
+
 describe("database migrations", () => {
   test("migrates an old-schema database and normalizes branches", () => {
     const oldPath = join(tempDir, "old.db");

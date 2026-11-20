@@ -15,6 +15,11 @@ import {
   EXPERIENCES,
 } from "../src/data.js";
 
+if (process.env.NODE_ENV === "production") {
+  console.error("Refusing to run seed-demo in production.");
+  process.exit(1);
+}
+
 console.log("Seeding demo content...");
 
 // Content is replaced; users and the audit log are preserved. Bookmarks are
