@@ -43,12 +43,40 @@ app.use(cookieParser());
 const text = (value, max) =>
   typeof value === "string" ? value.trim().slice(0, max) : "";
 
+const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing", 10);
+const rateBuckets = new Map();
+
+function rateLimit(routeKey) {
+  const disabled = process.env.RATE_LIMIT_DISABLED === "1" || process.env.NODE_ENV === "test";
+  const max = Number(process.env.AUTH_RATE_LIMIT_MAX || 10);
+  const windowMs = Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000);
+  return (req, res, next) => {
+    if (disabled) return next();
+    const email = routeKey === "password"
+      ? (req.user?.email || "")
+      : text(req.body?.email, 120).toLowerCase();
+    const ip = req.ip || req.socket?.remoteAddress || "unknown";
+    const key = `${routeKey}:${ip}:${email}`;
+    const now = Date.now();
+    const bucket = rateBuckets.get(key);
+    if (!bucket || now - bucket.start >= windowMs) {
+      rateBuckets.set(key, { start: now, count: 1 });
+      return next();
+    }
+    bucket.count += 1;
+    if (bucket.count > max) {
+      return res.status(429).json({ error: "Too many attempts. Please try again later." });
+    }
+    next();
+  };
+}
+
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "vjti-placements-api" });
 });
 
 // ---------------------------------------------------------------- auth
-app.post("/api/auth/register", (req, res) => {
+app.post("/api/auth/register", rateLimit("register"), async (req, res) => {
   const fullName = text(req.body?.fullName, 80);
   const email = text(req.body?.email, 120).toLowerCase();
   const password = typeof req.body?.password === "string" ? req.body.password : "";
@@ -70,7 +98,7 @@ app.post("/api/auth/register", (req, res) => {
     return res.status(409).json({ error: "An account with that email already exists." });
   }
 
-  const hash = bcrypt.hashSync(password, 10);
+  const hash = await bcrypt.hash(password, 10);
   const result = db.prepare(
     `INSERT INTO users (full_name, email, password_hash, role, branch, graduation_year)
      VALUES (?, ?, ?, 'student', ?, ?)`
@@ -84,12 +112,14 @@ app.post("/api/auth/register", (req, res) => {
   res.status(201).json({ user });
 });
 
-app.post("/api/auth/login", (req, res) => {
+app.post("/api/auth/login", rateLimit("login"), async (req, res) => {
   const email = text(req.body?.email, 120).toLowerCase();
   const password = typeof req.body?.password === "string" ? req.body.password : "";
 
   const row = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
-  if (!row || !bcrypt.compareSync(password, row.password_hash)) {
+  const hash = row?.password_hash || DUMMY_HASH;
+  const ok = await bcrypt.compare(password, hash);
+  if (!row || !ok) {
     return res.status(401).json({ error: "Incorrect email or password." });
   }
 
@@ -207,12 +237,14 @@ app.put("/api/me", requireAuth, (req, res) => {
   res.json({ user: publicUser(findUserById(req.user.id)) });
 });
 
-app.post("/api/me/password", requireAuth, (req, res) => {
+app.post("/api/me/password", requireAuth, rateLimit("password"), async (req, res) => {
   const current = typeof req.body?.currentPassword === "string" ? req.body.currentPassword : "";
   const next = typeof req.body?.newPassword === "string" ? req.body.newPassword : "";
   // publicUser() strips the hash, so read the raw row for the comparison.
   const row = db.prepare("SELECT password_hash FROM users WHERE id = ?").get(req.user.id);
-  if (!row || !bcrypt.compareSync(current, row.password_hash)) {
+  const hash = row?.password_hash || DUMMY_HASH;
+  const ok = await bcrypt.compare(current, hash);
+  if (!row || !ok) {
     return res.status(401).json({ error: "Current password is incorrect." });
   }
   if (next.length < 8) {
@@ -220,7 +252,7 @@ app.post("/api/me/password", requireAuth, (req, res) => {
   }
   db.prepare(
     "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?"
-  ).run(bcrypt.hashSync(next, 10), req.user.id);
+  ).run(await bcrypt.hash(next, 10), req.user.id);
   audit(req, "change_password", req.user.email);
   res.json({ ok: true });
 });

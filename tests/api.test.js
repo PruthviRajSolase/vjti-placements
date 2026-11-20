@@ -74,7 +74,7 @@ before(async () => {
   });
   child = spawn(process.execPath, ["server/index.js"], {
     cwd: root,
-    env: { ...process.env, DB_PATH: dbPath, API_PORT: "0" },
+    env: { ...process.env, DB_PATH: dbPath, API_PORT: "0", NODE_ENV: "test" },
     stdio: ["ignore", "pipe", "pipe"],
   });
   base = await waitForServer();
@@ -217,6 +217,59 @@ describe("authentication", () => {
       body: { email: "student@vjti.ac.in", password: "nope" },
     });
     assert.equal(result.status, 401);
+  });
+
+  test("login is rate limited after repeated attempts", async () => {
+    const limitDir = mkdtempSync(join(tmpdir(), "vjti-rate-"));
+    const limitDb = join(limitDir, "placements.db");
+    execFileSync(process.execPath, ["server/seed-demo.js"], {
+      cwd: root, env: { ...process.env, DB_PATH: limitDb }, stdio: "pipe",
+    });
+    const limitChild = spawn(process.execPath, ["server/index.js"], {
+      cwd: root,
+      env: { ...process.env, DB_PATH: limitDb, API_PORT: "0", AUTH_RATE_LIMIT_MAX: "2" },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const limitBase = await new Promise((resolveReady, reject) => {
+      let buffer = "";
+      const timer = setTimeout(() => reject(new Error("rate-limit API did not start")), 15000);
+      limitChild.stdout.on("data", (chunk) => {
+        buffer += chunk.toString();
+        const match = buffer.match(/listening on http:\/\/localhost:(\d+)/);
+        if (match) {
+          clearTimeout(timer);
+          resolveReady(`http://localhost:${match[1]}`);
+        }
+      });
+      limitChild.once("exit", (code) => {
+        clearTimeout(timer);
+        reject(new Error(`rate-limit API exited early (${code})`));
+      });
+    });
+    try {
+      for (let i = 0; i < 2; i += 1) {
+        const res = await fetch(`${limitBase}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: "student@vjti.ac.in", password: "wrong" }),
+        });
+        assert.equal(res.status, 401);
+      }
+      const limited = await fetch(`${limitBase}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "student@vjti.ac.in", password: "wrong" }),
+      });
+      assert.equal(limited.status, 429);
+      const body = await limited.json();
+      assert.match(body.error, /Too many attempts/);
+    } finally {
+      if (limitChild.exitCode === null) {
+        limitChild.kill();
+        await new Promise((done) => limitChild.once("exit", done));
+      }
+      rmSync(limitDir, { recursive: true, force: true });
+    }
   });
 
   test("sign-up accepts college email only, always creates a student", async () => {
