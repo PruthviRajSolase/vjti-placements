@@ -20,6 +20,10 @@ test("public pages load API content and filters update the lists", async ({ page
   await page.goto("/");
   await expect(page.getByRole("link", { name: "VJTI Placements" })).toBeVisible();
   await expect(page.locator(".stat-card")).toHaveCount(4);
+  await expect(page.getByRole("columnheader", { name: "Total" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Unplaced" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Placed %" })).toBeVisible();
+  await expect(page.locator(".branch-table tfoot")).toContainText("Total");
 
   const companySearch = page.getByPlaceholder("Search company or role…");
   await companySearch.fill("north");

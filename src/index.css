@@ -358,6 +358,32 @@ main > section, footer {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+.branch-percent-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 150px;
+}
+
+.branch-percent-label {
+  min-width: 52px;
+  font-variant-numeric: tabular-nums;
+}
+
+.branch-progress {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.branch-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
 /* ------------------------------------------------------------
    9. EXPERIENCE CARDS
    ------------------------------------------------------------ */
@@ -1383,6 +1409,7 @@ main { padding-bottom: 24px; }
      into a horizontal swipe area — the standard pattern used by
      real data-heavy sites like the reference one. */
   .company-table, .branch-table { min-width: 560px; }
+  .branch-placement-table { min-width: 640px; }
 
   .company-table th, .company-table td,
   .branch-table th, .branch-table td {
