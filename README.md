@@ -25,7 +25,7 @@ An unofficial, student-run placement portal demo for **Veermata Jijabai Technolo
 | --- | --- |
 | Frontend | React 19, Vite 7, React Router 7, plain CSS with custom properties |
 | Backend | Express 5, Node's built-in `node:sqlite`, JWT in an httpOnly cookie, bcryptjs |
-| Tests | Node `node:test` (48 API tests), Playwright (14 browser flows) |
+| Tests | Node `node:test` (API integration tests), Playwright (browser flows) |
 | Tooling | ESLint 10, GitHub Actions CI, npm scripts |
 
 ## Getting started
@@ -65,7 +65,7 @@ Environment variables are optional for local development. Copy [`.env.example`](
 | `API_PORT` | Change the API/production server port (default `3001`) |
 | `APP_MODE` | `demo` (default) or `launch`. Launch mode hides/disables TPO placement surfaces but keeps experience sharing, review, and admin accounts/audit. |
 | `TRUST_PROXY` | Express trust proxy setting for deployments behind a reverse proxy (`1`, `true`, or proxy IP). Needed so rate limiting sees real client IPs. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | SMTP settings for email verification and password reset OTPs. In non-production or when SMTP is unset, OTP codes are logged to the server console. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | SMTP settings for email verification and password reset OTPs. If SMTP is missing outside production, OTP/reset codes are logged to the server console. In production with `APP_MODE=launch`, missing SMTP settings cause startup to fail; never log OTP codes or SMTP secrets in production. |
 | `PLAYWRIGHT_CHANNEL` | Set to `msedge` to run browser tests in Edge on Windows |
 
 Restart Vite after editing `vite.config.js` — a stale dev server can serve `index.html` instead of JSON for `/api` calls.
@@ -80,10 +80,11 @@ Restart Vite after editing `vite.config.js` — a stale dev server can serve `in
 | `npm run build` | Production build into `dist/` |
 | `npm start` | Serve the API and built SPA from one Express process |
 | `npm run preview` | Preview the production build locally |
-| `npm test` | 88 API integration tests against a throwaway database |
+| `npm test` | 93 API integration tests against a throwaway database |
 | `npm run test:ui` | Build, then run 17 Playwright flows against a throwaway database |
 | `npm run lint` | ESLint across source, server, tests and config |
 | `npm run backup` | Write a timestamped SQLite backup to `server/data/backups/` (or `BACKUP_DIR`) |
+| `npm run mail:test -- you@example.com` | Send one test email using configured SMTP settings |
 | `npm run seed`, `npm run seed:demo` | Seed the first admin / reset demo presentation data |
 | `npm run seed:launch` | Create/update only the initial TPOI account from `TPOI_*` env vars (no sample content) |
 

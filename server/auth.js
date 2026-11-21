@@ -11,8 +11,13 @@ import jwt from "jsonwebtoken";
 import { findUserById, publicUser } from "./db.js";
 
 const configuredSecret = process.env.JWT_SECRET;
-if (process.env.NODE_ENV === "production" && (!configuredSecret || configuredSecret.length < 32)) {
-  throw new Error("JWT_SECRET must be set to at least 32 characters in production.");
+const isProduction = process.env.NODE_ENV === "production";
+
+export function authStartupIssues() {
+  if (isProduction && (!configuredSecret || configuredSecret.length < 32)) {
+    return ["JWT_SECRET must be set to at least 32 characters."];
+  }
+  return [];
 }
 
 export const JWT_SECRET = configuredSecret || "dev-only-change-me";

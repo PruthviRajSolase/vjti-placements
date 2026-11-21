@@ -26,9 +26,10 @@ import {
   optionalAuth,
   requireAuth,
   requireRole,
+  authStartupIssues,
 } from "./auth.js";
 import { parseCsv } from "./csv.js";
-import { sendOtpEmail } from "./mailer.js";
+import { sendOtpEmail, smtpStartupIssues } from "./mailer.js";
 
 const app = express();
 if (process.env.TRUST_PROXY) {
@@ -147,7 +148,10 @@ async function createEmailOtp(email, purpose) {
       "INSERT INTO email_otps (email, purpose, code_hash, expires_at) VALUES (?, ?, ?, ?)"
     ).run(email, purpose, codeHash, expiresAt);
   });
-  await sendOtpEmail({ to: email, purpose, code });
+  const sent = await sendOtpEmail({ to: email, purpose, code });
+  if (!sent.ok) {
+    return { ok: false, error: sent.error || "We couldn't send the email right now. Please try again later.", sendFailed: true };
+  }
   return { ok: true, ...(process.env.NODE_ENV === "test" ? { devCode: code } : {}) };
 }
 
@@ -211,7 +215,8 @@ app.post("/api/auth/register", rateLimit("register"), async (req, res) => {
 
   const otp = await createEmailOtp(email, "verify_email");
   if (!otp.ok) {
-    return res.status(201).json({ needsVerification: true, email, message: otp.error, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
+    const status = otp.sendFailed ? 503 : 201;
+    return res.status(status).json({ needsVerification: true, email, error: otp.error, message: otp.error, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
   }
   res.status(201).json({ needsVerification: true, email, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
 });
@@ -244,7 +249,7 @@ app.post("/api/auth/resend-verification", rateLimit("resend"), async (req, res) 
   if (!userRow) return res.json({ ok: true });
   if (userRow.email_verified) return res.json({ ok: true, verified: true });
   const otp = await createEmailOtp(email, "verify_email");
-  if (!otp.ok) return res.status(429).json({ error: otp.error });
+  if (!otp.ok) return res.status(otp.sendFailed ? 503 : 429).json({ error: otp.error });
   res.json({ ok: true, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
 });
 
@@ -256,7 +261,7 @@ app.post("/api/auth/forgot-password", rateLimit("forgot"), async (req, res) => {
   const userRow = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
   if (userRow) {
     const otp = await createEmailOtp(email, "reset_password");
-    if (!otp.ok) return res.status(429).json({ error: otp.error });
+    if (!otp.ok) return res.status(otp.sendFailed ? 503 : 429).json({ error: otp.error });
     return res.json({ ok: true, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
   }
   res.json({ ok: true });
@@ -1620,6 +1625,16 @@ app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Something went wrong on the server." });
 });
+
+const startupIssues = [];
+for (const issue of authStartupIssues()) startupIssues.push(issue);
+for (const issue of smtpStartupIssues()) startupIssues.push(issue);
+
+if (startupIssues.length > 0) {
+  console.error("Startup check failed:");
+  for (const issue of startupIssues) console.error(`- ${issue}`);
+  process.exit(1);
+}
 
 const server = app.listen(PORT, () => {
   // Print the real bound port; with API_PORT=0 the OS picks a free one.

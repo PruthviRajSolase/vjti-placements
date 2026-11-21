@@ -15,6 +15,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { buildPrepInsights } from "../server/insights.js";
+import { sendMail, sendOtpEmail, _setTransporterForTest, _resetTransporterForTest } from "../server/mailer.js";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const tempDir = mkdtempSync(join(tmpdir(), "vjti-api-"));
@@ -1375,23 +1376,26 @@ describe("drives and applications", () => {
   });
 });
 
-describe("production JWT secret", () => {
-  test("requires a strong JWT_SECRET in production", () => {
-    assert.throws(() => execFileSync(process.execPath, ["--input-type=module", "-e",
-      "process.env.NODE_ENV='production'; delete process.env.JWT_SECRET; await import('./server/auth.js');"
-    ], { cwd: root, env: { ...process.env, NODE_ENV: "production" }, stdio: "pipe" }));
-
-    assert.throws(() => execFileSync(process.execPath, ["--input-type=module", "-e",
-      "process.env.NODE_ENV='production'; process.env.JWT_SECRET='short-secret'; await import('./server/auth.js');"
-    ], { cwd: root, env: { ...process.env, NODE_ENV: "production", JWT_SECRET: "short-secret" }, stdio: "pipe" }));
-
-    execFileSync(process.execPath, ["--input-type=module", "-e",
-      "process.env.NODE_ENV='production'; process.env.JWT_SECRET='a-very-long-secret-key-with-32-chars'; await import('./server/auth.js');"
-    ], {
-      cwd: root,
-      env: { ...process.env, NODE_ENV: "production", JWT_SECRET: "a-very-long-secret-key-with-32-chars" },
-      stdio: "pipe",
+describe("production startup checks", () => {
+  test("reports JWT_SECRET issues in startup checklist", () => {
+    const dir = mkdtempSync(join(tmpdir(), "vjti-startup-"));
+    const env = { ...process.env, NODE_ENV: "production", APP_MODE: "demo", DB_PATH: join(dir, "placements.db"), API_PORT: "0" };
+    delete env.JWT_SECRET;
+    assert.throws(() => execFileSync(process.execPath, ["server/index.js"], { cwd: root, env, stdio: "pipe" }), (err) => {
+      const out = String(err.stderr || err.stdout || "");
+      assert.match(out, /Startup check failed/);
+      assert.match(out, /JWT_SECRET/);
+      return true;
     });
+
+    env.JWT_SECRET = "short-secret";
+    assert.throws(() => execFileSync(process.execPath, ["server/index.js"], { cwd: root, env, stdio: "pipe" }), (err) => {
+      const out = String(err.stderr || err.stdout || "");
+      assert.match(out, /JWT_SECRET/);
+      return true;
+    });
+
+    rmSync(dir, { recursive: true, force: true });
   });
 });
 
@@ -2036,5 +2040,51 @@ describe("launch mode", () => {
     assert.equal(users.status, 200);
     const audit = await reqL("/api/admin/audit", { cookie: sess.tpoi });
     assert.equal(audit.status, 200);
+  });
+});
+
+describe('mailer', () => {
+  test('sendMail uses stubbed transport when injected', async () => {
+    const calls = [];
+    _setTransporterForTest({ sendMail: async (opts) => { calls.push(opts); return { accepted: [opts.to] }; } });
+    try {
+      const result = await sendMail({ to: 'a@vjti.ac.in', subject: 'Hi', text: 'Body' });
+      assert.equal(result.ok, true);
+      assert.equal(result.delivered, true);
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0].to, 'a@vjti.ac.in');
+      assert.match(calls[0].subject, /Hi/);
+    } finally {
+      _resetTransporterForTest();
+    }
+  });
+
+  test('sendMail returns friendly error on send failure', async () => {
+    _setTransporterForTest({ sendMail: async () => { throw new Error('SMTP boom'); } });
+    try {
+      const result = await sendMail({ to: 'a@vjti.ac.in', subject: 'Hi', text: 'Body' });
+      assert.equal(result.ok, false);
+      assert.equal(result.delivered, false);
+      assert.match(result.error, /try again later/i);
+    } finally {
+      _resetTransporterForTest();
+    }
+  });
+
+  test('sendOtpEmail builds verification and reset emails', async () => {
+    const calls = [];
+    _setTransporterForTest({ sendMail: async (opts) => { calls.push(opts); } });
+    try {
+      const v = await sendOtpEmail({ to: 'a@vjti.ac.in', purpose: 'verify_email', code: '123456' });
+      assert.equal(v.ok, true);
+      assert.match(calls[0].subject, /verification/i);
+      assert.match(calls[0].text, /123456/);
+      const r = await sendOtpEmail({ to: 'a@vjti.ac.in', purpose: 'reset_password', code: '654321' });
+      assert.equal(r.ok, true);
+      assert.match(calls[1].subject, /reset/i);
+      assert.match(calls[1].text, /654321/);
+    } finally {
+      _resetTransporterForTest();
+    }
   });
 });

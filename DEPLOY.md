@@ -32,18 +32,18 @@ Mount a persistent volume at the directory containing your SQLite DB (default: `
 | `JWT_SECRET` | Yes | Session signing secret. Must be at least 32 characters; server refuses to start in production without it. |
 | `DB_PATH` | Recommended | SQLite file path on a persistent volume, e.g. `/data/placements.db`. Default is `server/data/placements.db`. |
 | `TRUST_PROXY` | Recommended behind proxy | Express trust proxy setting (`1`, `true`, or proxy IP). Required so rate limiting sees real client IPs behind a host reverse proxy. |
-| `SMTP_HOST` | For email delivery | SMTP host for verification/reset OTP emails. |
-| `SMTP_PORT` | For email delivery | SMTP port (default `587`). |
-| `SMTP_USER` | For email delivery | SMTP username. |
-| `SMTP_PASS` | For email delivery | SMTP password/secret. |
-| `MAIL_FROM` | For email delivery | From address, e.g. `"VJTI Placements <no-reply@example.com>"`. |
+| `SMTP_HOST` | Yes in production launch | SMTP host for verification/reset OTP emails (e.g. `smtp.gmail.com`). |
+| `SMTP_PORT` | Yes in production launch | SMTP port (`587` STARTTLS or `465` TLS). |
+| `SMTP_USER` | Yes in production launch | SMTP username. |
+| `SMTP_PASS` | Yes in production launch | SMTP password/App Password. |
+| `MAIL_FROM` | Yes in production launch | From address, e.g. `"VJTI Placements <no-reply@example.com>"`. |
 | `TPOI_EMAIL` | For initial admin seed | Initial TPO in-charge email for `npm run seed:launch`. |
 | `TPOI_PASSWORD` | For initial admin seed | Initial TPO in-charge password (min 8 chars). |
 | `TPOI_NAME` | Optional | Initial TPO in-charge display name. |
 | `API_PORT` | Optional | API/server port (default `3001`). |
 
 Notes:
-- In non-production or when SMTP is unset, OTP codes are logged to the server console instead of emailed. Configure SMTP for real launch use.
+- If SMTP is missing outside production, OTP/reset codes are logged to the server console. In production with `APP_MODE=launch`, missing SMTP settings cause startup to fail. Never log OTP codes or SMTP secrets in production.
 - `seed-demo` is blocked in production and in launch mode.
 
 ## Persistent SQLite volume
