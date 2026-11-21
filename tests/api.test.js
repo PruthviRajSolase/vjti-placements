@@ -9,7 +9,7 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -1445,5 +1445,37 @@ describe("database migrations", () => {
       }
       db.close();
     `], { cwd: root, env: { ...process.env, DB_PATH: oldPath }, stdio: "pipe" });
+  });
+});
+
+describe("backup script", () => {
+  test("creates a timestamped SQLite backup", () => {
+    const dir = mkdtempSync(join(tmpdir(), "vjti-backup-"));
+    const backupDir = join(dir, "backups");
+    const srcDb = join(dir, "placements.db");
+    execFileSync(process.execPath, ["server/seed-demo.js"], {
+      cwd: root,
+      env: { ...process.env, DB_PATH: srcDb },
+      stdio: "pipe",
+    });
+
+    const out = execFileSync(process.execPath, ["scripts/backup-db.js"], {
+      cwd: root,
+      env: { ...process.env, DB_PATH: srcDb, BACKUP_DIR: backupDir },
+      encoding: "utf8",
+      stdio: "pipe",
+    });
+
+    assert.match(out, /Backup written to/);
+    const backupFile = out.match(/Backup written to (.+)/)?.[1]?.trim();
+    assert.ok(backupFile && existsSync(backupFile));
+    const backupDb = new DatabaseSync(backupFile, { readOnly: true });
+    try {
+      const count = backupDb.prepare("SELECT COUNT(*) AS count FROM users").get().count;
+      assert.ok(count > 0);
+    } finally {
+      backupDb.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

@@ -80,6 +80,7 @@ Restart Vite after editing `vite.config.js` — a stale dev server can serve `in
 | `npm test` | 48 API integration tests against a throwaway database |
 | `npm run test:ui` | Build, then run 14 Playwright flows against a throwaway database |
 | `npm run lint` | ESLint across source, server, tests and config |
+| `npm run backup` | Write a timestamped SQLite backup to `server/data/backups/` (or `BACKUP_DIR`) |
 | `npm run seed`, `npm run seed:demo` | Seed the first admin / reset presentation data |
 
 For a full reset, stop the servers, delete `server/data/placements.db`, then run `npm run seed && npm run seed:demo`.
