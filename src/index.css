@@ -258,8 +258,18 @@ main > section, footer {
 .hero-sub {
   color: var(--text-soft);
   max-width: 640px;
-  margin: 0 auto 24px;                    /* margin auto = center the paragraph */
+  margin: 0 auto 12px;
 }
+
+.hero-value {
+  max-width: 640px;
+  margin: 0 auto 20px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.hero-cta { margin: 0 0 24px; }
+.hero-cta-btn { display: inline-block; text-decoration: none; }
 
 /* Year tabs — pill-shaped year selector like the reference site */
 .year-tabs {
