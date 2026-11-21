@@ -102,6 +102,8 @@ npm start
 
 Express serves the API and `dist/` from one origin on `:3001`, with an SPA fallback for deep links such as `/admin`; unknown `/api/*` paths stay JSON 404s. `public/_redirects` provides the same fallback on static hosts.
 
+For launch-mode deployment (persistent SQLite volume, SMTP, trust proxy, seed:launch, backups/restore, first-launch checklist), see [`DEPLOY.md`](./DEPLOY.md).
+
 ## Repository layout
 
 ```text
