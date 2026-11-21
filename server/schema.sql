@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   branch          TEXT,
   graduation_year TEXT,
   token_version   INTEGER NOT NULL DEFAULT 0,
+  email_verified  INTEGER NOT NULL DEFAULT 0,
   created_at      TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -180,3 +181,16 @@ CREATE TABLE IF NOT EXISTS applications (
 );
 
 CREATE INDEX IF NOT EXISTS idx_applications_user ON applications(user_id);
+
+-- Email OTP codes for verification and password reset.
+CREATE TABLE IF NOT EXISTS email_otps (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  email      TEXT NOT NULL COLLATE NOCASE,
+  purpose    TEXT NOT NULL CHECK (purpose IN ('verify_email', 'reset_password')),
+  code_hash  TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_otps_email_purpose ON email_otps(email, purpose);

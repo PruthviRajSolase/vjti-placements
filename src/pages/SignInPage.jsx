@@ -4,6 +4,7 @@
 
   - Sign in: email + password -> POST /api/auth/login
   - Sign up: college email + password -> POST /api/auth/register
+  - Verify: 6-digit email OTP before first sign-in
   The server sets an httpOnly cookie; AuthContext remembers the returned
   user so the Header and route guards can react immediately.
 */
@@ -15,7 +16,7 @@ import { useAuth } from "../AuthContext.jsx";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function SignInPage() {
-  const { user, signIn, signUp, signOut } = useAuth();
+  const { user, signIn, signUp, signOut, verifyEmail, resendVerification } = useAuth();
   const [mode, setMode] = useState("signin");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,21 +24,27 @@ function SignInPage() {
   const [branch, setBranch] = useState("");
   const [graduationYear, setGraduationYear] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [verifyEmailAddr, setVerifyEmailAddr] = useState("");
+  const [otpCode, setOtpCode] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
   const isSignUp = mode === "signup";
+  const isVerify = mode === "verify";
 
-  function switchMode() {
-    setMode(isSignUp ? "signin" : "signup");
+  function switchMode(next) {
+    setMode(next);
     setError("");
+    setInfo("");
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    setInfo("");
 
     const name = fullName.trim();
     const mail = email.trim();
@@ -52,9 +59,6 @@ function SignInPage() {
       setError("Use your @vjti.ac.in college email address.");
       return;
     }
-    // The 8-character rule is for NEW passwords only. Signing in must send
-    // whatever the user typed to the server — the server compares the hash
-    // and returns 401 for a mismatch. The seeded TPO password is 7 chars.
     if (isSignUp && password.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
@@ -67,17 +71,79 @@ function SignInPage() {
     setSubmitting(true);
     try {
       if (isSignUp) {
-        await signUp({
+        const data = await signUp({
           fullName: name,
           email: mail,
           password,
           branch: college,
           graduationYear: year,
         });
+        if (data?.needsVerification) {
+          setVerifyEmailAddr(data.email || mail);
+          setOtpCode("");
+          setMode("verify");
+          setInfo("We sent a 6-digit verification code to your college email.");
+          return;
+        }
       } else {
-        await signIn(mail, password);
+        const data = await signIn(mail, password);
+        if (data?.needsVerification) {
+          setVerifyEmailAddr(data.email || mail);
+          setOtpCode("");
+          setMode("verify");
+          setInfo("Verify your email to continue.");
+          return;
+        }
       }
       navigate(from, { replace: true });
+    } catch (err) {
+      if (err.status === 403 && err.data?.needsVerification) {
+        setVerifyEmailAddr(err.data.email || mail);
+        setOtpCode("");
+        setMode("verify");
+        setInfo("Verify your email to continue.");
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleVerify(event) {
+    event.preventDefault();
+    setError("");
+    setInfo("");
+    const code = otpCode.trim();
+    if (!/^\d{6}$/.test(code)) {
+      setError("Enter the 6-digit code from your email.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await verifyEmail(verifyEmailAddr, code);
+      if (password) {
+        await signIn(verifyEmailAddr, password);
+        navigate(from, { replace: true });
+        return;
+      }
+      setMode("signin");
+      setEmail(verifyEmailAddr);
+      setInfo("Email verified. Sign in with your password.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleResend() {
+    setError("");
+    setInfo("");
+    setSubmitting(true);
+    try {
+      await resendVerification(verifyEmailAddr);
+      setInfo("If the account needs verification, a new code was sent.");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -91,7 +157,7 @@ function SignInPage() {
         <div className="auth-card">
           <h1>You're signed in</h1>
           <p className="auth-sub">
-            Signed in as <strong>{user.email}</strong> · role: <strong>{user.role}</strong>
+            Signed in as <strong>{user.email}</strong> — role: <strong>{user.role}</strong>
           </p>
           <div className="auth-actions">
             {["tpo", "tpoi"].includes(user.role) && (
@@ -100,6 +166,42 @@ function SignInPage() {
             <Link className="btn-primary" to="/">Go to homepage</Link>
             <button type="button" className="btn-signout" onClick={signOut}>
               Sign out
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (isVerify) {
+    return (
+      <section className="auth-page">
+        <div className="auth-card">
+          <h1>Verify your email</h1>
+          <p className="auth-sub">
+            Enter the 6-digit code sent to <strong>{verifyEmailAddr}</strong>.
+          </p>
+          <form className="auth-form" onSubmit={handleVerify} noValidate>
+            <div className="field">
+              <label htmlFor="verify-code">Verification code</label>
+              <input
+                id="verify-code" type="text" inputMode="numeric" autoComplete="one-time-code"
+                maxLength={6} placeholder="123456" value={otpCode}
+                onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, ""))}
+              />
+            </div>
+            {error && <p className="form-error" role="alert">{error}</p>}
+            {info && <p className="auth-sub" role="status">{info}</p>}
+            <button className="btn-primary" type="submit" disabled={submitting}>
+              {submitting ? "Please wait…" : "Verify email"}
+            </button>
+          </form>
+          <div className="auth-actions" style={{ marginTop: 12 }}>
+            <button type="button" className="btn-ghost" onClick={handleResend} disabled={submitting}>
+              Resend code
+            </button>
+            <button type="button" className="btn-ghost" onClick={() => switchMode("signin")} disabled={submitting}>
+              Back to sign in
             </button>
           </div>
         </div>
@@ -172,6 +274,7 @@ function SignInPage() {
           </div>
 
           {error && <p className="form-error" role="alert">{error}</p>}
+          {info && <p className="auth-sub" role="status">{info}</p>}
 
           <button className="btn-primary" type="submit" disabled={submitting}>
             {submitting
@@ -182,7 +285,7 @@ function SignInPage() {
 
         <p className="auth-switch">
           {isSignUp ? "Already have an account?" : "New here?"}{" "}
-          <button type="button" onClick={switchMode}>
+          <button type="button" onClick={() => switchMode(isSignUp ? "signin" : "signup")}>
             {isSignUp ? "Sign in instead" : "Create an account"}
           </button>
         </p>

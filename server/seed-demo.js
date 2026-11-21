@@ -104,14 +104,15 @@ const accounts = [
 ];
 
 const upsertUser = db.prepare(
-  `INSERT INTO users (full_name, email, password_hash, role, branch, graduation_year)
-   VALUES (@fullName, @email, @hash, @role, @branch, @graduationYear)
+  `INSERT INTO users (full_name, email, password_hash, role, branch, graduation_year, email_verified)
+   VALUES (@fullName, @email, @hash, @role, @branch, @graduationYear, 1)
    ON CONFLICT(email) DO UPDATE SET
      full_name = excluded.full_name,
      password_hash = excluded.password_hash,
      role = excluded.role,
      branch = excluded.branch,
      graduation_year = excluded.graduation_year,
+     email_verified = 1,
      updated_at = datetime('now')`
 );
 

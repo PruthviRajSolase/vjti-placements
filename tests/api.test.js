@@ -293,7 +293,7 @@ describe("authentication", () => {
     }
   });
 
-  test("sign-up accepts college email only, always creates a student", async () => {
+  test("sign-up accepts college email only, always creates a student, and requires verification", async () => {
     const bad = await request("/api/auth/register", {
       method: "POST",
       body: { fullName: "Outsider", email: "x@gmail.com", password: "Password123!" },
@@ -317,7 +317,30 @@ describe("authentication", () => {
       },
     });
     assert.equal(created.status, 201);
-    assert.equal(created.data.user.role, "student");
+    assert.equal(created.data.needsVerification, true);
+    assert.equal(created.data.email, "newbie@vjti.ac.in");
+    assert.ok(created.data.devCode);
+
+    const loginBefore = await request("/api/auth/login", {
+      method: "POST",
+      body: { email: "newbie@vjti.ac.in", password: "Password123!" },
+    });
+    assert.equal(loginBefore.status, 403);
+    assert.equal(loginBefore.data.needsVerification, true);
+
+    const verify = await request("/api/auth/verify-email", {
+      method: "POST",
+      body: { email: "newbie@vjti.ac.in", code: created.data.devCode },
+    });
+    assert.equal(verify.status, 200);
+    assert.equal(verify.data.verified, true);
+
+    const loginAfter = await request("/api/auth/login", {
+      method: "POST",
+      body: { email: "newbie@vjti.ac.in", password: "Password123!" },
+    });
+    assert.equal(loginAfter.status, 200);
+    assert.equal(loginAfter.data.user.role, "student");
 
     const duplicate = await request("/api/auth/register", {
       method: "POST",
@@ -333,7 +356,18 @@ describe("authentication", () => {
       },
     });
     assert.equal(normalized.status, 201);
-    assert.equal(normalized.data.user.branch, "Information Technology");
+    assert.equal(normalized.data.needsVerification, true);
+    const verify2 = await request("/api/auth/verify-email", {
+      method: "POST",
+      body: { email: "aliasbranch@vjti.ac.in", code: normalized.data.devCode },
+    });
+    assert.equal(verify2.status, 200);
+    const login2 = await request("/api/auth/login", {
+      method: "POST",
+      body: { email: "aliasbranch@vjti.ac.in", password: "Password123!" },
+    });
+    assert.equal(login2.status, 200);
+    assert.equal(login2.data.user.branch, "Information Technology");
   });
 });
 
@@ -1552,9 +1586,13 @@ describe("database migrations", () => {
       const user = db.prepare("SELECT branch, token_version FROM users WHERE email = ?").get("old@vjti.ac.in");
       const drive = db.prepare("SELECT eligibility_branches FROM drives WHERE company = ?").get("Test Co");
       const branch = db.prepare("SELECT year, branch, percent, total_students, placed_students FROM branch_stats WHERE year = ?").get("2026");
-      if (version !== 3) throw new Error("version=" + version);
+      if (version !== 4) throw new Error("version=" + version);
       if (user.token_version !== 0) throw new Error("token=" + user.token_version);
       if (user.branch !== "Information Technology") throw new Error("branch=" + user.branch);
+      const verified = db.prepare("SELECT email_verified FROM users WHERE email = ?").get("old@vjti.ac.in");
+      if (Number(verified.email_verified) !== 1) throw new Error("verified=" + verified.email_verified);
+      const otpTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='email_otps'").get();
+      if (!otpTable) throw new Error("missing email_otps");
       if (drive.eligibility_branches !== JSON.stringify(["Information Technology","Mechanical Engineering"])) {
         throw new Error("drive=" + drive.eligibility_branches);
       }
@@ -1638,6 +1676,96 @@ describe("access-control matrix", () => {
   }
 });
 
+
+describe("email verification OTP", () => {
+  function openDb() { return new DatabaseSync(dbPath); }
+
+  test("unverified user cannot login or submit; verification enforces attempt limit", async () => {
+    const email = "verifytest@vjti.ac.in";
+    const reg = await request("/api/auth/register", {
+      method: "POST",
+      body: { fullName: "Verify Test", email, password: "Password123!" },
+    });
+    assert.equal(reg.status, 201);
+    assert.equal(reg.data.needsVerification, true);
+    assert.match(reg.data.devCode || "", /^\d{6}$/);
+
+    const login = await request("/api/auth/login", { method: "POST", body: { email, password: "Password123!" } });
+    assert.equal(login.status, 403);
+    assert.equal(login.data.needsVerification, true);
+
+    for (let i = 0; i < 5; i++) {
+      const bad = await request("/api/auth/verify-email", { method: "POST", body: { email, code: "000000" } });
+      assert.equal(bad.status, 400);
+    }
+    const afterLimit = await request("/api/auth/verify-email", { method: "POST", body: { email, code: reg.data.devCode } });
+    assert.equal(afterLimit.status, 400);
+  });
+
+  test("resend cooldown, one active code, and resend issues fresh code", async () => {
+    const email = "resendtest@vjti.ac.in";
+    const reg = await request("/api/auth/register", {
+      method: "POST",
+      body: { fullName: "Resend Test", email, password: "Password123!" },
+    });
+    assert.equal(reg.status, 201);
+    const firstCode = reg.data.devCode;
+
+    const cooldown = await request("/api/auth/resend-verification", { method: "POST", body: { email } });
+    assert.equal(cooldown.status, 429);
+
+    const db = openDb();
+    db.prepare("UPDATE email_otps SET created_at = datetime('now', '-61 seconds') WHERE email = ? AND purpose = 'verify_email'").run(email);
+    db.close();
+
+    const resend = await request("/api/auth/resend-verification", { method: "POST", body: { email } });
+    assert.equal(resend.status, 200);
+    assert.match(resend.data.devCode || "", /^\d{6}$/);
+    assert.notEqual(resend.data.devCode, firstCode);
+
+    const oldCode = await request("/api/auth/verify-email", { method: "POST", body: { email, code: firstCode } });
+    assert.equal(oldCode.status, 400);
+
+    const ok = await request("/api/auth/verify-email", { method: "POST", body: { email, code: resend.data.devCode } });
+    assert.equal(ok.status, 200);
+    const login = await request("/api/auth/login", { method: "POST", body: { email, password: "Password123!" } });
+    assert.equal(login.status, 200);
+  });
+
+  test("expired code is rejected and unverified user cannot submit experience", async () => {
+    const email = "expirytest@vjti.ac.in";
+    const reg = await request("/api/auth/register", {
+      method: "POST",
+      body: { fullName: "Expiry Test", email, password: "Password123!" },
+    });
+    assert.equal(reg.status, 201);
+
+    const db = openDb();
+    db.prepare("UPDATE email_otps SET expires_at = datetime('now', '-1 minute') WHERE email = ? AND purpose = 'verify_email'").run(email);
+    db.close();
+
+    const expired = await request("/api/auth/verify-email", { method: "POST", body: { email, code: reg.data.devCode } });
+    assert.equal(expired.status, 400);
+
+    // Make user verified to get session, then mark unverified and ensure submit blocked.
+    const db2 = openDb();
+    db2.prepare("UPDATE users SET email_verified = 1 WHERE email = ?").run(email);
+    db2.close();
+    const login = await request("/api/auth/login", { method: "POST", body: { email, password: "Password123!" } });
+    assert.equal(login.status, 200);
+    const cookie = login.cookie.split(";")[0];
+    const db3 = openDb();
+    db3.prepare("UPDATE users SET email_verified = 0 WHERE email = ?").run(email);
+    db3.close();
+
+    const submit = await request("/api/experiences", {
+      method: "POST",
+      cookie,
+      body: { company: "TestCo", role: "Intern", placementYear: "2026", heading: "A heading", body: "This body is long enough to pass validation rules for experiences.", tags: [], visibility: "anonymous" },
+    });
+    assert.equal(submit.status, 403);
+  });
+});
 
 describe("launch mode", () => {
   let childL;

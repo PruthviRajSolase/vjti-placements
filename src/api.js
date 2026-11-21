@@ -24,6 +24,7 @@ export async function api(path, options = {}) {
     // `details`; keep them on the error so forms can show all problems.
     error.details = data.details;
     error.status = response.status;
+    error.data = data;
     throw error;
   }
   return data;

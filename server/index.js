@@ -28,6 +28,7 @@ import {
   requireRole,
 } from "./auth.js";
 import { parseCsv } from "./csv.js";
+import { sendOtpEmail } from "./mailer.js";
 
 const app = express();
 const PORT = process.env.API_PORT === undefined
@@ -118,6 +119,58 @@ app.get("/api/health", (_req, res) => {
 });
 
 // ---------------------------------------------------------------- auth
+function generateOtpCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function createEmailOtp(email, purpose) {
+  const now = Date.now();
+  const recent = db.prepare(
+    "SELECT created_at FROM email_otps WHERE email = ? AND purpose = ? ORDER BY id DESC LIMIT 1"
+  ).get(email, purpose);
+  if (recent) {
+    const createdMs = new Date(recent.created_at + "Z").getTime();
+    if (Number.isFinite(createdMs) && now - createdMs < 60_000) {
+      return { ok: false, error: "Please wait 60 seconds before requesting another code." };
+    }
+  }
+  const code = generateOtpCode();
+  const codeHash = await bcrypt.hash(code, 10);
+  const expiresAt = new Date(now + 10 * 60 * 1000).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+  withTransaction(() => {
+    db.prepare("DELETE FROM email_otps WHERE email = ? AND purpose = ?").run(email, purpose);
+    db.prepare(
+      "INSERT INTO email_otps (email, purpose, code_hash, expires_at) VALUES (?, ?, ?, ?)"
+    ).run(email, purpose, codeHash, expiresAt);
+  });
+  await sendOtpEmail({ to: email, purpose, code });
+  return { ok: true, ...(process.env.NODE_ENV === "test" ? { devCode: code } : {}) };
+}
+
+async function verifyEmailOtp(email, purpose, code) {
+  const row = db.prepare(
+    "SELECT * FROM email_otps WHERE email = ? AND purpose = ? ORDER BY id DESC LIMIT 1"
+  ).get(email, purpose);
+  if (!row) return { ok: false, error: "Invalid or expired code." };
+  const expiresMs = new Date(row.expires_at + "Z").getTime();
+  if (!Number.isFinite(expiresMs) || Date.now() > expiresMs) {
+    db.prepare("DELETE FROM email_otps WHERE id = ?").run(row.id);
+    return { ok: false, error: "Invalid or expired code." };
+  }
+  if (row.attempts >= 5) {
+    db.prepare("DELETE FROM email_otps WHERE id = ?").run(row.id);
+    return { ok: false, error: "Too many invalid attempts. Request a new code." };
+  }
+  const match = await bcrypt.compare(code, row.code_hash);
+  if (!match) {
+    db.prepare("UPDATE email_otps SET attempts = attempts + 1 WHERE id = ?").run(row.id);
+    const attemptsLeft = Math.max(0, 4 - row.attempts);
+    return { ok: false, error: attemptsLeft > 0 ? `Invalid code. ${attemptsLeft} attempt(s) left.` : "Too many invalid attempts. Request a new code." };
+  }
+  db.prepare("DELETE FROM email_otps WHERE id = ?").run(row.id);
+  return { ok: true };
+}
+
 app.post("/api/auth/register", rateLimit("register"), async (req, res) => {
   const fullName = text(req.body?.fullName, 80);
   const email = text(req.body?.email, 120).toLowerCase();
@@ -144,16 +197,51 @@ app.post("/api/auth/register", rateLimit("register"), async (req, res) => {
 
   const hash = await bcrypt.hash(password, 10);
   const result = db.prepare(
-    `INSERT INTO users (full_name, email, password_hash, role, branch, graduation_year)
-     VALUES (?, ?, ?, 'student', ?, ?)`
+    `INSERT INTO users (full_name, email, password_hash, role, branch, graduation_year, email_verified)
+     VALUES (?, ?, ?, 'student', ?, ?, 0)`
   ).run(fullName, email, hash, branch || null, graduationYear || null);
 
   const user = publicUser(findUserById(Number(result.lastInsertRowid)));
   db.prepare("INSERT INTO audit_log (actor_id, action, target) VALUES (?, 'register', ?)")
     .run(user.id, email);
 
-  setAuthCookie(res, user.id, 0);
-  res.status(201).json({ user });
+  const otp = await createEmailOtp(email, "verify_email");
+  if (!otp.ok) {
+    return res.status(201).json({ needsVerification: true, email, message: otp.error, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
+  }
+  res.status(201).json({ needsVerification: true, email, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
+});
+
+app.post("/api/auth/verify-email", rateLimit("verify"), async (req, res) => {
+  const email = text(req.body?.email, 120).toLowerCase();
+  const code = text(req.body?.code, 12);
+  if (!email.endsWith(COLLEGE_DOMAIN) || !/^\d{6}$/.test(code)) {
+    return res.status(400).json({ error: "Enter a valid email and 6-digit code." });
+  }
+  const userRow = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+  if (!userRow) return res.status(400).json({ error: "Invalid or expired code." });
+  if (userRow.email_verified) {
+    return res.json({ ok: true, verified: true });
+  }
+  const check = await verifyEmailOtp(email, "verify_email", code);
+  if (!check.ok) return res.status(400).json({ error: check.error });
+  db.prepare("UPDATE users SET email_verified = 1, updated_at = datetime('now') WHERE id = ?").run(userRow.id);
+  db.prepare("INSERT INTO audit_log (actor_id, action, target) VALUES (?, 'verify_email', ?)")
+    .run(userRow.id, email);
+  res.json({ ok: true, verified: true });
+});
+
+app.post("/api/auth/resend-verification", rateLimit("resend"), async (req, res) => {
+  const email = text(req.body?.email, 120).toLowerCase();
+  if (!email.endsWith(COLLEGE_DOMAIN)) {
+    return res.status(400).json({ error: `Use your ${COLLEGE_DOMAIN} email address.` });
+  }
+  const userRow = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+  if (!userRow) return res.json({ ok: true });
+  if (userRow.email_verified) return res.json({ ok: true, verified: true });
+  const otp = await createEmailOtp(email, "verify_email");
+  if (!otp.ok) return res.status(429).json({ error: otp.error });
+  res.json({ ok: true, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
 });
 
 app.post("/api/auth/login", rateLimit("login"), async (req, res) => {
@@ -165,6 +253,9 @@ app.post("/api/auth/login", rateLimit("login"), async (req, res) => {
   const ok = await bcrypt.compare(password, hash);
   if (!row || !ok) {
     return res.status(401).json({ error: "Incorrect email or password." });
+  }
+  if (!row.email_verified) {
+    return res.status(403).json({ error: "Please verify your email before signing in.", needsVerification: true, email: row.email });
   }
 
   const user = publicUser(row);
@@ -876,8 +967,8 @@ app.post("/api/admin/users", ...superAdmin, (req, res) => {
   }
 
   const result = db.prepare(
-    `INSERT INTO users (full_name, email, password_hash, role)
-     VALUES (?, ?, ?, ?)`
+    `INSERT INTO users (full_name, email, password_hash, role, email_verified)
+     VALUES (?, ?, ?, ?, 1)`
   ).run(fullName, email, bcrypt.hashSync(password, 10), role);
   audit(req, "create_staff", `${email}:${role}`);
   res.status(201).json({ user: publicUser(findUserById(Number(result.lastInsertRowid))) });
@@ -971,6 +1062,7 @@ function experienceError(fields) {
 }
 
 app.post("/api/experiences", ...submitter, (req, res) => {
+  if (!req.user.emailVerified) return res.status(403).json({ error: "Please verify your email before submitting experiences." });
   const fields = experienceFields(req.body);
   const invalid = experienceError(fields);
   if (invalid) return res.status(400).json({ error: invalid });
@@ -996,6 +1088,7 @@ app.post("/api/experiences", ...submitter, (req, res) => {
 // A student may edit only their own submissions, and only while they are
 // still pending or after the TPO asks for changes. Editing resubmits.
 app.put("/api/experiences/:id", ...submitter, (req, res) => {
+  if (!req.user.emailVerified) return res.status(403).json({ error: "Please verify your email before submitting experiences." });
   const id = Number(req.params.id);
   const existing = db.prepare("SELECT * FROM experiences WHERE id = ?").get(id);
   if (!existing) return res.status(404).json({ error: "Submission not found." });

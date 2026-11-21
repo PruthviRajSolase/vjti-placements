@@ -63,6 +63,7 @@ Environment variables are optional for local development. Copy [`.env.example`](
 | `TPOI_EMAIL`, `TPOI_PASSWORD`, `TPOI_NAME` | Credentials for the first in-charge created by `npm run seed` |
 | `DB_PATH` | Override the SQLite file location (default `server/data/placements.db`) |
 | `API_PORT` | Change the API/production server port (default `3001`) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | SMTP settings for email verification and password reset OTPs. In non-production or when SMTP is unset, OTP codes are logged to the server console. |
 | `PLAYWRIGHT_CHANNEL` | Set to `msedge` to run browser tests in Edge on Windows |
 
 Restart Vite after editing `vite.config.js` — a stale dev server can serve `index.html` instead of JSON for `/api` calls.

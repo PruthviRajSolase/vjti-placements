@@ -25,8 +25,9 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: { email, password },
     });
+    if (data.needsVerification) return data;
     setUser(data.user);
-    return data.user;
+    return data;
   }
 
   async function signUp(fields) {
@@ -34,8 +35,23 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: fields,
     });
+    if (data.needsVerification) return data;
     setUser(data.user);
-    return data.user;
+    return data;
+  }
+
+  async function verifyEmail(email, code) {
+    return api("/auth/verify-email", {
+      method: "POST",
+      body: { email, code },
+    });
+  }
+
+  async function resendVerification(email) {
+    return api("/auth/resend-verification", {
+      method: "POST",
+      body: { email },
+    });
   }
 
   async function signOut() {
@@ -50,7 +66,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, updateUser, verifyEmail, resendVerification }}>
       {children}
     </AuthContext.Provider>
   );

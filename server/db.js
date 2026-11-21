@@ -90,6 +90,27 @@ function applyMigrations() {
     version = 3;
     db.exec(`PRAGMA user_version = ${version}`);
   }
+
+  if (version < 4) {
+    if (!hasColumn("users", "email_verified")) {
+      db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0");
+    }
+    db.exec("UPDATE users SET email_verified = 1 WHERE email_verified = 0");
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS email_otps (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        email      TEXT NOT NULL COLLATE NOCASE,
+        purpose    TEXT NOT NULL CHECK (purpose IN ('verify_email', 'reset_password')),
+        code_hash  TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        attempts   INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+    db.exec("CREATE INDEX IF NOT EXISTS idx_email_otps_email_purpose ON email_otps(email, purpose)");
+    version = 4;
+    db.exec(`PRAGMA user_version = ${version}`);
+  }
 }
 
 applyMigrations();
@@ -104,6 +125,7 @@ export function publicUser(row) {
     role: row.role,
     branch: row.branch,
     graduationYear: row.graduation_year,
+    emailVerified: Boolean(row.email_verified),
     createdAt: row.created_at,
   };
 }

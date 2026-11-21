@@ -28,7 +28,7 @@ if (existing) {
 } else {
   const hash = bcrypt.hashSync(password, 10);
   db.prepare(
-    "INSERT INTO users (full_name, email, password_hash, role) VALUES (?, ?, ?, 'tpoi')"
+    "INSERT INTO users (full_name, email, password_hash, role, email_verified) VALUES (?, ?, ?, 'tpoi', 1)"
   ).run(fullName, email, hash);
   console.log(`Seeded TPOI account: ${email} / ${password}`);
   console.log("Change this password before any real deployment.");
