@@ -13,7 +13,7 @@ function Footer() {
             <strong>VJTI Placements</strong> — Student-run project, not an official TPO website.
             Experiences are shared by students and reviewed before publishing.
           </p>
-          <p><Link to="/guidelines">Community guidelines</Link></p>
+          <p><Link to="/guidelines">Community guidelines</Link> · <Link to="/privacy">Privacy</Link></p>
         </>
       ) : (
         <>
@@ -21,7 +21,7 @@ function Footer() {
             <strong>VJTI Placements</strong> — an unofficial, student-run project.
             Numbers and write-ups shown are sample data for this demo — staff-editable, not official TPO records.
           </p>
-          <p><Link to="/guidelines">Community guidelines</Link> · Made with ♥ by VJTI students · Inspired by college placement trackers</p>
+          <p><Link to="/guidelines">Community guidelines</Link> · <Link to="/privacy">Privacy</Link> · Made with ♥ by VJTI students · Inspired by college placement trackers</p>
         </>
       )}
     </footer>

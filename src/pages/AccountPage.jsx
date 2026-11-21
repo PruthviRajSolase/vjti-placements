@@ -5,17 +5,20 @@
   PUT /api/me, so this page cannot be used to escalate privileges.
 */
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import { BRANCHES } from "../branches.js";
 import { useAuth } from "../AuthContext.jsx";
 
 function AccountPage() {
   const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({ fullName: "", branch: "", graduationYear: "" });
   const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -69,6 +72,22 @@ function AccountPage() {
     }
   }
 
+
+  async function deleteAccount() {
+    setError("");
+    setNotice("");
+    if (!window.confirm("Delete your account? Your bookmarks and notifications will be removed, and your published experiences will be anonymized. This cannot be undone.")) return;
+    setDeleting(true);
+    try {
+      await api("/me", { method: "DELETE" });
+      updateUser(null);
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
   return (
     <section className="form-page account-page">
       <div className="page-intro">
@@ -166,6 +185,16 @@ function AccountPage() {
           {busy ? "Updating…" : "Update password"}
         </button>
       </form>
+
+      <section className="experience-form account-form danger-zone" aria-label="Delete account">
+        <h2>Delete my account</h2>
+        <p className="field-hint">
+          This removes your account, bookmarks, and notifications. Your published experiences will be anonymized and no longer attributed to you.
+        </p>
+        <button type="button" className="btn-danger" onClick={deleteAccount} disabled={deleting || busy}>
+          {deleting ? "Deleting…" : "Delete my account"}
+        </button>
+      </section>
     </section>
   );
 }

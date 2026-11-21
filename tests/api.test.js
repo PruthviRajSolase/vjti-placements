@@ -1856,6 +1856,42 @@ describe("experience reports and guidelines", () => {
   });
 });
 
+describe("account deletion and privacy", () => {
+  test("delete account removes user data and anonymizes published experiences", async () => {
+    const email = "deleteme@vjti.ac.in";
+    const reg = await request("/api/auth/register", { method: "POST", body: { fullName: "Delete Me", email, password: "Password123!" } });
+    assert.equal(reg.status, 201);
+    await request("/api/auth/verify-email", { method: "POST", body: { email, code: reg.data.devCode } });
+    const login = await request("/api/auth/login", { method: "POST", body: { email, password: "Password123!" } });
+    assert.equal(login.status, 200);
+    const cookie = login.cookie.split(";")[0];
+
+    const submit = await request("/api/experiences", { method: "POST", cookie, body: {
+      company: "DeleteCo", role: "SWE", placementYear: "2026", heading: "Delete test", body: "This is long enough for the experience body validation.", tags: ["DSA"], visibility: "named"
+    }});
+    assert.equal(submit.status, 201);
+    const expId = submit.data.id;
+    await request(`/api/admin/experiences/${expId}/review`, { method: "POST", cookie: session.tpo, body: { action: "approve", note: "" } });
+
+    const del = await request("/api/me", { method: "DELETE", cookie });
+    assert.equal(del.status, 200);
+
+    const me = await request("/api/auth/me", { cookie });
+    assert.equal(me.status, 200);
+    assert.equal(me.data.user, null);
+
+    const detail = await request(`/api/experiences/${expId}`);
+    assert.equal(detail.status, 200);
+    assert.equal(detail.data.experience.author.name, "Anonymous senior");
+
+    // audit should not contain plain email
+    const audit = await request("/api/admin/audit", { cookie: session.tpoi });
+    const delLog = (audit.data.entries || []).find((l) => l.action === "delete_account" && String(l.target).includes(String(login.data.user.id)));
+    assert.ok(delLog);
+    assert.ok(!String(delLog.target).includes(email));
+  });
+});
+
 describe("launch mode", () => {
   let childL;
   let baseL;

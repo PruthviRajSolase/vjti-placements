@@ -450,6 +450,28 @@ app.post("/api/me/password", requireAuth, rateLimit("password"), async (req, res
   res.json({ ok: true });
 });
 
+app.delete("/api/me", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const randomHash = await bcrypt.hash(`deleted-${userId}-${Date.now()}-${Math.random()}`, 10);
+  withTransaction(() => {
+    db.prepare("DELETE FROM saved_companies WHERE user_id = ?").run(userId);
+    db.prepare("DELETE FROM notifications WHERE user_id = ?").run(userId);
+    db.prepare("DELETE FROM applications WHERE user_id = ?").run(userId);
+    db.prepare("DELETE FROM email_otps WHERE email = (SELECT email FROM users WHERE id = ?)").run(userId);
+    db.prepare("DELETE FROM experience_reports WHERE reporter_id = ?").run(userId);
+    db.prepare("UPDATE experiences SET visibility = 'anonymous', updated_at = datetime('now') WHERE user_id = ?").run(userId);
+    db.prepare(
+      `UPDATE users SET full_name = 'Deleted account', email = ?, password_hash = ?, role = 'student',
+        branch = NULL, graduation_year = NULL, email_verified = 0, token_version = token_version + 1, updated_at = datetime('now')
+       WHERE id = ?`
+    ).run(`deleted-${userId}@deleted.invalid`, randomHash, userId);
+    db.prepare("INSERT INTO audit_log (actor_id, action, target) VALUES (?, 'delete_account', ?)")
+      .run(userId, `user:${userId}`);
+  });
+  clearAuthCookie(res);
+  res.json({ ok: true });
+});
+
 // ------------------------------------------- Phase 8: notifications
 app.get("/api/notifications", requireAuth, (req, res) => {
   const notifications = db.prepare(
