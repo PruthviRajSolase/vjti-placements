@@ -34,6 +34,28 @@ const PORT = process.env.API_PORT === undefined
   ? 3001
   : Number(process.env.API_PORT);
 const COLLEGE_DOMAIN = "@vjti.ac.in";
+export const APP_MODE = process.env.APP_MODE === "launch" ? "launch" : "demo";
+export const isLaunchMode = APP_MODE === "launch";
+
+const LAUNCH_DISABLED_PREFIXES = [
+  "/api/drives",
+  "/api/applications",
+  "/api/bookmarks",
+  "/api/admin/content",
+  "/api/admin/stats",
+  "/api/admin/companies",
+  "/api/admin/branch-stats",
+  "/api/admin/alumni",
+  "/api/admin/drives",
+];
+
+function launchModeBlock(req, res, next) {
+  if (!isLaunchMode) return next();
+  if (LAUNCH_DISABLED_PREFIXES.some((p) => req.path === p || req.path.startsWith(p + "/"))) {
+    return res.status(404).json({ error: "Not available" });
+  }
+  next();
+}
 
 // Used only in production, after `npm run build` has created dist/.
 const here = dirname(fileURLToPath(import.meta.url));
@@ -58,6 +80,7 @@ app.use(helmet({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(launchModeBlock);
 
 const text = (value, max) =>
   typeof value === "string" ? value.trim().slice(0, max) : "";
@@ -167,7 +190,7 @@ app.get("/api/admin/ping", requireAuth, requireRole("tpo", "tpoi"), (req, res) =
 // ------------------------------------------------------------- content
 // Public read — everything the student-facing pages need in ONE request.
 app.get("/api/content", (_req, res) => {
-  res.json(getPublicContent());
+  res.json({ ...getPublicContent(), mode: APP_MODE });
 });
 
 // Admin uses the same middleware stack for every write below.

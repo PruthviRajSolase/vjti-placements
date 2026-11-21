@@ -18,10 +18,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useNotifications } from "../NotificationsContext.jsx";
+import { useContent } from "../ContentContext.jsx";
 
 function Header({ user, onSignOut, theme, onToggleTheme }) {
   const location = useLocation();
   const { unreadCount } = useNotifications();
+  const { content } = useContent();
+  const isLaunch = content?.mode === "launch";
   const [navOpen, setNavOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const userMenuRef = useRef(null);
@@ -84,10 +87,10 @@ function Header({ user, onSignOut, theme, onToggleTheme }) {
 
       <nav id="main-nav" ref={navRef} className={`main-nav${navOpen ? " open" : ""}`}>
         <NavLink to="/" end className={navClass}>Home</NavLink>
-        <NavLink to="/companies" className={navClass}>Companies</NavLink>
-        <NavLink to="/drives" className={navClass}>Drives</NavLink>
+        {!isLaunch && <NavLink to="/companies" className={navClass}>Companies</NavLink>}
+        {!isLaunch && <NavLink to="/drives" className={navClass}>Drives</NavLink>}
         <NavLink to="/prep-insights" className={navClass}>Prep insights</NavLink>
-        {["student", "contributor"].includes(user?.role) && (
+        {!isLaunch && ["student", "contributor"].includes(user?.role) && (
           <NavLink to="/my-applications" className={navClass}>My applications</NavLink>
         )}
         {["student", "contributor"].includes(user?.role) && (
@@ -96,7 +99,9 @@ function Header({ user, onSignOut, theme, onToggleTheme }) {
         {["tpo", "tpoi"].includes(user?.role) && (
           <>
             <NavLink to="/admin/reviews" className={navClass}>Reviews</NavLink>
-            <NavLink to="/admin" end className={navClass}>Admin</NavLink>
+            {!isLaunch && <NavLink to="/admin" end className={navClass}>Admin</NavLink>}
+            {isLaunch && <NavLink to="/admin/users" className={navClass}>Accounts</NavLink>}
+            {isLaunch && user?.role === "tpoi" && <NavLink to="/admin/audit" className={navClass}>Audit log</NavLink>}
           </>
         )}
       </nav>
@@ -149,9 +154,11 @@ function Header({ user, onSignOut, theme, onToggleTheme }) {
                 <Link className="user-dropdown-link" to="/account" onClick={() => setUserOpen(false)}>
                   Account
                 </Link>
-                <Link className="user-dropdown-link" to="/saved" onClick={() => setUserOpen(false)}>
-                  Saved
-                </Link>
+                {!isLaunch && (
+                  <Link className="user-dropdown-link" to="/saved" onClick={() => setUserOpen(false)}>
+                    Saved
+                  </Link>
+                )}
                 <button
                   type="button"
                   className="btn-signout user-dropdown-signout"

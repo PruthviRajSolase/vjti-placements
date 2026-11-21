@@ -108,13 +108,16 @@ function App() {
     );
   }
 
+  const isLaunch = content?.mode === "launch";
+
   return (
     <>
       <Header user={user} onSignOut={signOut} theme={theme} onToggleTheme={toggleTheme} />
 
-      <p className="demo-banner">
-        Demo build — all statistics and experiences shown here are sample data,
-        not official TPO records.
+      <p className={isLaunch ? "demo-banner beta-banner" : "demo-banner"}>
+        {isLaunch
+          ? "Beta — student-run experience portal. Content is reviewed before publishing."
+          : "Demo build — all statistics and experiences shown here are sample data, not official TPO records."}
       </p>
 
       <main>
@@ -123,20 +126,24 @@ function App() {
             path="/"
             element={<HomePage year={year} onYearChange={setYear} />}
           />
-          <Route
-            path="/companies"
-            element={<CompaniesPage year={year} onYearChange={setYear} />}
-          />
-          <Route path="/company/:slug" element={<CompanyPage />} />
-          <Route path="/drives" element={<DrivesPage />} />
-          <Route
-            path="/my-applications"
-            element={
-              <RequireRole roles={["student", "contributor"]}>
-                <MyApplicationsPage />
-              </RequireRole>
-            }
-          />
+          {!isLaunch && (
+            <Route
+              path="/companies"
+              element={<CompaniesPage year={year} onYearChange={setYear} />}
+            />
+          )}
+          {!isLaunch && <Route path="/company/:slug" element={<CompanyPage />} />}
+          {!isLaunch && <Route path="/drives" element={<DrivesPage />} />}
+          {!isLaunch && (
+            <Route
+              path="/my-applications"
+              element={
+                <RequireRole roles={["student", "contributor"]}>
+                  <MyApplicationsPage />
+                </RequireRole>
+              }
+            />
+          )}
           <Route path="/experience/:id" element={<ExperienceDetailPage />} />
           <Route path="/prep-insights" element={<PrepInsightsPage />} />
           <Route path="/signin" element={<SignInPage />} />
@@ -164,14 +171,16 @@ function App() {
               </RequireRole>
             }
           />
-          <Route
-            path="/saved"
-            element={
-              <RequireAuth>
-                <SavedCompaniesPage />
-              </RequireAuth>
-            }
-          />
+          {!isLaunch && (
+            <Route
+              path="/saved"
+              element={
+                <RequireAuth>
+                  <SavedCompaniesPage />
+                </RequireAuth>
+              }
+            />
+          )}
           <Route
             path="/notifications"
             element={
@@ -188,14 +197,16 @@ function App() {
               </RequireAuth>
             }
           />
-          <Route
-            path="/admin"
-            element={
-              <RequireRole roles={["tpo", "tpoi"]}>
-                <AdminPage />
-              </RequireRole>
-            }
-          />
+          {!isLaunch && (
+            <Route
+              path="/admin"
+              element={
+                <RequireRole roles={["tpo", "tpoi"]}>
+                  <AdminPage />
+                </RequireRole>
+              }
+            />
+          )}
           <Route
             path="/admin/reviews"
             element={
@@ -220,22 +231,26 @@ function App() {
               </RequireRole>
             }
           />
-          <Route
-            path="/admin/alumni"
-            element={
-              <RequireRole roles={["tpo", "tpoi"]}>
-                <AdminAlumniPage />
-              </RequireRole>
-            }
-          />
-          <Route
-            path="/admin/drives"
-            element={
-              <RequireRole roles={["tpo", "tpoi"]}>
-                <AdminDrivesPage />
-              </RequireRole>
-            }
-          />
+          {!isLaunch && (
+            <Route
+              path="/admin/alumni"
+              element={
+                <RequireRole roles={["tpo", "tpoi"]}>
+                  <AdminAlumniPage />
+                </RequireRole>
+              }
+            />
+          )}
+          {!isLaunch && (
+            <Route
+              path="/admin/drives"
+              element={
+                <RequireRole roles={["tpo", "tpoi"]}>
+                  <AdminDrivesPage />
+                </RequireRole>
+              }
+            />
+          )}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
