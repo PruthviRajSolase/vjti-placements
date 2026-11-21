@@ -338,3 +338,28 @@ test("TPO publishes a drive and it appears on the public page", async ({ page })
   await page.getByRole("searchbox", { name: "Search drives" }).fill("UI Drive Corp");
   await expect(page.locator(".drive-card", { hasText: "UI Drive Corp" })).toBeVisible();
 });
+
+test("key pages have no horizontal overflow at 390px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  const assertNoOverflow = async (path) => {
+    await page.goto(path);
+    await page.waitForLoadState("domcontentloaded");
+    const hasOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    expect(hasOverflow, `overflow at ${path}`).toBeFalsy();
+  };
+
+  await assertNoOverflow("/");
+  await assertNoOverflow("/companies");
+  await assertNoOverflow("/drives");
+
+  await signIn(page, "tpo@vjti.ac.in", "Tpo1234!");
+  await assertNoOverflow("/admin");
+  await assertNoOverflow("/admin/alumni");
+  await assertNoOverflow("/admin/users");
+
+  await page.context().clearCookies();
+  await page.goto("/");
+  await signIn(page, "student@vjti.ac.in", "Student123!");
+  await assertNoOverflow("/my-applications");
+});

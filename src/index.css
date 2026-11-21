@@ -107,6 +107,10 @@ html {
   scroll-behavior: smooth;
 }
 
+html, body {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;                          /* kill the default 8px gap around the page */
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -302,6 +306,9 @@ main > section, footer {
 .table-scroll {
   overflow-x: auto;                   /* horizontal scrollbar ONLY when needed */
   -webkit-overflow-scrolling: touch;  /* smooth momentum scrolling on iOS */
+  max-width: 100%;
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
 }
 
 /* th and td = every table cell */
@@ -917,6 +924,8 @@ main > section, footer {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 24px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .admin-card-wide { grid-column: 1 / -1; }
@@ -2083,6 +2092,8 @@ a.user-chip:hover { opacity: 0.85; }
   background: var(--surface);
   color: var(--text);
   font: inherit;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .alumni-table th:first-child,
