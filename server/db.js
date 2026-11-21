@@ -71,6 +71,25 @@ function applyMigrations() {
       throw err;
     }
   }
+
+  if (version < 3) {
+    if (!hasColumn("branch_stats", "total_students")) {
+      db.exec("ALTER TABLE branch_stats ADD COLUMN total_students INTEGER NOT NULL DEFAULT 0");
+    }
+    if (!hasColumn("branch_stats", "placed_students")) {
+      db.exec("ALTER TABLE branch_stats ADD COLUMN placed_students INTEGER NOT NULL DEFAULT 0");
+    }
+    // Preserve existing percent as a placeholder only. Real totals/placed are
+    // provided by seed-demo; admins should update rows through the new API.
+    db.exec(`
+      UPDATE branch_stats
+      SET total_students = 100,
+          placed_students = CAST(ROUND(percent) AS INTEGER)
+      WHERE total_students = 0 AND placed_students = 0
+    `);
+    version = 3;
+    db.exec(`PRAGMA user_version = ${version}`);
+  }
 }
 
 applyMigrations();

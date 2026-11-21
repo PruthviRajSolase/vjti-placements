@@ -170,9 +170,17 @@ export function getPublicContent() {
   for (const row of db.prepare(
     "SELECT * FROM branch_stats ORDER BY year DESC, percent DESC"
   ).all()) {
+    const totalStudents = Number(row.total_students ?? 0);
+    const placedStudents = Number(row.placed_students ?? 0);
+    const percent = totalStudents > 0
+      ? Math.round((placedStudents / totalStudents) * 1000) / 10
+      : Number(row.percent ?? 0);
     (branchStatsByYear[row.year] ??= []).push({
       branch: row.branch,
-      percent: row.percent,
+      totalStudents,
+      placedStudents,
+      unplacedStudents: Math.max(0, totalStudents - placedStudents),
+      percent,
     });
   }
 

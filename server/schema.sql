@@ -78,10 +78,12 @@ CREATE TABLE IF NOT EXISTS companies (
 CREATE INDEX IF NOT EXISTS idx_companies_year ON companies(year);
 
 CREATE TABLE IF NOT EXISTS branch_stats (
-  id      INTEGER PRIMARY KEY AUTOINCREMENT,
-  year    TEXT NOT NULL,
-  branch  TEXT NOT NULL,
-  percent INTEGER NOT NULL,
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  year             TEXT NOT NULL,
+  branch           TEXT NOT NULL,
+  percent          REAL NOT NULL DEFAULT 0,
+  total_students   INTEGER NOT NULL DEFAULT 0,
+  placed_students  INTEGER NOT NULL DEFAULT 0,
   UNIQUE (year, branch)
 );
 

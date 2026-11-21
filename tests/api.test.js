@@ -1479,7 +1479,7 @@ describe("database migrations", () => {
       const version = db.prepare("PRAGMA user_version").get().user_version;
       const user = db.prepare("SELECT branch, token_version FROM users WHERE email = ?").get("old@vjti.ac.in");
       const drive = db.prepare("SELECT eligibility_branches FROM drives WHERE company = ?").get("Test Co");
-      if (version !== 2) throw new Error("version=" + version);
+      if (version !== 3) throw new Error("version=" + version);
       if (user.token_version !== 0) throw new Error("token=" + user.token_version);
       if (user.branch !== "Information Technology") throw new Error("branch=" + user.branch);
       if (drive.eligibility_branches !== JSON.stringify(["Information Technology","Mechanical Engineering"])) {

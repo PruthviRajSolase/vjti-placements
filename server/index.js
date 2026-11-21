@@ -524,21 +524,59 @@ app.delete("/api/admin/companies/:id", ...admin, (req, res) => {
   res.json({ ok: true });
 });
 
-// Replace all branch percentages for a year in one go.
+function branchPercent(totalStudents, placedStudents) {
+  return totalStudents > 0
+    ? Math.round((placedStudents / totalStudents) * 1000) / 10
+    : 0;
+}
+
+// Replace all branch placement rows for a year in one go.
 app.put("/api/admin/branch-stats/:year", ...admin, (req, res) => {
   const year = text(req.params.year, 4);
   if (!/^\d{4}$/.test(year)) return res.status(400).json({ error: "Invalid year." });
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
-  const clean = rows.map((r) => ({
-    branch: text(r?.branch, 80),
-    percent: Math.min(100, Math.max(0, number(r?.percent))),
-  })).filter((r) => r.branch);
+  const clean = [];
+
+  for (const r of rows) {
+    const branch = text(r?.branch, 80);
+    if (!branch) continue;
+
+    const hasTotals = r?.totalStudents !== undefined || r?.placedStudents !== undefined;
+    let totalStudents;
+    let placedStudents;
+    if (hasTotals) {
+      totalStudents = number(r?.totalStudents, NaN);
+      placedStudents = number(r?.placedStudents, NaN);
+      if (!Number.isInteger(totalStudents) || totalStudents < 0
+        || !Number.isInteger(placedStudents) || placedStudents < 0) {
+        return res.status(400).json({ error: `Enter whole numbers for ${branch} student counts.` });
+      }
+      if (placedStudents > totalStudents) {
+        return res.status(400).json({ error: `Placed students cannot exceed total students for ${branch}.` });
+      }
+    } else {
+      // Backward compat for old clients sending percent only.
+      const percent = Math.min(100, Math.max(0, number(r?.percent)));
+      totalStudents = 100;
+      placedStudents = Math.round(percent);
+    }
+
+    clean.push({
+      branch,
+      totalStudents,
+      placedStudents,
+      percent: branchPercent(totalStudents, placedStudents),
+    });
+  }
 
   db.prepare("DELETE FROM branch_stats WHERE year = ?").run(year);
   const insert = db.prepare(
-    "INSERT OR REPLACE INTO branch_stats (year, branch, percent) VALUES (?, ?, ?)"
+    `INSERT OR REPLACE INTO branch_stats (year, branch, percent, total_students, placed_students)
+     VALUES (?, ?, ?, ?, ?)`
   );
-  for (const row of clean) insert.run(year, row.branch, row.percent);
+  for (const row of clean) {
+    insert.run(year, row.branch, row.percent, row.totalStudents, row.placedStudents);
+  }
   audit(req, "update_branch_stats", year);
   res.json({ ok: true, saved: clean.length });
 });

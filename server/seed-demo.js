@@ -166,10 +166,18 @@ for (const [year, list] of Object.entries(COMPANIES_BY_YEAR)) {
 }
 
 const insertBranch = db.prepare(
-  "INSERT INTO branch_stats (year, branch, percent) VALUES (?, ?, ?)"
+  `INSERT INTO branch_stats (year, branch, percent, total_students, placed_students)
+   VALUES (?, ?, ?, ?, ?)`
 );
 for (const [year, rows] of Object.entries(BRANCH_STATS_BY_YEAR)) {
-  for (const row of rows) insertBranch.run(year, row.branch, row.percent);
+  for (const row of rows) {
+    const totalStudents = Number(row.totalStudents ?? 100);
+    const placedStudents = Number(row.placedStudents ?? Math.round(row.percent));
+    const percent = totalStudents > 0
+      ? Math.round((placedStudents / totalStudents) * 1000) / 10
+      : Number(row.percent ?? 0);
+    insertBranch.run(year, row.branch, percent, totalStudents, placedStudents);
+  }
 }
 
 const insertExperience = db.prepare(
