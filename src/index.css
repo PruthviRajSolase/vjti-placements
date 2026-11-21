@@ -125,21 +125,17 @@ img { max-width: 100%; }              /* never let an image overflow its contain
    3. HEADER — sticky top bar
    ------------------------------------------------------------ */
 .site-header {
-  /* Flexbox: puts children (brand, nav, sign-in) in a ROW.
-     space-between = spread them out: left / middle / right */
   display: flex;
   align-items: center;
-  gap: 24px;
-
-  position: sticky;                   /* sticks to top when you scroll */
-  top: 0;                             /* ...at exactly 0px from the top */
-  z-index: 10;                        /* float ABOVE content when overlapping */
-
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 22px;
   padding: 12px 24px;
-  margin: 16px;                       /* gap between header and window edge */
+  margin: 16px;
   box-shadow: var(--shadow);
 }
 
@@ -147,27 +143,53 @@ img { max-width: 100%; }              /* never let an image overflow its contain
   font-weight: 800;
   font-size: 1.2rem;
   color: var(--text);
-  text-decoration: none;              /* remove the underline links have by default */
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-toggle {
+  display: none;
+  margin-left: auto;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .main-nav {
   display: flex;
   gap: 8px;
-  margin-left: auto;                  /* push nav+button to the right side */
+  margin-left: auto;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.main-nav a {
+.main-nav a,
+.main-nav .nav-link {
   color: var(--text-soft);
   text-decoration: none;
   padding: 8px 14px;
-  border-radius: 999px;               /* huge value on a pill shape = fully rounded */
+  border-radius: 999px;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
-.main-nav a:hover {
-  /* :hover is a "pseudo-class" — styles that apply WHILE the mouse is over it */
+.main-nav a:hover,
+.main-nav .nav-link:hover {
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 4px;
 }
 
 .btn-signin {
@@ -178,9 +200,35 @@ img { max-width: 100%; }              /* never let an image overflow its contain
   border-radius: 999px;
   font-weight: 600;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
-.btn-signin:hover { opacity: 0.9; }   /* subtle dim on hover */
+.btn-signin:hover { opacity: 0.9; }
+
+@media (max-width: 767px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+    margin: 10px;
+    border-radius: 18px;
+  }
+  .nav-toggle { display: inline-flex; align-items: center; justify-content: center; margin-left: auto; }
+  .main-nav {
+    display: none;
+    order: 4;
+    flex-basis: 100%;
+    margin-left: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .main-nav.open { display: flex; }
+  .main-nav a, .main-nav .nav-link { white-space: normal; }
+  .header-actions { margin-left: 0; gap: 8px; }
+}
 
 /* ------------------------------------------------------------
    4. LAYOUT CONTAINER
@@ -745,6 +793,8 @@ main > section, footer {
    ------------------------------------------------------------ */
 
 /* Signed-in state in the header */
+.user-menu { position: relative; }
+
 .user-chip {
   background: var(--accent-soft);
   color: var(--accent);
@@ -752,7 +802,40 @@ main > section, footer {
   border-radius: 999px;
   font-size: 0.9rem;
   font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  font: inherit;
 }
+
+.user-chip:hover { border-color: var(--accent); }
+
+.user-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 180px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+  z-index: 40;
+}
+
+.user-dropdown-link {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.user-dropdown-link:hover { background: var(--accent-soft); color: var(--accent); }
+.user-dropdown-signout { width: 100%; text-align: left; white-space: nowrap; }
 
 /* Theme switch in the header (Step 10) */
 .theme-toggle {
@@ -770,6 +853,7 @@ main > section, footer {
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .theme-toggle-label { white-space: nowrap; }
@@ -789,6 +873,7 @@ main > section, footer {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .btn-signout:hover {
@@ -1389,30 +1474,6 @@ main { padding-bottom: 24px; }
    the reference site uses for its mobile layout.
    ------------------------------------------------------------ */
 @media (max-width: 760px) {
-
-  /* --- header: wraps onto two rows ---
-     Row 1: brand (left)  +  Sign in (right)
-     Row 2: navigation links (order + flex-basis push it to its own row) */
-  .site-header {
-    flex-wrap: wrap;        /* allow children to break onto new lines */
-    gap: 10px;
-    padding: 12px 16px;
-    margin: 10px;           /* less margin = more usable width */
-    border-radius: 18px;
-  }
-
-  .main-nav {
-    margin-left: 0;
-    order: 3;               /* flex children default to order 0; giving the
-                               nav order 3 moves it AFTER brand & sign-in */
-    flex-basis: 100%;       /* force the nav onto its own full-width row */
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .btn-signin {
-    margin-left: auto;      /* push the pill to the right edge of row 1 */
-  }
 
   /* --- global spacing: tighter on small screens --- */
   main > section, footer {

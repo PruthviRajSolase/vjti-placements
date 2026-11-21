@@ -59,6 +59,7 @@ test("prep insights rank common themes from approved experiences", async ({ page
 test("signed-in bookmarks are private and can be toggled from cards and detail pages", async ({ page }) => {
   await signIn(page, "student@vjti.ac.in", "Student123!");
 
+  await page.locator(".user-chip").click();
   await page.getByRole("link", { name: "Saved" }).click();
   await expect(page.getByRole("heading", { name: "Saved companies" })).toBeVisible();
   await expect(page.locator(".saved-item")).toHaveCount(2);
@@ -78,6 +79,7 @@ test("signed-in bookmarks are private and can be toggled from cards and detail p
   await page.goto("/saved");
   await expect(page.locator(".saved-item")).toHaveCount(2);
 
+  await page.locator(".user-chip").click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await signIn(page, "contributor@vjti.ac.in", "Contributor123!");
   await page.goto("/saved");

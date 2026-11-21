@@ -15,18 +15,55 @@
   for EVERY path (since all paths start with "/"). `end` means
   "only exact matches count".
 */
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useNotifications } from "../NotificationsContext.jsx";
 
 function Header({ user, onSignOut, theme, onToggleTheme }) {
-  // Remember the current page so /signin can send the user back here.
   const location = useLocation();
   const { unreadCount } = useNotifications();
-  // publicUser() returns `fullName`; the old demo auth used `name`.
-  // Support both so the header always shows the real name when available.
+  const [navOpen, setNavOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const userMenuRef = useRef(null);
+  const navRef = useRef(null);
+
   const displayName = user
     ? user.fullName || user.name || user.email.split("@")[0]
     : "";
+
+  useEffect(() => {
+    setNavOpen(false);
+    setUserOpen(false);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    function onDocClick(event) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setUserOpen(false);
+      }
+      if (
+        navRef.current &&
+        !navRef.current.contains(event.target) &&
+        !event.target.closest(".nav-toggle")
+      ) {
+        setNavOpen(false);
+      }
+    }
+    function onKeyDown(event) {
+      if (event.key === "Escape") {
+        setNavOpen(false);
+        setUserOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
+  const navClass = ({ isActive }) => `nav-link${isActive ? " active" : ""}`;
 
   return (
     <header className="site-header">
@@ -34,43 +71,37 @@ function Header({ user, onSignOut, theme, onToggleTheme }) {
         VJTI Placements
       </Link>
 
-      <nav className="main-nav">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-        >
-          Home
-        </NavLink>
-        <NavLink
-          to="/companies"
-          className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-        >
-          Companies
-        </NavLink>
-        <NavLink
-          to="/drives"
-          className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-        >
-          Drives
-        </NavLink>
-        <NavLink
-          to="/prep-insights"
-          className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-        >
-          Prep insights
-        </NavLink>
-        {/* Signed-in users get a private shortlist; students can track their
-            write-ups; staff get review + content links. These are shortcuts
-            only — the API re-checks the session and role. */}
-        {user && (
-          <NavLink
-            to="/saved"
-            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-          >
-            Saved
-          </NavLink>
+      <button
+        type="button"
+        className="nav-toggle"
+        aria-expanded={navOpen}
+        aria-controls="main-nav"
+        aria-label={navOpen ? "Close menu" : "Open menu"}
+        onClick={() => setNavOpen((v) => !v)}
+      >
+        <span aria-hidden="true">{navOpen ? "✕" : "☰"}</span>
+      </button>
+
+      <nav id="main-nav" ref={navRef} className={`main-nav${navOpen ? " open" : ""}`}>
+        <NavLink to="/" end className={navClass}>Home</NavLink>
+        <NavLink to="/companies" className={navClass}>Companies</NavLink>
+        <NavLink to="/drives" className={navClass}>Drives</NavLink>
+        <NavLink to="/prep-insights" className={navClass}>Prep insights</NavLink>
+        {["student", "contributor"].includes(user?.role) && (
+          <NavLink to="/my-applications" className={navClass}>My applications</NavLink>
         )}
+        {["student", "contributor"].includes(user?.role) && (
+          <NavLink to="/my-experiences" className={navClass}>My experiences</NavLink>
+        )}
+        {["tpo", "tpoi"].includes(user?.role) && (
+          <>
+            <NavLink to="/admin/reviews" className={navClass}>Reviews</NavLink>
+            <NavLink to="/admin" end className={navClass}>Admin</NavLink>
+          </>
+        )}
+      </nav>
+
+      <div className="header-actions">
         {user && (
           <NavLink
             to="/notifications"
@@ -86,77 +117,61 @@ function Header({ user, onSignOut, theme, onToggleTheme }) {
             )}
           </NavLink>
         )}
-        {["student", "contributor"].includes(user?.role) && (
-          <NavLink
-            to="/my-applications"
-            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-          >
-            My applications
-          </NavLink>
-        )}
-        {["student", "contributor"].includes(user?.role) && (
-          <NavLink
-            to="/my-experiences"
-            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-          >
-            My experiences
-          </NavLink>
-        )}
-        {["tpo", "tpoi"].includes(user?.role) && (
-          <>
-            <NavLink
-              to="/admin/reviews"
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-            >
-              Reviews
-            </NavLink>
-            <NavLink
-              to="/admin"
-              end
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-            >
-              Admin
-            </NavLink>
-          </>
-        )}
-      </nav>
 
-      {/* STEP 10: theme switch. aria-pressed tells assistive tech whether
-          dark mode is currently ON; the label names the ACTION to take. */}
-      <button
-        type="button"
-        className="theme-toggle"
-        onClick={onToggleTheme}
-        aria-pressed={theme === "dark"}
-        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        <span aria-hidden="true">{theme === "dark" ? "☀️" : "🌙"}</span>
-        <span className="theme-toggle-label">
-          {theme === "dark" ? "Light" : "Dark"}
-        </span>
-      </button>
-
-      {/* STEP 9: the right-hand slot swaps between a sign-in link and
-          a signed-in chip + sign-out button. Conditional JSX again. */}
-      {user ? (
-        <>
-          <Link className="user-chip" to="/account" title={`${user.email} — account settings`}>
-            Hi, {displayName}
-          </Link>
-          <button type="button" className="btn-signout" onClick={onSignOut}>
-            Sign out
-          </button>
-        </>
-      ) : (
-        <Link
-          className="btn-signin"
-          to="/signin"
-          state={{ from: location.pathname + location.search }}
+        <button
+          type="button"
+          className="theme-toggle"
+          onClick={onToggleTheme}
+          aria-pressed={theme === "dark"}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
-          Sign in
-        </Link>
-      )}
+          <span aria-hidden="true">{theme === "dark" ? "☀️" : "🌙"}</span>
+          <span className="theme-toggle-label">
+            {theme === "dark" ? "Light" : "Dark"}
+          </span>
+        </button>
+
+        {user ? (
+          <div className="user-menu" ref={userMenuRef}>
+            <button
+              type="button"
+              className="user-chip"
+              aria-haspopup="menu"
+              aria-expanded={userOpen}
+              onClick={() => setUserOpen((v) => !v)}
+              title={`${user.email} — account menu`}
+            >
+              Hi, {displayName}
+            </button>
+            {userOpen && (
+              <div className="user-dropdown">
+                <Link className="user-dropdown-link" to="/account" onClick={() => setUserOpen(false)}>
+                  Account
+                </Link>
+                <Link className="user-dropdown-link" to="/saved" onClick={() => setUserOpen(false)}>
+                  Saved
+                </Link>
+                <button
+                  type="button"
+                  className="btn-signout user-dropdown-signout"
+                  onClick={() => { setUserOpen(false); onSignOut(); }}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Link
+            className="btn-signin"
+            to="/signin"
+            state={{ from: location.pathname + location.search }}
+          >
+            Sign in
+          </Link>
+        )}
+      </div>
     </header>
   );
 }
