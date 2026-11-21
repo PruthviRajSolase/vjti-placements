@@ -31,6 +31,10 @@ import { parseCsv } from "./csv.js";
 import { sendOtpEmail } from "./mailer.js";
 
 const app = express();
+if (process.env.TRUST_PROXY) {
+  const v = process.env.TRUST_PROXY;
+  app.set("trust proxy", v === "true" ? true : v === "false" ? false : /^\d+$/.test(v) ? Number(v) : v);
+}
 const PORT = process.env.API_PORT === undefined
   ? 3001
   : Number(process.env.API_PORT);

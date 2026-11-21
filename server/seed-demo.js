@@ -19,6 +19,10 @@ if (process.env.NODE_ENV === "production") {
   console.error("Refusing to run seed-demo in production.");
   process.exit(1);
 }
+if (process.env.APP_MODE === "launch") {
+  console.error("Refusing to run seed-demo in launch mode. Use npm run seed:launch for production launch setup.");
+  process.exit(1);
+}
 
 console.log("Seeding demo content...");
 

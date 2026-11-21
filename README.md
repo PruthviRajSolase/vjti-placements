@@ -63,6 +63,8 @@ Environment variables are optional for local development. Copy [`.env.example`](
 | `TPOI_EMAIL`, `TPOI_PASSWORD`, `TPOI_NAME` | Credentials for the first in-charge created by `npm run seed` |
 | `DB_PATH` | Override the SQLite file location (default `server/data/placements.db`) |
 | `API_PORT` | Change the API/production server port (default `3001`) |
+| `APP_MODE` | `demo` (default) or `launch`. Launch mode hides/disables TPO placement surfaces but keeps experience sharing, review, and admin accounts/audit. |
+| `TRUST_PROXY` | Express trust proxy setting for deployments behind a reverse proxy (`1`, `true`, or proxy IP). Needed so rate limiting sees real client IPs. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | SMTP settings for email verification and password reset OTPs. In non-production or when SMTP is unset, OTP codes are logged to the server console. |
 | `PLAYWRIGHT_CHANNEL` | Set to `msedge` to run browser tests in Edge on Windows |
 
@@ -78,11 +80,12 @@ Restart Vite after editing `vite.config.js` — a stale dev server can serve `in
 | `npm run build` | Production build into `dist/` |
 | `npm start` | Serve the API and built SPA from one Express process |
 | `npm run preview` | Preview the production build locally |
-| `npm test` | 74 API integration tests against a throwaway database |
-| `npm run test:ui` | Build, then run 14 Playwright flows against a throwaway database |
+| `npm test` | 88 API integration tests against a throwaway database |
+| `npm run test:ui` | Build, then run 17 Playwright flows against a throwaway database |
 | `npm run lint` | ESLint across source, server, tests and config |
 | `npm run backup` | Write a timestamped SQLite backup to `server/data/backups/` (or `BACKUP_DIR`) |
-| `npm run seed`, `npm run seed:demo` | Seed the first admin / reset presentation data |
+| `npm run seed`, `npm run seed:demo` | Seed the first admin / reset demo presentation data |
+| `npm run seed:launch` | Create/update only the initial TPOI account from `TPOI_*` env vars (no sample content) |
 
 For a full reset, stop the servers, delete `server/data/placements.db`, then run `npm run seed && npm run seed:demo`. See `DEMO.md` for the full presenter runbook and `DEMO-SHORT.md` for the 5-minute version.
 

@@ -1892,6 +1892,39 @@ describe("account deletion and privacy", () => {
   });
 });
 
+describe("launch seed and production guards", () => {
+  test("seed-demo refuses in launch mode", () => {
+    assert.throws(
+      () => execFileSync(process.execPath, ["server/seed-demo.js"], {
+        cwd: root, env: { ...process.env, DB_PATH: dbPath, APP_MODE: "launch" }, stdio: "pipe",
+      }),
+      /Refusing/
+    );
+  });
+
+  test("seed:launch creates only pre-verified TPOI and no sample content", () => {
+    const dir = mkdtempSync(join(tmpdir(), "vjti-launch-seed-"));
+    const launchDb = join(dir, "placements.db");
+    execFileSync(process.execPath, ["server/seed-launch.js"], {
+      cwd: root,
+      env: { ...process.env, DB_PATH: launchDb, TPOI_EMAIL: "admin@vjti.ac.in", TPOI_PASSWORD: "StrongPass123!", TPOI_NAME: "Admin" },
+      stdio: "pipe",
+    });
+    const db = new DatabaseSync(launchDb);
+    const users = db.prepare("SELECT email, role, email_verified FROM users").all();
+    assert.equal(users.length, 1);
+    assert.equal(users[0].email, "admin@vjti.ac.in");
+    assert.equal(users[0].role, "tpoi");
+    assert.equal(Number(users[0].email_verified), 1);
+    const counts = db.prepare("SELECT (SELECT COUNT(*) FROM experiences) e, (SELECT COUNT(*) FROM companies) c, (SELECT COUNT(*) FROM drives) d").get();
+    assert.equal(counts.e, 0);
+    assert.equal(counts.c, 0);
+    assert.equal(counts.d, 0);
+    db.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+});
+
 describe("launch mode", () => {
   let childL;
   let baseL;
