@@ -67,6 +67,9 @@ Environment variables are optional for local development. Copy [`.env.example`](
 | `TRUST_PROXY` | Express trust proxy setting for deployments behind a reverse proxy (`1`, `true`, or proxy IP). Required in production + `APP_MODE=launch`; needed so rate limiting sees real client IPs. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | SMTP settings for email verification and password reset OTPs. If SMTP is missing outside production, OTP/reset codes are logged to the server console. In production with `APP_MODE=launch`, missing SMTP settings cause startup to fail; never log OTP codes or SMTP secrets in production. |
 | `MAX_EMAILS_PER_DAY` | Global OTP/reset email cap per rolling 24h (default `150`). Per-address cap is 5/hour. |
+| `BACKUP_DIR` | Backup output directory (default next to `DB_PATH`). |
+| `BACKUP_KEEP` | Number of newest backups to keep when pruning (default `14`). |
+| `BACKUP_DAILY` | Set to `1` to enable in-process daily backups. |
 | `PLAYWRIGHT_CHANNEL` | Set to `msedge` to run browser tests in Edge on Windows |
 
 Restart Vite after editing `vite.config.js` — a stale dev server can serve `index.html` instead of JSON for `/api` calls.
@@ -81,10 +84,10 @@ Restart Vite after editing `vite.config.js` — a stale dev server can serve `in
 | `npm run build` | Production build into `dist/` |
 | `npm start` | Serve the API and built SPA from one Express process |
 | `npm run preview` | Preview the production build locally |
-| `npm test` | 95 API integration tests against a throwaway database |
+| `npm test` | 99 API integration tests against a throwaway database |
 | `npm run test:ui` | Build, then run 17 Playwright flows against a throwaway database |
 | `npm run lint` | ESLint across source, server, tests and config |
-| `npm run backup` | Write a timestamped SQLite backup to `server/data/backups/` (or `BACKUP_DIR`) |
+| `npm run backup` | Write a timestamped SQLite backup to `server/data/backups/` (or `BACKUP_DIR`) and prune to newest `BACKUP_KEEP` (default 14) |
 | `npm run mail:test -- you@example.com` | Send one test email using configured SMTP settings |
 | `npm run seed`, `npm run seed:demo` | Seed the first admin / reset demo presentation data |
 | `npm run seed:launch` | Create/update only the initial TPOI account from `TPOI_*` env vars (no sample content) |

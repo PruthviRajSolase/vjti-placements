@@ -6,7 +6,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import bcrypt from "bcryptjs";
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { createReadStream, existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BRANCHES, normalizeBranch } from "../src/branches.js";
@@ -30,6 +30,7 @@ import {
 } from "./auth.js";
 import { parseCsv } from "./csv.js";
 import { sendOtpEmail, smtpStartupIssues } from "./mailer.js";
+import { latestBackup, resolveBackupDir, resolveDbPath, startDailyBackupTimer } from "./backup.js";
 
 const app = express();
 if (process.env.TRUST_PROXY) {
@@ -1114,6 +1115,18 @@ app.get("/api/admin/audit", ...superAdmin, (req, res) => {
   res.json({ entries });
 });
 
+app.get("/api/admin/backup", ...admin, (req, res) => {
+  const backupDir = resolveBackupDir(resolveDbPath());
+  const file = latestBackup(backupDir);
+  if (!file) return res.status(404).json({ error: "No backup file found." });
+  audit(req, "download_backup", file.name);
+  res.setHeader("Content-Type", "application/octet-stream");
+  res.setHeader("Content-Disposition", `attachment; filename="${file.name}"`);
+  createReadStream(file.path).on("error", () => {
+    if (!res.headersSent) res.status(500).json({ error: "Could not read backup file." });
+  }).pipe(res);
+});
+
 // ------------------------------------------------------- Phase 3: reviews
 // Students AND contributors may submit; staff approval is what publishes.
 const submitter = [requireAuth, requireRole("student", "contributor")];
@@ -1682,6 +1695,8 @@ if (startupIssues.length > 0) {
   for (const issue of startupIssues) console.error(`- ${issue}`);
   process.exit(1);
 }
+
+startDailyBackupTimer();
 
 const server = app.listen(PORT, () => {
   // Print the real bound port; with API_PORT=0 the OS picks a free one.

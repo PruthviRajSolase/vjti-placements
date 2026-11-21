@@ -67,7 +67,7 @@ Run backups on a schedule (cron/host scheduler):
 npm run backup
 ```
 
-`BACKUP_DIR` can override the backup output directory (default: `server/data/backups/`). Keep backups off the same ephemeral disk when possible.
+`npm run backup` prunes to the newest `BACKUP_KEEP` backups (default `14`). `BACKUP_DIR` can override the backup output directory (default next to `DB_PATH`). Set `BACKUP_DAILY=1` to enable an in-process daily backup timer. Staff can also download the latest backup from `GET /api/admin/backup` (authenticated, audited).
 
 **Restore:**
 

@@ -9,13 +9,14 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { buildPrepInsights } from "../server/insights.js";
 import { sendMail, sendOtpEmail, _setTransporterForTest, _resetTransporterForTest } from "../server/mailer.js";
+import { pruneBackups, listBackupFiles } from "../server/backup.js";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const tempDir = mkdtempSync(join(tmpdir(), "vjti-api-"));
@@ -2233,5 +2234,46 @@ describe('launch startup safety', () => {
       await new Promise((d) => child.once('exit', d));
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('backup pruning and admin download', () => {
+  test('pruning keeps the newest N backups', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'vjti-prune-'));
+    const db = join(dir, 'placements.db');
+    execFileSync(process.execPath, ['server/seed-demo.js'], { cwd: root, env: { ...process.env, DB_PATH: db }, stdio: 'pipe' });
+    const backupDir = join(dir, 'backups');
+    mkdirSync(backupDir, { recursive: true });
+    for (let i = 0; i < 5; i++) {
+      const name = `placements-2026-01-0${i+1}T00-00-00-000Z.db`;
+      writeFileSync(join(backupDir, name), 'db' + i);
+      const t = Date.now() - (1000 * (10 - i));
+      utimesSync(join(backupDir, name), t / 1000, t / 1000);
+    }
+    const pruned = pruneBackups(backupDir, 2);
+    assert.equal(pruned.removed.length, 3);
+    assert.equal(pruned.kept.length, 2);
+    const remaining = listBackupFiles(backupDir).map((f) => f.name);
+    assert.deepEqual(remaining, ['placements-2026-01-04T00-00-00-000Z.db', 'placements-2026-01-05T00-00-00-000Z.db']);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test('admin backup endpoint enforces access control and streams latest backup', async () => {
+    const backupDir = join(dirname(dbPath), 'backups');
+    mkdirSync(backupDir, { recursive: true });
+    const name = 'placements-2099-01-01T00-00-00-000Z.db';
+    writeFileSync(join(backupDir, name), 'sqlite-backup-content');
+
+    assert.equal((await request('/api/admin/backup')).status, 401);
+    assert.equal((await request('/api/admin/backup', { cookie: session.student })).status, 403);
+
+    const res = await fetch(base + '/api/admin/backup', { headers: { Cookie: session.tpo } });
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get('content-disposition') || '', /placements-2099-01-01T00-00-00-000Z\.db/);
+    const body = await res.text();
+    assert.equal(body, 'sqlite-backup-content');
+
+    const audit = await request('/api/admin/audit', { cookie: session.tpoi });
+    assert.ok(audit.data.entries.some((e) => e.action === 'download_backup' && String(e.target).includes('placements-2099-01-01T00-00-00-000Z.db')));
   });
 });
