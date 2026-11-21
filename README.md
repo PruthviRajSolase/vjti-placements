@@ -30,7 +30,7 @@ An unofficial, student-run placement portal demo for **Veermata Jijabai Technolo
 
 ## Getting started
 
-Requires **Node 24** and npm.
+Requires **Node 24+** and npm (see `engines` in `package.json`).
 
 ```bash
 npm install
