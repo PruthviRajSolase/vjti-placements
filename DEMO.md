@@ -66,11 +66,11 @@ This is the interaction to linger on. It answers the TPO's real question: *"Do I
 2. Enter `tpo@vjti.ac.in` / `Tpo1234!` → **Sign in**.
    - Say: *"This is a real login — passwords are hashed, the session is an httpOnly cookie, and the server checks who I am on every request. Not a fake front-end screen."*
 3. The header now shows **Hi, TPO Office** and an **Admin** nav link. Click **Admin**.
-4. In the **2026 statistics** card, change **Students placed** from `512` to `520`.
-5. Click **Save statistics**. Green message: *"Saved 2026 statistics. The homepage now shows the new numbers."*
-6. Click **Home** in the nav. The stat card now reads **520**.
+4. In the **2026 statistics** card, point out **Students placed** is read-only with the note *"Calculated from the branch table."*
+5. Scroll to **Branch-wise placement — 2026**. In the **Information Technology** row, change **Total students** to `118` and **Placed** to `111`. Point at the live **Placed %** and totals row updating (the headline total becomes 520).
+6. Click **Save branch placement**. Green message confirms the save. Click **Home** — the stat card now reads **520**.
 
-> "I changed the number as TPO staff, saved, and the public site updated — no code change, no developer, no redeploy. Companies and branch percentages work the same way."
+> "I changed the branch numbers as TPO staff, saved, and the public site updated — no code change, no developer, no redeploy. The headline placement count is derived from the branch table, so the numbers stay consistent."
 
 7. Go back to **Admin**. In the company form, fill:
    - Company name: `InnovaSoft Technologies`

@@ -153,6 +153,22 @@ test("TPO imports companies from pasted CSV and sees validation details", async 
   await expect(page.locator(".admin-table tbody tr", { hasText: "UI Import Corp" })).toBeVisible();
 });
 
+test("TPO edits branch placement and the derived headline updates", async ({ page }) => {
+  await signIn(page, "tpo@vjti.ac.in", "Tpo1234!");
+  await page.goto("/admin");
+
+  await expect(page.getByText("Calculated from the branch table.")).toBeVisible();
+  const totalInput = page.getByLabel("Information Technology total students");
+  const placedInput = page.getByLabel("Information Technology placed students");
+  await totalInput.fill("118");
+  await placedInput.fill("111");
+  await page.getByRole("button", { name: "Save branch placement" }).click();
+  await expect(page.locator(".admin-message.success")).toContainText("Saved 2026 branch placement data.");
+
+  await page.goto("/");
+  await expect(page.locator(".stat-card", { hasText: "Students Placed" })).toContainText("520");
+});
+
 test("TPO manages alumni outreach import and bulk actions", async ({ page }) => {
   await signIn(page, "tpo@vjti.ac.in", "Tpo1234!");
   await page.goto("/admin");

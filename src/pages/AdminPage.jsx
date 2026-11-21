@@ -60,9 +60,16 @@ function AdminPage() {
 
     const rows = raw.branchStats
       .filter((row) => row.year === year)
-      .map((row) => ({ branch: row.branch, percent: row.percent }));
+      .map((row) => ({
+        branch: row.branch,
+        percent: row.percent,
+        totalStudents: row.totalStudents ?? 0,
+        placedStudents: row.placedStudents ?? 0,
+      }));
     setBranchRows(
-      rows.length ? rows : branchNames.map((branch) => ({ branch, percent: 0 }))
+      rows.length
+        ? rows
+        : branchNames.map((branch) => ({ branch, percent: 0, totalStudents: 0, placedStudents: 0 }))
     );
   }, [raw, year, branchNames]);
 
@@ -87,8 +94,12 @@ function AdminPage() {
 
   function saveStats(event) {
     event.preventDefault();
+    const body = {
+      ...statsForm,
+      studentsPlaced: derivedPlaced ?? statsForm.studentsPlaced,
+    };
     run(
-      () => api(`/admin/stats/${year}`, { method: "PUT", body: statsForm }),
+      () => api(`/admin/stats/${year}`, { method: "PUT", body }),
       `Saved ${year} statistics. The homepage now shows the new numbers.`
     );
   }
@@ -134,12 +145,20 @@ function AdminPage() {
 
   function saveBranches(event) {
     event.preventDefault();
+    const rows = branchRows.map((row) => {
+      const totalStudents = Number(row.totalStudents ?? 0);
+      const percent = Number(row.percent ?? 0);
+      const placedStudents = row.placedStudents !== undefined
+        ? Number(row.placedStudents)
+        : (totalStudents > 0 ? Math.round((totalStudents * percent) / 100) : Math.round(percent));
+      return { branch: row.branch, totalStudents, placedStudents };
+    });
     run(
       () => api(`/admin/branch-stats/${year}`, {
         method: "PUT",
-        body: { rows: branchRows },
+        body: { rows },
       }),
-      `Saved ${year} branch percentages.`
+      `Saved ${year} branch placement data.`
     );
   }
 
@@ -181,6 +200,10 @@ function AdminPage() {
   }
 
   const companies = raw.companies.filter((row) => row.year === year);
+  const branchRowsForYear = raw.branchStats.filter((row) => row.year === year);
+  const derivedPlaced = branchRowsForYear.length > 0
+    ? branchRowsForYear.reduce((sum, row) => sum + Number(row.placedStudents ?? 0), 0)
+    : null;
 
   return (
     <section className="admin-page">
@@ -243,9 +266,16 @@ function AdminPage() {
             <label>
               Students placed
               <input
-                type="number" min="0" value={statsForm.studentsPlaced}
+                type="number"
+                min="0"
+                value={derivedPlaced ?? statsForm.studentsPlaced}
+                readOnly={derivedPlaced !== null}
+                disabled={derivedPlaced !== null}
                 onChange={(e) => setStatsForm({ ...statsForm, studentsPlaced: e.target.value })}
               />
+              {derivedPlaced !== null && (
+                <span className="field-help">Calculated from the branch table.</span>
+              )}
             </label>
             <label>
               Highest package
@@ -395,30 +425,86 @@ function AdminPage() {
           </button>
         </form>
 
-        {/* ---- Branch percentages ---- */}
+        {/* ---- Branch placement ---- */}
         <form className="admin-card admin-card-wide" onSubmit={saveBranches}>
           <h2 className="section-title">Branch-wise placement — {year}</h2>
-          <p className="section-sub">Percentages are shown in the branch table.</p>
+          <p className="section-sub">Enter total and placed student counts. Placement % is calculated automatically.</p>
 
-          <div className="admin-branch-grid">
-            {branchRows.map((row, index) => (
-              <label key={row.branch}>
-                {row.branch}
-                <input
-                  type="number" min="0" max="100" value={row.percent}
-                  onChange={(event) =>
-                    setBranchRows((current) =>
-                      current.map((item, i) =>
-                        i === index ? { ...item, percent: event.target.value } : item
-                      )
-                    )
-                  }
-                />
-              </label>
-            ))}
+          <div className="table-scroll">
+            <table className="branch-table admin-branch-table">
+              <thead>
+                <tr>
+                  <th scope="col">Branch</th>
+                  <th scope="col">Total students</th>
+                  <th scope="col">Placed</th>
+                  <th scope="col">Placed %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {branchRows.map((row, index) => {
+                  const total = Number(row.totalStudents ?? 0);
+                  const placed = Number(row.placedStudents ?? 0);
+                  const percent = total > 0 ? Math.round((placed / total) * 1000) / 10 : 0;
+                  return (
+                    <tr key={row.branch}>
+                      <td>{row.branch}</td>
+                      <td>
+                        <input
+                          aria-label={`${row.branch} total students`}
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={row.totalStudents}
+                          onChange={(event) => {
+                            const totalStudents = event.target.value;
+                            setBranchRows((current) =>
+                              current.map((item, i) =>
+                                i === index ? { ...item, totalStudents } : item
+                              )
+                            );
+                          }}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          aria-label={`${row.branch} placed students`}
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={row.placedStudents}
+                          onChange={(event) => {
+                            const placedStudents = event.target.value;
+                            setBranchRows((current) =>
+                              current.map((item, i) =>
+                                i === index ? { ...item, placedStudents } : item
+                              )
+                            );
+                          }}
+                        />
+                      </td>
+                      <td>{percent.toFixed(1)}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row">Total</th>
+                  <td>{branchRows.reduce((sum, row) => sum + Number(row.totalStudents || 0), 0)}</td>
+                  <td>{branchRows.reduce((sum, row) => sum + Number(row.placedStudents || 0), 0)}</td>
+                  <td>
+                    {(() => {
+                      const total = branchRows.reduce((sum, row) => sum + Number(row.totalStudents || 0), 0);
+                      const placed = branchRows.reduce((sum, row) => sum + Number(row.placedStudents || 0), 0);
+                      return `${(total > 0 ? Math.round((placed / total) * 1000) / 10 : 0).toFixed(1)}%`;
+                    })()}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
           <button className="btn-primary admin-submit" type="submit" disabled={busy}>
-            Save percentages
+            Save branch placement
           </button>
         </form>
       </div>

@@ -27,11 +27,12 @@ All accounts are created by `npm run seed:demo`.
 
 1. Click **Sign in** and sign in as `tpo@vjti.ac.in` / `Tpo1234!`.
 2. Open **Admin**.
-3. In the **2026 statistics** card, change **Students placed** from `512` to `520`.
-4. Click **Save statistics**.
-5. Click **Home** and show the updated **Students Placed** stat card.
+3. In the **2026 statistics** card, point out **Students placed** is read-only: *"Calculated from the branch table."*
+4. Scroll to **Branch-wise placement — 2026**. In the **Information Technology** row, change **Total students** to `118` and **Placed** to `111`.
+5. Click **Save branch placement**.
+6. Click **Home** and show the updated **Students Placed** stat card.
 
-> "TPO staff can update official placement numbers directly, and the public site updates immediately."
+> "TPO staff can update branch placement counts directly, the headline total is derived from the branch table, and the public site updates immediately."
 
 ## 2. Submit -> review -> publish
 

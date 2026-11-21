@@ -333,6 +333,31 @@ main > section, footer {
 .company-table tbody tr:hover,
 .branch-table tbody tr:hover { background: var(--accent-soft); }
 
+.branch-table tfoot th,
+.branch-table tfoot td {
+  font-weight: 700;
+  background: var(--surface-alt);
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+}
+
+.admin-branch-table input {
+  width: 100%;
+  min-width: 88px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.admin-branch-table input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 /* ------------------------------------------------------------
    9. EXPERIENCE CARDS
    ------------------------------------------------------------ */
