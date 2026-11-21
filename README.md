@@ -8,7 +8,7 @@ An unofficial, student-run placement portal demo for **Veermata Jijabai Technolo
 
 ## Features
 
-- Year-wise placement stats, company visit data, branch-wise percentages and a company detail view
+- Year-wise placement stats, company visit data, branch-wise placement totals/percentages and a company detail view
 - Searchable, filterable library of approved interview experiences with shareable filters
 - Prep insights: ranked "what to prepare" themes derived from tags in approved student write-ups
 - Accounts with `@vjti.ac.in` sign-up, httpOnly cookie sessions and role-based permissions
