@@ -1,99 +1,281 @@
-# Deploying VJTI Placements (Launch Mode)
+# Deploying VJTI Placements (Zero-cost, Launch Mode)
 
-This guide is for deploying the student experience portal in **launch mode** (`APP_MODE=launch`). Launch mode hides/disables TPO placement surfaces (stats, companies, drives, alumni, etc.) but keeps experience sharing, review, notifications, and admin accounts/audit.
+This guide deploys the app in **launch mode** (`APP_MODE=launch`) with no paid services and no purchased domain. Launch mode keeps experience sharing, review, notifications, accounts/audit, and hides/disables TPO placement surfaces.
 
-## Build and run
+## Before you deploy
 
-### Node (without Docker)
+- Use a **dedicated project Gmail account** for OTP/reset mail (not a personal primary mailbox).
+- Use a host with a **persistent disk/volume**. SQLite data is lost on ephemeral filesystems.
+- Do **not** use Render's free tier for this app: its free web services use an ephemeral filesystem and SQLite data can be lost on redeploy/restart/instance replacement.
+
+## Environment variables
+
+| Name | Required | Example | Purpose |
+| --- | --- | --- | --- |
+| `NODE_ENV` | Yes | `production` | Enables production behavior and static SPA serving. |
+| `APP_MODE` | Yes | `launch` | Enables launch mode; disables TPO placement surfaces. |
+| `JWT_SECRET` | Yes | `replace-with-a-long-random-secret-32+` | Signs session cookies. Must be at least 32 characters. Never commit it. |
+| `DB_PATH` | Yes (recommended explicit) | `/data/placements.db` | SQLite database file path. Must be on a persistent volume. |
+| `TRUST_PROXY` | Yes in production launch | `1` | Tells Express it is behind a reverse proxy so rate limiting sees real client IPs. |
+| `SMTP_HOST` | Yes in production launch | `smtp.gmail.com` | SMTP server for verification/reset emails. |
+| `SMTP_PORT` | Yes in production launch | `587` | SMTP port. Use `587` for STARTTLS or `465` for TLS. |
+| `SMTP_USER` | Yes in production launch | `projectmail@gmail.com` | SMTP username (Gmail address). |
+| `SMTP_PASS` | Yes in production launch | `abcd efgh ijkl mnop` | Gmail App Password. Never commit it. |
+| `MAIL_FROM` | Yes in production launch | `"VJTI Placements <projectmail@gmail.com>"` | From address shown in emails. |
+| `MAX_EMAILS_PER_DAY` | Optional | `150` | Global OTP/reset email cap per rolling 24h. Default `150`; warning logged at 80%. Per-address cap is 5/hour. |
+| `TPOI_EMAIL` | Required when no staff account exists | `tpoi@vjti.ac.in` | Initial TPO in-charge account email. Startup can create it if DB has no staff account. |
+| `TPOI_PASSWORD` | Required when no staff account exists | `StrongPassword123!` | Initial TPO in-charge password (min 8 chars). Never commit it. |
+| `TPOI_NAME` | Optional | `TPO In-Charge` | Display name for initial TPO in-charge account. |
+| `API_PORT` | Optional | `3001` | HTTP port inside the container/process. Default `3001`. |
+| `BACKUP_DIR` | Optional | `/data/backups` | Backup output directory. Default: next to `DB_PATH`. |
+| `BACKUP_KEEP` | Optional | `14` | Number of newest backups to keep. Default `14`. |
+| `BACKUP_DAILY` | Optional | `1` | Set to `1` to enable in-process daily backups. |
+
+## Gmail App Password (dedicated project account)
+
+1. Create/use a dedicated Gmail account for the project (e.g. `vjti.placements.project@gmail.com`).
+2. Enable **2-Step Verification** on that Google account.
+3. Open Google Account > **Security** > **2-Step Verification** > **App passwords**.
+4. Create an app password for "Mail" / "Other (VJTI Placements)". Google shows a 16-character password.
+5. Set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER=<that gmail>`, `SMTP_PASS=<16-char app password>`, `MAIL_FROM="VJTI Placements <that gmail>"`.
+6. Verify locally before deploying:
+
+   ```bash
+   npm run mail:test -- you@example.com
+   ```
+
+   If SMTP is not configured outside production, the command logs instead of sending; configure SMTP vars to send a real test.
+
+**What can go wrong**
+- App Passwords are unavailable until 2-Step Verification is enabled.
+- Gmail has sending limits; the app caps OTP/reset emails (`MAX_EMAILS_PER_DAY`, default 150, and 5/hour per address) but you should still monitor usage.
+- If Google blocks sign-in/sending, regenerate the App Password and update `SMTP_PASS`.
+
+## Option A: Oracle Cloud Always Free VM (recommended)
+
+This option gives you an Always Free VM where you run Docker with a persistent volume.
+
+### A1. Create the VM
+
+1. Sign in to Oracle Cloud and create an Always Free Compute VM (Ampere A1 or AMD Micro, subject to Oracle availability).
+2. Choose Ubuntu (or another Linux image you are comfortable with).
+3. Add your SSH public key.
+4. Create the instance and note its public IP.
+
+### A2. Open ports
+
+1. In Oracle Cloud networking (VCN/security list or NSG), allow inbound:
+   - TCP `22` (SSH) from your IP.
+   - TCP `80` (HTTP) and TCP `443` (HTTPS) from `0.0.0.0/0`.
+2. On the VM firewall (Ubuntu ufw/firewalld/iptables depending on image), allow the same ports. Example with ufw:
+
+   ```bash
+   sudo ufw allow 22/tcp
+   sudo ufw allow 80/tcp
+   sudo ufw allow 443/tcp
+   sudo ufw enable
+   ```
+
+### A3. Install Docker
 
 ```bash
-npm ci
-npm run build
-npm start
+sudo apt update
+sudo apt install -y ca-certificates curl
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+# log out/in so docker group applies
+docker --version
 ```
 
-`npm start` runs `server/start.js`, which sets `NODE_ENV=production` and serves the built React app from `dist/` with the API.
-
-### Docker
+### A4. Get the app and build
 
 ```bash
-docker build -t vjti-placements .
-docker run --env-file .env -p 3001:3001 -v vjti-data:/app/server/data vjti-placements
+git clone <your-repo-url> vjti-placements
+cd vjti-placements
+docker build -t vjti-placements:launch .
 ```
 
-Mount a persistent volume at the directory containing your SQLite DB (default: `/app/server/data`, file `placements.db`). If you set `DB_PATH`, mount that path instead.
+### A5. Create env file and data volume
 
-## Required environment variables
+Create `/home/ubuntu/vjti-placements.env` (chmod 600). Do not commit it.
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `NODE_ENV` | Yes | Set to `production`. |
-| `APP_MODE` | Yes | Set to `launch` for the student deployment. |
-| `JWT_SECRET` | Yes | Session signing secret. Must be at least 32 characters; server refuses to start in production without it. |
-| `DB_PATH` | Recommended | SQLite file path on a persistent volume, e.g. `/data/placements.db`. Default is `server/data/placements.db`. |
-| `TRUST_PROXY` | Yes in production launch | Express trust proxy setting (`1`, `true`, or proxy IP). Required so rate limiting sees real client IPs behind a host reverse proxy. |
-| `SMTP_HOST` | Yes in production launch | SMTP host for verification/reset OTP emails (e.g. `smtp.gmail.com`). |
-| `SMTP_PORT` | Yes in production launch | SMTP port (`587` STARTTLS or `465` TLS). |
-| `SMTP_USER` | Yes in production launch | SMTP username. |
-| `SMTP_PASS` | Yes in production launch | SMTP password/App Password. |
-| `MAIL_FROM` | Yes in production launch | From address, e.g. `"VJTI Placements <no-reply@example.com>"`. |
-| `MAX_EMAILS_PER_DAY` | Optional | Global OTP/reset email cap per rolling 24h (default `150`). Per-address cap is 5/hour; warns at 80%. |
-| `TPOI_EMAIL` | For initial admin seed | Initial TPO in-charge email for `npm run seed:launch`. |
-| `TPOI_PASSWORD` | For initial admin seed | Initial TPO in-charge password (min 8 chars). |
-| `TPOI_NAME` | Optional | Initial TPO in-charge display name. |
-| `API_PORT` | Optional | API/server port (default `3001`). |
+```env
+NODE_ENV=production
+APP_MODE=launch
+JWT_SECRET=replace-with-a-long-random-secret-at-least-32-chars
+DB_PATH=/data/placements.db
+TRUST_PROXY=1
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=projectmail@gmail.com
+SMTP_PASS=your-gmail-app-password
+MAIL_FROM="VJTI Placements <projectmail@gmail.com>"
+MAX_EMAILS_PER_DAY=150
+TPOI_EMAIL=tpoi@vjti.ac.in
+TPOI_PASSWORD=StrongPassword123!
+TPOI_NAME=TPO In-Charge
+BACKUP_DAILY=1
+BACKUP_KEEP=14
+```
 
-Notes:
-- If SMTP is missing outside production, OTP/reset codes are logged to the server console. In production with `APP_MODE=launch`, missing SMTP settings cause startup to fail. Never log OTP codes or SMTP secrets in production.
-- `seed-demo` is blocked in production and in launch mode.
-
-## Persistent SQLite volume
-
-SQLite data must live on a **persistent volume/disk**. Set `DB_PATH` to a file on that mounted volume.
-
-Create the initial admin account once:
+Create a persistent Docker volume:
 
 ```bash
-npm run seed:launch
+docker volume create vjti_data
 ```
 
-This creates/updates only the pre-verified TPOI account from `TPOI_*` env vars. It creates no sample content. In production + launch, if the database has no staff account, startup can also create the initial pre-verified TPOI account when `TPOI_EMAIL` and `TPOI_PASSWORD` are set.
-
-## Backups and restore
-
-Run backups on a schedule (cron/host scheduler):
+### A6. Run the container
 
 ```bash
-npm run backup
+docker run -d \
+  --name vjti-placements \
+  --restart unless-stopped \
+  --env-file /home/ubuntu/vjti-placements.env \
+  -v vjti_data:/data \
+  -p 127.0.0.1:3001:3001 \
+  vjti-placements:launch
 ```
 
-`npm run backup` prunes to the newest `BACKUP_KEEP` backups (default `14`). `BACKUP_DIR` can override the backup output directory (default next to `DB_PATH`). Set `BACKUP_DAILY=1` to enable an in-process daily backup timer. Staff can also download the latest backup from `GET /api/admin/backup` (authenticated, audited).
+Check logs/health:
 
-**Restore:**
+```bash
+docker logs --tail 100 vjti-placements
+curl http://127.0.0.1:3001/api/health
+```
 
-1. Stop the app.
-2. Replace the DB file at `DB_PATH` (or `server/data/placements.db`) with the chosen backup file.
-3. Start the app.
-4. Verify sign-in, review queue, and recent content.
+### A7. Free HTTPS option
+
+You need HTTPS for secure cookies in production. Two free options:
+
+**Recommended: Caddy + free DuckDNS subdomain**
+1. Create a free DuckDNS subdomain (e.g. `vjti-placements.duckdns.org`) and point it to your VM public IP.
+2. Install Caddy on the VM.
+3. Create `/etc/caddy/Caddyfile`:
+
+   ```caddy
+   vjti-placements.duckdns.org {
+     reverse_proxy 127.0.0.1:3001
+   }
+   ```
+
+4. Reload Caddy. It automatically obtains/renews Let's Encrypt certificates.
+5. Keep `TRUST_PROXY=1` in the app env.
+
+**Alternative: Cloudflare Tunnel**
+- Run `cloudflared` on the VM and create a tunnel that forwards to `http://127.0.0.1:3001`.
+- Useful if you cannot expose ports 80/443 directly. It requires a Cloudflare account and tunnel setup; DNS/certificate handling is managed by Cloudflare.
+- Keep `TRUST_PROXY=1` and confirm forwarded client IP behavior for rate limiting.
+
+### A8. Update
+
+```bash
+cd ~/vjti-placements
+git pull
+docker build -t vjti-placements:launch .
+docker rm -f vjti-placements
+docker run -d \
+  --name vjti-placements \
+  --restart unless-stopped \
+  --env-file /home/ubuntu/vjti-placements.env \
+  -v vjti_data:/data \
+  -p 127.0.0.1:3001:3001 \
+  vjti-placements:launch
+```
+
+### A9. Backups on Oracle VM
+
+- Set `BACKUP_DAILY=1` and keep the `/data` Docker volume persistent.
+- Download a backup from browser as staff: `GET /api/admin/backup` (authenticated, audited).
+- Or copy from volume/host:
+
+  ```bash
+  docker run --rm -v vjti_data:/data -v "$PWD":/out alpine cp /data/backups/<file>.db /out/
+  ```
+
+### Option A: What can go wrong
+
+- **Oracle reclaim/idle risk:** Oracle Always Free resources can be reclaimed or become unavailable depending on account/resource/idle conditions. Keep backups downloaded off the VM; monitor the instance.
+- **Ports blocked:** if Oracle security list/NSG or VM firewall is misconfigured, HTTPS will not work.
+- **No persistent volume:** if you run without `-v vjti_data:/data`, SQLite data is lost on container replacement.
+- **Wrong TRUST_PROXY:** rate limiting may see proxy IP instead of real client IP.
+- **SMTP/App Password issues:** OTP email delivery fails; startup will refuse in production+launch if SMTP vars are missing.
+- **Disk fills up:** backups and DB grow; keep `BACKUP_KEEP` reasonable and download backups periodically.
+
+## Option B: Railway Free plan
+
+Railway can run this as a Docker/container deployment with a volume, but you must watch free-plan credits and limits.
+
+### B1. Connect repo
+
+1. Create a Railway project and connect your GitHub repo.
+2. Use the included `Dockerfile` (Railway can build from Dockerfile).
+
+### B2. Set environment variables
+
+In Railway service variables, set the env vars from the table above. At minimum for production launch: `NODE_ENV`, `APP_MODE`, `JWT_SECRET`, `DB_PATH=/data/placements.db`, `TRUST_PROXY=1`, all `SMTP_*`/`MAIL_FROM`, and `TPOI_*` if no staff account exists.
+
+### B3. Add a volume
+
+1. Add a Railway volume and mount it at `/data`.
+2. Set `DB_PATH=/data/placements.db`.
+3. Optionally set `BACKUP_DIR=/data/backups`, `BACKUP_DAILY=1`, `BACKUP_KEEP=14`.
+
+### B4. Start command / port
+
+- Dockerfile CMD is `node server/start.js`; keep it.
+- The app listens on `API_PORT` (default `3001`). Configure Railway to route to the container port your service exposes (set `API_PORT` to Railway's expected port if required by the platform).
+
+### B5. Watch credit usage
+
+- Monitor Railway monthly free credit/usage in the dashboard.
+- Set alerts/notifications where available and check usage regularly.
+
+### Option B: What can go wrong
+
+- **Credit exhaustion:** when free credit is exhausted, service behavior may be paused/limited; the app can become unavailable until credits reset or plan changes.
+- **No volume or wrong mount:** without a persistent `/data` volume, SQLite data can be lost.
+- **Ephemeral assumptions:** do not treat container filesystem as durable; only `/data` volume should hold DB/backups.
+- **Port mismatch:** if Railway expects a specific port and `API_PORT`/routing is wrong, health checks fail.
+- **SMTP/startup checklist failures:** missing required launch env vars causes startup to fail with a checklist error in logs.
 
 ## First-launch checklist
 
-1. Set required env vars and mount a persistent volume for `DB_PATH`.
-2. Deploy/build and start the app.
-3. Run `npm run seed:launch` (once) to create the TPOI account.
+1. Deploy with required env vars and a persistent volume mounted at `/data`.
+2. Confirm health: `GET /api/health` returns `{ ok: true, ... }`.
+3. Confirm initial staff account exists (created by `npm run seed:launch` or startup auto-create when no staff exists and `TPOI_*` are set).
 4. Register a student account with a `@vjti.ac.in` email.
-5. Verify the email using the OTP (or console log in non-SMTP dev).
+5. Verify the email using the OTP (Gmail SMTP in production launch).
 6. Submit an experience as the student.
-7. Sign in as TPOI/staff, approve the experience in the review queue.
+7. Sign in as TPOI/staff and approve the experience in the review queue.
 8. Confirm it appears on the home page and prep insights.
 
-## Host options with volumes
+## Backup download and restore
 
-Do not pick a host blindly; confirm pricing, backups, and operational fit. Two options that support persistent volumes/disks:
+### Download
 
-- **Fly.io (Volumes)** — supports persistent volumes attached to Machines; suitable for a single-node SQLite app when the volume is mounted.
-- **Render (Persistent Disks)** — supports persistent disks for services; mount the disk and point `DB_PATH` at it.
+- Staff/TPOI can download the latest backup from browser while signed in:
 
-## Ephemeral disk warning
+  ```text
+  GET /api/admin/backup
+  ```
 
-**Free hosts with ephemeral disks lose data.** SQLite files stored on ephemeral filesystems can be wiped on redeploy, restart, or instance replacement. Use a persistent volume and scheduled backups for any real launch.
+  The request is authenticated, staff-only, and audited.
+- You can also run `npm run backup` on the host/container; backups are pruned to newest `BACKUP_KEEP`.
+
+### Restore
+
+1. Stop the app/container.
+2. Replace the SQLite DB at `DB_PATH` (e.g. `/data/placements.db`) with the selected backup file.
+3. Start the app/container.
+4. Verify sign-in, review queue, recent content, and audit log.
+
+## Startup safety checklist (production + launch)
+
+On startup in production+launch, the server refuses to start with one checklist-style error listing all missing items. It requires:
+- `JWT_SECRET` (32+ chars)
+- `TRUST_PROXY`
+- SMTP settings (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`)
+- writable `DB_PATH` directory
+- `TPOI_EMAIL` and `TPOI_PASSWORD` when the database has no staff account (it creates the pre-verified TPOI account when these are present)
+
+Secret values are never printed in startup errors/logs.
