@@ -258,7 +258,7 @@ function AdminPage() {
 
       <div className="admin-grid">
         {/* ---- Season statistics ---- */}
-        <form className="admin-card" onSubmit={saveStats}>
+        <form className="admin-card admin-card-wide" onSubmit={saveStats}>
           <h2 className="section-title">{year} statistics</h2>
           <p className="section-sub">These four numbers appear on the homepage.</p>
 
@@ -310,42 +310,62 @@ function AdminPage() {
           <p className="section-sub">Add, edit or remove visiting companies.</p>
 
           <form className="admin-company-form" onSubmit={saveCompany}>
-            <input
-              aria-label="Company name" placeholder="Company name" required
-              value={companyForm.name}
-              onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
-            />
-            <input
-              aria-label="Role" placeholder="Role" required
-              value={companyForm.role}
-              onChange={(e) => setCompanyForm({ ...companyForm, role: e.target.value })}
-            />
-            <input
-              aria-label="Package in LPA" type="number" step="0.1" min="0"
-              placeholder="Package (LPA)" value={companyForm.package}
-              onChange={(e) => setCompanyForm({ ...companyForm, package: e.target.value })}
-            />
-            <input
-              aria-label="Students hired" type="number" min="0" placeholder="Hired"
-              value={companyForm.hired}
-              onChange={(e) => setCompanyForm({ ...companyForm, hired: e.target.value })}
-            />
-            <input
-              aria-label="Eligible branches" placeholder="Branches (comma separated)"
-              value={companyForm.branches}
-              onChange={(e) => setCompanyForm({ ...companyForm, branches: e.target.value })}
-            />
-            <button className="btn-primary" type="submit" disabled={busy}>
-              {companyForm.id ? "Update" : "Add company"}
-            </button>
-            {companyForm.id && (
-              <button
-                type="button" className="btn-signout"
-                onClick={() => setCompanyForm(emptyCompany)}
-              >
-                Cancel
+            <label className="admin-company-field">
+              Company name
+              <input
+                aria-label="Company name" placeholder="e.g. Northbridge Software" required
+                value={companyForm.name}
+                onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
+              />
+            </label>
+            <label className="admin-company-field">
+              Role
+              <input
+                aria-label="Role" placeholder="e.g. Software Engineer" required
+                value={companyForm.role}
+                onChange={(e) => setCompanyForm({ ...companyForm, role: e.target.value })}
+              />
+            </label>
+            <label className="admin-company-field">
+              Package (LPA)
+              <div className="input-with-unit">
+                <input
+                  aria-label="Package in LPA" type="number" step="0.1" min="0"
+                  placeholder="0.0" value={companyForm.package}
+                  onChange={(e) => setCompanyForm({ ...companyForm, package: e.target.value })}
+                />
+                <span className="input-unit">LPA</span>
+              </div>
+            </label>
+            <label className="admin-company-field">
+              Students hired
+              <input
+                aria-label="Students hired" type="number" min="0" placeholder="0"
+                value={companyForm.hired}
+                onChange={(e) => setCompanyForm({ ...companyForm, hired: e.target.value })}
+              />
+            </label>
+            <label className="admin-company-field admin-company-field-wide">
+              Eligible branches
+              <input
+                aria-label="Eligible branches" placeholder="CS, IT, Extc"
+                value={companyForm.branches}
+                onChange={(e) => setCompanyForm({ ...companyForm, branches: e.target.value })}
+              />
+            </label>
+            <div className="admin-company-actions">
+              <button className="btn-primary" type="submit" disabled={busy}>
+                {companyForm.id ? "Update" : "Add company"}
               </button>
-            )}
+              {companyForm.id && (
+                <button
+                  type="button" className="btn-signout"
+                  onClick={() => setCompanyForm(emptyCompany)}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </form>
 
           <div className="table-scroll">

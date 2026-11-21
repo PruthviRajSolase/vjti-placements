@@ -1078,13 +1078,35 @@ main > section, footer {
 .admin-submit { margin-top: 18px; }
 
 .admin-company-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
   margin-bottom: 20px;
+  align-items: end;
 }
 
-.admin-company-form input { flex: 1 1 150px; min-width: 120px; }
+.admin-company-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 0;
+}
+
+.admin-company-field-wide { grid-column: span 2; }
+.admin-company-actions { display: flex; gap: 8px; align-items: center; }
+
+.input-with-unit { position: relative; display: flex; align-items: center; }
+.input-with-unit input { width: 100%; padding-right: 52px; }
+.input-unit {
+  position: absolute;
+  right: 12px;
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+  pointer-events: none;
+}
 
 .admin-table { min-width: 640px; }
 
