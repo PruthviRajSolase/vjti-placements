@@ -1637,3 +1637,118 @@ describe("access-control matrix", () => {
     });
   }
 });
+
+
+describe("launch mode", () => {
+  let childL;
+  let baseL;
+  const sess = {};
+  const tempDirL = mkdtempSync(join(tmpdir(), "vjti-launch-api-"));
+  const dbPathL = join(tempDirL, "placements.db");
+
+  function waitForServerL() {
+    return new Promise((resolveReady, reject) => {
+      let buffer = "";
+      const timer = setTimeout(() => reject(new Error("launch API did not start")), 15000);
+      const finish = (fn, value) => { clearTimeout(timer); fn(value); };
+      childL.stdout.on("data", (chunk) => {
+        buffer += chunk.toString();
+        const match = buffer.match(/listening on http:\/\/localhost:(\d+)/);
+        if (match) finish(resolveReady, `http://localhost:${match[1]}`);
+      });
+      childL.stderr.on("data", (chunk) => process.stderr.write(chunk));
+      childL.once("exit", (code) => finish(reject, new Error(`launch API exited early (${code})`)));
+    });
+  }
+
+  async function reqL(path, { method = "GET", body, cookie } = {}) {
+    const response = await fetch(baseL + path, {
+      method,
+      headers: {
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+    const data = await response.json().catch(() => ({}));
+    return { status: response.status, data, cookie: response.headers.get("set-cookie") };
+  }
+
+  async function loginL(email, password) {
+    const result = await reqL("/api/auth/login", { method: "POST", body: { email, password } });
+    assert.equal(result.status, 200, `login ${email}: ${result.data.error}`);
+    return result.cookie.split(";")[0];
+  }
+
+  before(async () => {
+    execFileSync(process.execPath, ["server/seed-demo.js"], {
+      cwd: root,
+      env: { ...process.env, DB_PATH: dbPathL },
+      stdio: "pipe",
+    });
+    childL = spawn(process.execPath, ["server/index.js"], {
+      cwd: root,
+      env: { ...process.env, DB_PATH: dbPathL, API_PORT: "0", NODE_ENV: "test", APP_MODE: "launch" },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    baseL = await waitForServerL();
+    sess.tpo = await loginL("tpo@vjti.ac.in", "Tpo1234!");
+    sess.tpoi = await loginL("tpoi@vjti.ac.in", "ChangeMe123!");
+    sess.student = await loginL("student@vjti.ac.in", "Student123!");
+    sess.contributor = await loginL("contributor@vjti.ac.in", "Contributor123!");
+  });
+
+  after(async () => {
+    if (childL && childL.exitCode === null) {
+      childL.kill();
+      await new Promise((done) => childL.once("exit", done));
+    }
+    rmSync(tempDirL, { recursive: true, force: true });
+  });
+
+  test("content reports launch mode", async () => {
+    const res = await reqL("/api/content");
+    assert.equal(res.status, 200);
+    assert.equal(res.data.mode, "launch");
+  });
+
+  test("disabled routes return 404 for every role", async () => {
+    const roles = [null, sess.student, sess.contributor, sess.tpo, sess.tpoi];
+    const checks = [
+      ["GET", "/api/drives"],
+      ["GET", "/api/applications"],
+      ["GET", "/api/bookmarks"],
+      ["GET", "/api/admin/content"],
+      ["PUT", "/api/admin/stats/2026"],
+      ["POST", "/api/admin/companies"],
+      ["POST", "/api/admin/companies/import"],
+      ["PUT", "/api/admin/branch-stats/2026"],
+      ["GET", "/api/admin/alumni"],
+      ["GET", "/api/admin/drives"],
+    ];
+    for (const cookie of roles) {
+      for (const [method, path] of checks) {
+        const res = await reqL(path, { method, cookie, body: method === "GET" ? undefined : {} });
+        assert.equal(res.status, 404, `${method} ${path} as ${cookie ? "auth" : "anon"} should be 404`);
+        assert.equal(res.data.error, "Not available");
+      }
+    }
+  });
+
+  test("enabled routes still work in launch mode", async () => {
+    const content = await reqL("/api/content");
+    assert.equal(content.status, 200);
+    assert.ok(Array.isArray(content.data.experiences));
+    const me = await reqL("/api/auth/me", { cookie: sess.student });
+    assert.equal(me.status, 200);
+    assert.equal(me.data.user.email, "student@vjti.ac.in");
+    const notifs = await reqL("/api/notifications", { cookie: sess.student });
+    assert.equal(notifs.status, 200);
+    const reviews = await reqL("/api/admin/experiences", { cookie: sess.tpo });
+    assert.equal(reviews.status, 200);
+    const users = await reqL("/api/admin/users", { cookie: sess.tpo });
+    assert.equal(users.status, 200);
+    const audit = await reqL("/api/admin/audit", { cookie: sess.tpoi });
+    assert.equal(audit.status, 200);
+  });
+});

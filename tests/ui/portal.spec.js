@@ -7,6 +7,11 @@
   bookmarks, account settings and route guards from a user's point of view.
 */
 import { test, expect } from "@playwright/test";
+import { spawn, execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 async function signIn(page, email, password) {
   await page.goto("/signin");
@@ -364,4 +369,45 @@ test("key pages have no horizontal overflow at 390px", async ({ page }) => {
   await page.goto("/");
   await signIn(page, "student@vjti.ac.in", "Student123!");
   await assertNoOverflow("/my-applications");
+});
+
+
+test("launch mode home page hides placement sections", async ({ browser }) => {
+  const root = resolve(fileURLToPath(new URL("../..", import.meta.url)));
+  const tempDir = mkdtempSync(join(tmpdir(), "vjti-launch-ui-"));
+  const dbPath = join(tempDir, "placements.db");
+  execFileSync(process.execPath, ["server/seed-demo.js"], {
+    cwd: root, env: { ...process.env, DB_PATH: dbPath }, stdio: "pipe",
+  });
+  const child = spawn(process.execPath, ["server/index.js"], {
+    cwd: root,
+    env: { ...process.env, DB_PATH: dbPath, API_PORT: "3109", NODE_ENV: "production", JWT_SECRET: "ui-test-secret-key-that-is-at-least-32-chars", APP_MODE: "launch" },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  await new Promise((resolveReady, reject) => {
+    let buffer = "";
+    const timer = setTimeout(() => reject(new Error("launch UI server did not start")), 15000);
+    child.stdout.on("data", (chunk) => {
+      buffer += chunk.toString();
+      if (buffer.includes("listening on http://localhost:3109")) { clearTimeout(timer); resolveReady(); }
+    });
+    child.once("exit", (code) => { clearTimeout(timer); reject(new Error("exit "+code)); });
+  });
+  try {
+    const context = await browser.newContext({ baseURL: "http://127.0.0.1:3109" });
+    const page = await context.newPage();
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Interview experiences from VJTI seniors, for juniors" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Share your experience" })).toBeVisible();
+    await expect(page.locator(".stat-card")).toHaveCount(0);
+    await expect(page.locator(".company-table, .company-cards-mobile")).toHaveCount(0);
+    await expect(page.getByText(/Placement statistics, company data/i)).toHaveCount(0);
+    await expect(page.locator('nav a', { hasText: 'Companies' })).toHaveCount(0);
+    await expect(page.locator('nav a', { hasText: 'Drives' })).toHaveCount(0);
+    await context.close();
+  } finally {
+    child.kill();
+    await new Promise((done) => child.once("exit", done));
+    rmSync(tempDir, { recursive: true, force: true });
+  }
 });
