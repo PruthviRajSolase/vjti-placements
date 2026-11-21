@@ -1529,10 +1529,18 @@ describe("database migrations", () => {
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
+      CREATE TABLE branch_stats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        year TEXT NOT NULL,
+        branch TEXT NOT NULL,
+        percent INTEGER NOT NULL,
+        UNIQUE (year, branch)
+      );
       INSERT INTO users (full_name, email, password_hash, role, branch, graduation_year)
         VALUES ('Old Student', 'old@vjti.ac.in', 'x', 'student', 'IT', '2027');
       INSERT INTO drives (company, role, eligibility_branches, graduation_years)
         VALUES ('Test Co', 'Engineer', '["IT","Mech"]', '["2027"]');
+      INSERT INTO branch_stats (year, branch, percent) VALUES ('2026', 'Computer Engineering', 91);
     `);
     oldDb.close();
 
@@ -1543,12 +1551,17 @@ describe("database migrations", () => {
       const version = db.prepare("PRAGMA user_version").get().user_version;
       const user = db.prepare("SELECT branch, token_version FROM users WHERE email = ?").get("old@vjti.ac.in");
       const drive = db.prepare("SELECT eligibility_branches FROM drives WHERE company = ?").get("Test Co");
+      const branch = db.prepare("SELECT year, branch, percent, total_students, placed_students FROM branch_stats WHERE year = ?").get("2026");
       if (version !== 3) throw new Error("version=" + version);
       if (user.token_version !== 0) throw new Error("token=" + user.token_version);
       if (user.branch !== "Information Technology") throw new Error("branch=" + user.branch);
       if (drive.eligibility_branches !== JSON.stringify(["Information Technology","Mechanical Engineering"])) {
         throw new Error("drive=" + drive.eligibility_branches);
       }
+      if (!branch) throw new Error("missing branch_stats row");
+      if (branch.total_students !== 100) throw new Error("total=" + branch.total_students);
+      if (branch.placed_students !== 91) throw new Error("placed=" + branch.placed_students);
+      if (Number(branch.percent) !== 91) throw new Error("percent=" + branch.percent);
       db.close();
     `], { cwd: root, env: { ...process.env, DB_PATH: oldPath }, stdio: "pipe" });
   });
