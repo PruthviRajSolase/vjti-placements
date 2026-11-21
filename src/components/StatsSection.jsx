@@ -3,8 +3,7 @@
 
   {year} inside JSX = "inject this JavaScript value here".
   {cards.map(...)} = inject a whole ARRAY of elements.
-  This replaces the vanilla renderStats() + innerHTML + join("")
-  dance — React joins and injects for us.
+  React renders the mapped cards directly.
 */
 import { useContent } from "../ContentContext.jsx";
 

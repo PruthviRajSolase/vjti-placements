@@ -1,12 +1,6 @@
 /*
   ============================================================
-  STEP 7 — src/data.js (same data as vanilla, now as ES MODULES)
-
-  The ONE new concept: export / import.
-  - `export const X` = "other files may import X from here"
-  - `import { X } from "./data.js"` = receive it elsewhere.
-  This replaces the load-order dependency we had in vanilla
-  (where data.js HAD to load before script.js).
+  src/data.js — shared placement data and slug helpers (ES modules).
   ============================================================
 */
 

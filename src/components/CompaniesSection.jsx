@@ -1,9 +1,7 @@
 /*
   ============================================================
   STEP 7 — CompaniesSection.jsx: THE STAR COMPONENT.
-  Compare line-by-line with vanilla script.js. Everything about
-  search + pills + filtering is now ~40% shorter, with NO manual
-  re-render calls, NO delegation, NO dataset reads.
+  Renders the companies table with search and branch filters.
   ============================================================
 
   KEY CONCEPTS:

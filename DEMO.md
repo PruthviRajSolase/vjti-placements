@@ -73,7 +73,7 @@ This is the interaction to linger on. It answers the TPO's real question: *"Do I
 > "I changed the number as TPO staff, saved, and the public site updated — no code change, no developer, no redeploy. Companies and branch percentages work the same way."
 
 7. Go back to **Admin**. In the company form, fill:
-   - Company name: `Infosis Technologies`
+   - Company name: `InnovaSoft Technologies`
    - Role: `Software Engineer`
    - Package: `10.5`
    - Hired: `12`
@@ -128,12 +128,12 @@ Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) — §3b
 
 1. Click **Drives** in the nav. Three drives are already published with package, location, deadline countdown and eligibility pills.
    > "This is the live board, not last year's history. The TPO publishes one record here and every student sees the same deadline and eligibility."
-2. Type `tata` in **Search drives** → only **Harbor Automotive** remains. Clear the search, tick **Only drives for my batch** → all three still show because Asha is IT/2027 and each drive includes her batch or is open to all. Say that this filter reads the account's branch/year from the session, not from the browser.
+2. Type `harbor` in **Search drives** → only **Harbor Automotive** remains. Clear the search, tick **Only drives for my batch** → all three still show because Asha is IT/2027 and each drive includes her batch or is open to all. Say that this filter reads the account's branch/year from the session, not from the browser.
 3. Northbridge Software and Summit Bank Group already say **Tracking ✓** (seeded applications). Click **+ Track application** on **Harbor Automotive** → the app creates a private row on the server and opens `/my-applications` with a green *"Now tracking Harbor Automotive"* notice.
 4. The board has columns **Applied → Online assessment → Interview → Offer** (plus Rejected/Withdrawn when used). On the **Summit Bank Group** card, change **Stage** to `Interview`, type a private note like `Technical round confirmed.`, click **Save** → the card moves columns.
    > "Each student owns their own pipeline. The notes are private — they are stored against my account and the API refuses to read or change anyone else's row."
 5. **Sign out**, sign in as `contributor@vjti.ac.in` / `Contributor123!`, open `/my-applications` → the board is empty. Sign back out. That proves the rows are per user, not a shared list.
-6. (Optional, 30 seconds) Sign in as `tpo@vjti.ac.in` / `Tpo1234!`, open **Admin → Placement drives**. Point at the **Tracking** and **Self-reported offers** columns (Tata now has one applicant), then publish a test drive with deadline `2026-12-31`, eligible branch `Information Technology` and year `2027`. The green confirmation says eligible students were notified; sign in as the student again and the bell shows a **New drive** message linking to `/drives`.
+6. (Optional, 30 seconds) Sign in as `tpo@vjti.ac.in` / `Tpo1234!`, open **Admin → Placement drives**. Point at the **Tracking** and **Self-reported offers** columns (Harbor Automotive now has one applicant), then publish a test drive with deadline `2026-12-31`, eligible branch `Information Technology` and year `2027`. The green confirmation says eligible students were notified; sign in as the student again and the bell shows a **New drive** message linking to `/drives`.
 
 > "Students get a concrete next action and a private tracker; TPO gets one publication point with audit entries and targeted alerts instead of a WhatsApp forward."
 
@@ -178,10 +178,10 @@ No extra sign-in: this page is public, and you are still signed in as TPO from �
 
 1. Scroll to the bottom of the homepage: **What seniors say to prepare** shows the top three actionable themes with counts and a one-line action each, e.g. *"Mentioned in 4 of 7 write-ups"*. Point out that the counts include the Peregrine Systems write-up you just approved.
 2. Click **Full prep plan →** (or the **Prep insights** nav link) → `/prep-insights`.
-   - The three stat cards read **7 approved write-ups**, distinct themes and common themes.
+   - The three stat cards read **6 approved write-ups**, distinct themes and common themes.
    - **Your prep checklist** is the five most repeated *actionable* themes with a concrete next step each.
    - **All themes** shows a frequency bar per theme, the companies that mentioned it, and links to the source write-ups (`#id`) or a pre-filtered experience list.
-3. Point at **DSA**: `4 of 7 · 57%`, seen at Summit Bank Group, Northbridge Software, HexaNet Systems and Ironvale Partners. Click one `#id` link → the approved write-up it came from.
+3. Point at **DSA**: `4 of 6 · 67%`, seen at Summit Bank Group, Northbridge Software, HexaNet Systems and Ironvale Partners. Click one `#id` link → the approved write-up it came from.
 4. Scroll to a process tag like **On-campus**: it appears at the top of the ranking but is marked as a process fact, not a prep task, so it is excluded from the checklist.
 5. Say the trust line: *"Only approved write-ups feed this. The Bluepeak Retail and Silvergate Bank submissions still waiting in the review queue cannot influence a single number, and no real name or email is exposed."*
 
@@ -237,14 +237,14 @@ You are still signed in as **TPOI** from §5. These two features make the workfl
 
    ```csv
    name,role,package,hired,branches
-   Wipro,Project Engineer,6.5,18,"CS,IT,Extc"
+   Novacrest Technologies,Project Engineer,6.5,18,"CS,IT,Extc"
    ```
 
    Point at the quotes around `CS,IT,Extc`: *"commas inside a field must be quoted, so branches stay one value."*
-7. Click **Import into 2026** → *"Imported 1 row(s): 1 new, 0 updated."* The company table shows **Wipro**; click **Home** to see it in the public table with its branch tags.
+7. Click **Import into 2026** → *"Imported 1 row(s): 1 new, 0 updated."* The company table shows **Novacrest Technologies**; click **Home** to see it in the public table with its branch tags.
 8. Now paste `name,role` + a row and click import again → red error **"Missing CSV column"** with the expected header listed.
    > "Every row is validated first. If anything is wrong, nothing is written — no half-imported year."
-9. Re-paste the good CSV but change `6.5` to `7.0` and import → *"Imported 1 row(s): 0 new, 1 updated."* There is still exactly one Wipro row.
+9. Re-paste the good CSV but change `6.5` to `7.0` and import → *"Imported 1 row(s): 0 new, 1 updated."* There is still exactly one Novacrest Technologies row.
    > "Re-importing an updated spreadsheet edits the existing records instead of creating duplicates. That's how the office can keep a year's list in one sheet."
 
 ---
@@ -259,7 +259,7 @@ Sign in as `tpo@vjti.ac.in` / `Tpo1234!` if needed (end of §5b left you signed 
 2. **CSV import:** in **Import alumni contacts (CSV)**, paste:
    ```csv
    full_name,email,branch,graduation_year,placed_company,current_company
-   Karan Mehta,karan.mehta.alumni@example.com,IT,2022,Infosys,Infosys
+   Karan Mehta,karan.mehta.alumni@example.com,IT,2022,Asterline Consulting,Asterline Consulting
    ```
    Click **Import contacts** → *"Imported 1 contact(s): 1 new, 0 updated."* Paste a bad header like `email,company` and try again → red error with the expected columns.
    > "TPO can upload their alumni/placed-student list. Re-importing the same email updates contact details but keeps outreach history."

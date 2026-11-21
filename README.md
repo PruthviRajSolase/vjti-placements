@@ -105,7 +105,6 @@ src/              React app (pages, components, contexts, styles)
 server/           Express API, SQLite schema, auth and demo seed
 tests/            API integration tests and Playwright flows
 scripts/          Helper for the browser-test server
-vanilla-version/  Archived plain HTML/CSS/JS build from the tutorial
 .github/          CI workflow
 DEMO.md           Presentation click-through script
 DEVELOPMENT.md    Detailed technical notes and development log

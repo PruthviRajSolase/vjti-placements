@@ -5,15 +5,13 @@ import reactRefresh from "eslint-plugin-react-refresh";
 
 /*
   Flat ESLint config (ESLint 9+). Lints the real app, server, tests and
-  config files. The archived vanilla version is intentionally excluded —
-  it is a teaching snapshot, not maintained code.
+  config files.
 */
 export default [
   {
     ignores: [
       "node_modules/**",
       "dist/**",
-      "vanilla-version/**",
       "playwright-report/**",
       "test-results/**",
     ],

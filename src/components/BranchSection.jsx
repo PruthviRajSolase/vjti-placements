@@ -1,7 +1,6 @@
 /*
   STEP 7 — BranchSection.jsx: props in, JSX out.
-  The green-bolding business rule lives in JSX via a ternary —
-  same logic as vanilla renderBranches(), zero getElementById.
+  The green-bolding business rule lives in JSX via a ternary.
 */
 import { useContent } from "../ContentContext.jsx";
 

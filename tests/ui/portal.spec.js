@@ -168,7 +168,7 @@ test("TPO manages alumni outreach import and bulk actions", async ({ page }) => 
   await expect(page.locator(".admin-message-details li").first()).toContainText("full_name");
 
   await alumniTextarea.fill(
-    "full_name,email,branch,graduation_year,placed_company,current_company\nUI Alumni,ui.alumni@example.com,IT,2022,Infosys,Infosys"
+    "full_name,email,branch,graduation_year,placed_company,current_company\nUI Alumni,ui.alumni@example.com,IT,2022,Asterline Consulting,Asterline Consulting"
   );
   await importCard.getByRole("button", { name: "Import contacts" }).click();
   await expect(page.locator(".admin-message.success")).toContainText("Imported 1 contact(s)");

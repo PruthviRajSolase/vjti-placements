@@ -18,13 +18,12 @@ This file holds the detailed internals, design decisions, tutorial-style explana
 6. [State ownership](#6-state-ownership)
 7. [Data model](#7-data-model)
 8. [Design system & styling](#8-design-system--styling)
-9. [Archived vanilla version](#9-archived-vanilla-version)
-10. [Tutorial progression](#10-tutorial-progression)
-11. [Current status & known limitations](#11-current-status--known-limitations)
-12. [Future work / roadmap](#12-future-work--roadmap)
-13. [Product specification](#13-product-specification)
-14. [Changelog & development log](#14-changelog--development-log)
-15. [Demo runbook (DEMO.md)](#15-demo-runbook-demomd)
+9. [Tutorial progression](#9-tutorial-progression)
+10. [Current status & known limitations](#10-current-status--known-limitations)
+11. [Future work / roadmap](#11-future-work--roadmap)
+12. [Product specification](#12-product-specification)
+13. [Changelog & development log](#13-changelog--development-log)
+14. [Demo runbook (DEMO.md)](#14-demo-runbook-demomd)
 
 ---
 
@@ -113,11 +112,6 @@ D:\Placement
 ├── tests/
 │   ├── api.test.js                # 48 HTTP integration tests on a throwaway DB (npm test)
 │   └── ui/portal.spec.js          # 14 Playwright browser flows (npm run test:ui)
-├── vanilla-version/               # ARCHIVED Steps 1–6, plain HTML/CSS/JS
-│   ├── index.html
-│   ├── style.css
-│   ├── data.js
-│   └── script.js
 ├── server/                        # Express API (Phases 1–8)
 │   ├── index.js                   # routes + production static/SPA fallback
 │   ├── start.js                   # production entry point (NODE_ENV=production)
@@ -453,19 +447,11 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 
 ---
 
-## 9. Archived vanilla version
-
-`vanilla-version/` holds the original plain HTML/CSS/JS build from Steps 1–6, kept for side-by-side comparison. It uses empty containers filled by `renderStats()`, `renderCompanies()`, `renderBranchPills()`, `renderBranches()`, `renderExperiences()`, manual state variables, `innerHTML`, event delegation and `data-*` attributes. It needs no build step — open `vanilla-version/index.html` directly.
-
----
-
-## 10. Tutorial progression
+## 9. Tutorial progression
 
 | Step | Content | Where |
 |---|---|---|
-| 1–4 | HTML structure, CSS, responsive design | `vanilla-version/` |
-| 5 | Data + rendering functions | `vanilla-version/data.js`, `script.js` |
-| 6 | State, events, search/filtering, year tabs | `vanilla-version/script.js` |
+| 1–6 | Plain HTML/CSS/JS prototype (archived, later removed from repo) | — |
 | 7 | React migration: components, JSX, props, hooks, ES module imports | `src/components/`, `src/data.js`, `src/index.css` |
 | 8 | React Router: routes, dynamic slug route, 404, extracted reusable components | `src/App.jsx`, `src/main.jsx`, `src/pages/` |
 | 9 | Client-side auth UI: controlled form, validation, shared user state, localStorage | `src/pages/SignInPage.jsx`, `App.jsx`, `Header.jsx`, `index.css` |
@@ -485,7 +471,7 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 
 ---
 
-## 11. Current status & known limitations
+## 10. Current status & known limitations
 
 **Working (demo slice):**
 - All routes (including `/drives`, `/my-applications`, `/notifications` and `/admin/alumni`); year switching; stats, company search/branch filters, branch table, company detail pages and the filterable write-up library now read from `GET /api/content`.
@@ -512,11 +498,11 @@ Public `experiences` contain only rows with `status = 'approved'`; anonymous row
 - Drives show eligibility and filter by it, but tracking a drive is not hard-gated by branch/batch; the TPO still owns eligibility decisions. There is no aggregate funnel/dashboard yet — `applicantCount` and `offerCount` are the only staff-side metrics.
 - Vite dev server must be restarted after editing `vite.config.js` (stale proxy serves `index.html` for `/api/*`).
 - `npm audit` reports 4 high-severity advisories from `picomatch` (via `fdir`/`tinyglobby`/Vite). They affect **dev tooling only** — the Express production server has no vulnerable dependency. No patched `picomatch` version exists upstream; older Vite majors were checked and trade this for more serious dev-server advisories, so Vite 7.3.8 was kept deliberately. Do not expose the Vite dev server to an untrusted network.
-- Minor behaviour difference from vanilla: homepage search text is not reset when the year changes (harmless with the current branch data).
+- Minor behaviour difference from the early prototype: homepage search text is not reset when the year changes (harmless with the current branch data).
 
 ---
 
-## 12. Future work / roadmap
+## 11. Future work / roadmap
 
 Candidate next steps, in no particular order:
 
@@ -529,7 +515,7 @@ Candidate next steps, in no particular order:
 
 ---
 
-## 13. Product specification
+## 12. Product specification
 
 This is the **real build** the static demo is being converted into: a placement portal for students (stats, visiting companies, interview experiences), with staff-managed content and a review workflow for student-submitted experiences.
 
@@ -605,7 +591,7 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 
 ---
 
-## 14. Changelog & development log
+## 13. Changelog & development log
 
 > **Working agreement:** after every task, add a dated entry here describing what was done, which files changed, and how it was verified. Keep older entries; never rewrite history.
 
@@ -677,7 +663,7 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 
 ### 2026-11-19 — Phase 7: browser tests, lint and CI
 
-- Added `@playwright/test`, ESLint 10 (`@eslint/js`, `globals`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`) and a flat `eslint.config.js`. `npm run lint` is clean across `src/`, `server/`, `tests/` and config files; the archived vanilla snapshot is deliberately ignored.
+- Added `@playwright/test`, ESLint 10 (`@eslint/js`, `globals`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`) and a flat `eslint.config.js`. `npm run lint` is clean across `src/`, `server/`, `tests/` and config files.
 - Added `playwright.config.js` and `tests/ui/portal.spec.js`: four real-browser flows covering API-backed public filters, private bookmark toggles and isolation, account settings, and route guards. `scripts/serve-ui-test.js` builds on a **throwaway** SQLite DB at port 3107 (`npm run test:ui` builds first, then Playwright starts the production server), so demo data is never modified.
 - Changed `npm test` to `node --test tests/api.test.js`. Node 24 auto-discovered the new Playwright spec under `tests/` and tried to run it with the wrong runner, which hung the suite; the API command is now explicit.
 - Added `.github/workflows/ci.yml` (Node 24, `npm ci`, lint, API tests, build, Chromium install, browser tests, failure report upload). Added Playwright output dirs to `.gitignore`. The workflow is ready but inactive until this folder becomes a git repo.
@@ -799,7 +785,7 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 
 - Created `README.md` as the single source of truth for project overview, features, architecture, data, roadmap and this changelog.
 - Established the rule: implement a task, then immediately update this file.
-- Verified by reading all source files in `src/`, `vanilla-version/`, root config files and the built `dist/` output.
+- Verified by reading all source files in `src/`, root config files and the built `dist/` output.
 
 ### 2026-11-18 — Step 9: Sign-in / auth UI
 
@@ -811,13 +797,13 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 
 ### Earlier sessions (dates not recorded) — Steps 1–8
 
-- Built the vanilla HTML/CSS/JS version (Steps 1–6), archived in `vanilla-version/`.
+- Built the initial plain HTML/CSS/JS prototype (Steps 1–6), later archived and removed from the repo.
 - Migrated to React + Vite with components, props, hooks and ES modules (Step 7).
 - Added React Router with homepage, companies grid, dynamic company detail, 404 and reusable `YearTabs` (Step 8).
 - Added Vite config, `index.html` shell, design-token stylesheet and responsive rules.
 
 ---
 
-## 15. Demo runbook (DEMO.md)
+## 14. Demo runbook (DEMO.md)
 
 [`DEMO.md`](./DEMO.md) is the presenter's script: how to reset the database, the exact accounts to use, a 5–6 minute click-through of the TPO admin flow, the live **submit → review → publish** workflow, the **staff controls / audit log** closer, the **saved companies / account settings** convenience pass and the **notifications / CSV import** pass, the role-guard check, the story to tell around each click, troubleshooting, and what to ask for at the end. Keep it next to `README.md` when presenting; this file remains the technical source of truth.
