@@ -37,6 +37,7 @@ Mount a persistent volume at the directory containing your SQLite DB (default: `
 | `SMTP_USER` | Yes in production launch | SMTP username. |
 | `SMTP_PASS` | Yes in production launch | SMTP password/App Password. |
 | `MAIL_FROM` | Yes in production launch | From address, e.g. `"VJTI Placements <no-reply@example.com>"`. |
+| `MAX_EMAILS_PER_DAY` | Optional | Global OTP/reset email cap per rolling 24h (default `150`). Per-address cap is 5/hour; warns at 80%. |
 | `TPOI_EMAIL` | For initial admin seed | Initial TPO in-charge email for `npm run seed:launch`. |
 | `TPOI_PASSWORD` | For initial admin seed | Initial TPO in-charge password (min 8 chars). |
 | `TPOI_NAME` | Optional | Initial TPO in-charge display name. |

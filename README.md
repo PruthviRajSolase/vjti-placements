@@ -66,6 +66,7 @@ Environment variables are optional for local development. Copy [`.env.example`](
 | `APP_MODE` | `demo` (default) or `launch`. Launch mode hides/disables TPO placement surfaces but keeps experience sharing, review, and admin accounts/audit. |
 | `TRUST_PROXY` | Express trust proxy setting for deployments behind a reverse proxy (`1`, `true`, or proxy IP). Needed so rate limiting sees real client IPs. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | SMTP settings for email verification and password reset OTPs. If SMTP is missing outside production, OTP/reset codes are logged to the server console. In production with `APP_MODE=launch`, missing SMTP settings cause startup to fail; never log OTP codes or SMTP secrets in production. |
+| `MAX_EMAILS_PER_DAY` | Global OTP/reset email cap per rolling 24h (default `150`). Per-address cap is 5/hour. |
 | `PLAYWRIGHT_CHANNEL` | Set to `msedge` to run browser tests in Edge on Windows |
 
 Restart Vite after editing `vite.config.js` — a stale dev server can serve `index.html` instead of JSON for `/api` calls.
@@ -80,7 +81,7 @@ Restart Vite after editing `vite.config.js` — a stale dev server can serve `in
 | `npm run build` | Production build into `dist/` |
 | `npm start` | Serve the API and built SPA from one Express process |
 | `npm run preview` | Preview the production build locally |
-| `npm test` | 93 API integration tests against a throwaway database |
+| `npm test` | 95 API integration tests against a throwaway database |
 | `npm run test:ui` | Build, then run 17 Playwright flows against a throwaway database |
 | `npm run lint` | ESLint across source, server, tests and config |
 | `npm run backup` | Write a timestamped SQLite backup to `server/data/backups/` (or `BACKUP_DIR`) |

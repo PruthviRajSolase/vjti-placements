@@ -131,6 +131,21 @@ function applyMigrations() {
     version = 5;
     db.exec(`PRAGMA user_version = ${version}`);
   }
+
+  if (version < 6) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS email_send_log (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        email      TEXT NOT NULL COLLATE NOCASE,
+        purpose    TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+    db.exec("CREATE INDEX IF NOT EXISTS idx_email_send_log_created_at ON email_send_log(created_at)");
+    db.exec("CREATE INDEX IF NOT EXISTS idx_email_send_log_email_created_at ON email_send_log(email, created_at)");
+    version = 6;
+    db.exec(`PRAGMA user_version = ${version}`);
+  }
 }
 
 applyMigrations();

@@ -42,6 +42,8 @@ const PORT = process.env.API_PORT === undefined
 const COLLEGE_DOMAIN = "@vjti.ac.in";
 export const APP_MODE = process.env.APP_MODE === "launch" ? "launch" : "demo";
 export const isLaunchMode = APP_MODE === "launch";
+const MAX_EMAILS_PER_DAY = Math.max(1, Number(process.env.MAX_EMAILS_PER_DAY || 150));
+const EMAILS_PER_ADDRESS_PER_HOUR = 5;
 
 const LAUNCH_DISABLED_PREFIXES = [
   "/api/drives",
@@ -139,6 +141,20 @@ async function createEmailOtp(email, purpose) {
       return { ok: false, error: "Please wait 60 seconds before requesting another code." };
     }
   }
+  const daily = db.prepare("SELECT COUNT(*) AS n FROM email_send_log WHERE created_at >= datetime('now', '-1 day')").get().n;
+  if (daily >= MAX_EMAILS_PER_DAY) {
+    return { ok: false, retryLater: true, error: "Email limit reached. Please try again later." };
+  }
+  if (daily >= Math.ceil(MAX_EMAILS_PER_DAY * 0.8)) {
+    console.warn(`[mail] daily email cap at ${daily}/${MAX_EMAILS_PER_DAY} (80% threshold reached)`);
+  }
+  const hourly = db.prepare(
+    "SELECT COUNT(*) AS n FROM email_send_log WHERE email = ? AND created_at >= datetime('now', '-1 hour')"
+  ).get(email).n;
+  if (hourly >= EMAILS_PER_ADDRESS_PER_HOUR) {
+    return { ok: false, retryLater: true, error: "Too many email requests for this address. Please try again later." };
+  }
+
   const code = generateOtpCode();
   const codeHash = await bcrypt.hash(code, 10);
   const expiresAt = new Date(now + 10 * 60 * 1000).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
@@ -148,6 +164,7 @@ async function createEmailOtp(email, purpose) {
       "INSERT INTO email_otps (email, purpose, code_hash, expires_at) VALUES (?, ?, ?, ?)"
     ).run(email, purpose, codeHash, expiresAt);
   });
+  db.prepare("INSERT INTO email_send_log (email, purpose) VALUES (?, ?)").run(email, purpose);
   const sent = await sendOtpEmail({ to: email, purpose, code });
   if (!sent.ok) {
     return { ok: false, error: sent.error || "We couldn't send the email right now. Please try again later.", sendFailed: true };
@@ -215,7 +232,7 @@ app.post("/api/auth/register", rateLimit("register"), async (req, res) => {
 
   const otp = await createEmailOtp(email, "verify_email");
   if (!otp.ok) {
-    const status = otp.sendFailed ? 503 : 201;
+    const status = otp.sendFailed ? 503 : otp.retryLater ? 429 : 201;
     return res.status(status).json({ needsVerification: true, email, error: otp.error, message: otp.error, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
   }
   res.status(201).json({ needsVerification: true, email, ...(otp.devCode ? { devCode: otp.devCode } : {}) });

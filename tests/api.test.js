@@ -1590,7 +1590,7 @@ describe("database migrations", () => {
       const user = db.prepare("SELECT branch, token_version FROM users WHERE email = ?").get("old@vjti.ac.in");
       const drive = db.prepare("SELECT eligibility_branches FROM drives WHERE company = ?").get("Test Co");
       const branch = db.prepare("SELECT year, branch, percent, total_students, placed_students FROM branch_stats WHERE year = ?").get("2026");
-      if (version !== 5) throw new Error("version=" + version);
+      if (version !== 6) throw new Error("version=" + version);
       if (user.token_version !== 0) throw new Error("token=" + user.token_version);
       if (user.branch !== "Information Technology") throw new Error("branch=" + user.branch);
       const verified = db.prepare("SELECT email_verified FROM users WHERE email = ?").get("old@vjti.ac.in");
@@ -1599,6 +1599,8 @@ describe("database migrations", () => {
       if (!otpTable) throw new Error("missing email_otps");
       const reportTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='experience_reports'").get();
       if (!reportTable) throw new Error("missing experience_reports");
+      const sendLogTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='email_send_log'").get();
+      if (!sendLogTable) throw new Error("missing email_send_log");
       if (drive.eligibility_branches !== JSON.stringify(["Information Technology","Mechanical Engineering"])) {
         throw new Error("drive=" + drive.eligibility_branches);
       }
@@ -2085,6 +2087,76 @@ describe('mailer', () => {
       assert.match(calls[1].text, /654321/);
     } finally {
       _resetTransporterForTest();
+    }
+  });
+});
+
+describe('email send caps', () => {
+  test('per-address hourly cap blocks OTP sends', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'vjti-cap-addr-'));
+    const capDb = join(dir, 'placements.db');
+    const capServer = spawn(process.execPath, ['server/index.js'], {
+      cwd: root,
+      env: { ...process.env, DB_PATH: capDb, API_PORT: '0', NODE_ENV: 'test', JWT_SECRET: 'test-secret-that-is-at-least-32-chars' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let capBase = '';
+    await new Promise((resolveReady, reject) => {
+      let buf = '';
+      const t = setTimeout(() => reject(new Error('cap server timeout')), 15000);
+      capServer.stdout.on('data', (d) => { buf += d.toString(); const m = buf.match(/http:\/\/localhost:(\d+)/); if (m) { capBase = 'http://127.0.0.1:' + m[1]; clearTimeout(t); resolveReady(); } });
+      capServer.once('exit', (c) => { clearTimeout(t); reject(new Error('exit ' + c)); });
+    });
+    try {
+      // Pre-fill 5 send log rows for same address in last hour.
+      const db = new DatabaseSync(capDb);
+      for (let i = 0; i < 5; i++) db.prepare("INSERT INTO email_send_log (email, purpose) VALUES (?, 'verify_email')").run('cap@vjti.ac.in');
+      db.close();
+      const res = await fetch(capBase + '/api/auth/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName: 'Cap User', email: 'cap@vjti.ac.in', password: 'Password123!' }),
+      });
+      const data = await res.json();
+      assert.ok([429,503].includes(res.status));
+      assert.match(data.error || data.message, /too many email requests|try again later/i);
+    } finally {
+      capServer.kill();
+      await new Promise((d) => capServer.once('exit', d));
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('global daily cap blocks sends and returns try again later', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'vjti-cap-global-'));
+    const capDb = join(dir, 'placements.db');
+    const capServer = spawn(process.execPath, ['server/index.js'], {
+      cwd: root,
+      env: { ...process.env, DB_PATH: capDb, API_PORT: '0', NODE_ENV: 'test', JWT_SECRET: 'test-secret-that-is-at-least-32-chars', MAX_EMAILS_PER_DAY: '2' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let capBase = '';
+    await new Promise((resolveReady, reject) => {
+      let buf = '';
+      const t = setTimeout(() => reject(new Error('cap server timeout')), 15000);
+      capServer.stdout.on('data', (d) => { buf += d.toString(); const m = buf.match(/http:\/\/localhost:(\d+)/); if (m) { capBase = 'http://127.0.0.1:' + m[1]; clearTimeout(t); resolveReady(); } });
+      capServer.once('exit', (c) => { clearTimeout(t); reject(new Error('exit ' + c)); });
+    });
+    try {
+      const db = new DatabaseSync(capDb);
+      db.prepare("INSERT INTO email_send_log (email, purpose) VALUES ('a@vjti.ac.in', 'verify_email')").run();
+      db.prepare("INSERT INTO email_send_log (email, purpose) VALUES ('b@vjti.ac.in', 'verify_email')").run();
+      db.close();
+      const res = await fetch(capBase + '/api/auth/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName: 'Cap User', email: 'capg@vjti.ac.in', password: 'Password123!' }),
+      });
+      const data = await res.json();
+      assert.ok([429,503].includes(res.status));
+      assert.match(data.error || data.message, /try again later/i);
+    } finally {
+      capServer.kill();
+      await new Promise((d) => capServer.once('exit', d));
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });
