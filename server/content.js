@@ -199,6 +199,23 @@ export function getPublicContent() {
 }
 
 // Raw rows (with ids) for the admin panel.
+function shapeBranchStat(row) {
+  const totalStudents = Number(row.total_students ?? 0);
+  const placedStudents = Number(row.placed_students ?? 0);
+  const percent = totalStudents > 0
+    ? Math.round((placedStudents / totalStudents) * 1000) / 10
+    : Number(row.percent ?? 0);
+  return {
+    id: row.id,
+    year: row.year,
+    branch: row.branch,
+    totalStudents,
+    placedStudents,
+    unplacedStudents: Math.max(0, totalStudents - placedStudents),
+    percent,
+  };
+}
+
 export function getRawContent() {
   return {
     stats: db.prepare("SELECT * FROM stats ORDER BY year DESC").all(),
@@ -206,7 +223,7 @@ export function getRawContent() {
       "SELECT * FROM companies ORDER BY year DESC, package_lpa DESC"
     ).all().map((row) => ({ ...row, branches: parseList(row.branches).join(", ") })),
     branchStats: db.prepare(
-      "SELECT * FROM branch_stats ORDER BY year DESC, percent DESC"
-    ).all(),
+      "SELECT * FROM branch_stats ORDER BY year DESC, percent DESC, branch ASC"
+    ).all().map(shapeBranchStat),
   };
 }

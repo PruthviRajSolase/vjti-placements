@@ -536,31 +536,31 @@ app.put("/api/admin/branch-stats/:year", ...admin, (req, res) => {
   if (!/^\d{4}$/.test(year)) return res.status(400).json({ error: "Invalid year." });
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
   const clean = [];
+  const seen = new Set();
 
   for (const r of rows) {
-    const branch = text(r?.branch, 80);
+    const branch = normalizeBranch(text(r?.branch, 80));
     if (!branch) continue;
-
-    const hasTotals = r?.totalStudents !== undefined || r?.placedStudents !== undefined;
-    let totalStudents;
-    let placedStudents;
-    if (hasTotals) {
-      totalStudents = number(r?.totalStudents, NaN);
-      placedStudents = number(r?.placedStudents, NaN);
-      if (!Number.isInteger(totalStudents) || totalStudents < 0
-        || !Number.isInteger(placedStudents) || placedStudents < 0) {
-        return res.status(400).json({ error: `Enter whole numbers for ${branch} student counts.` });
-      }
-      if (placedStudents > totalStudents) {
-        return res.status(400).json({ error: `Placed students cannot exceed total students for ${branch}.` });
-      }
-    } else {
-      // Backward compat for old clients sending percent only.
-      const percent = Math.min(100, Math.max(0, number(r?.percent)));
-      totalStudents = 100;
-      placedStudents = Math.round(percent);
+    if (!BRANCHES.includes(branch)) {
+      return res.status(400).json({ error: `Select a valid branch name: ${branch}.` });
+    }
+    if (seen.has(branch)) {
+      return res.status(400).json({ error: `Duplicate branch row: ${branch}.` });
     }
 
+    const totalStudents = number(r?.totalStudents, NaN);
+    const placedStudents = number(r?.placedStudents, NaN);
+    if (!Number.isInteger(totalStudents) || totalStudents < 0) {
+      return res.status(400).json({ error: `Total students for ${branch} must be a whole number 0 or greater.` });
+    }
+    if (!Number.isInteger(placedStudents) || placedStudents < 0) {
+      return res.status(400).json({ error: `Placed students for ${branch} must be a whole number 0 or greater.` });
+    }
+    if (placedStudents > totalStudents) {
+      return res.status(400).json({ error: `Placed students cannot exceed total students for ${branch}.` });
+    }
+
+    seen.add(branch);
     clean.push({
       branch,
       totalStudents,

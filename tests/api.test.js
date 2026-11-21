@@ -1431,6 +1431,77 @@ describe("production seed guards", () => {
   });
 });
 
+describe("branch stats admin API", () => {
+  test("PUT /api/admin/branch-stats computes percent and returns shaped fields", async () => {
+    const res = await request("/api/admin/branch-stats/2026", {
+      method: "PUT",
+      cookie: session.tpo,
+      body: {
+        rows: [
+          { branch: "Computer Engineering", totalStudents: 120, placedStudents: 115 },
+          { branch: "Information Technology", totalStudents: 110, placedStudents: 104 },
+        ],
+      },
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.data.saved, 2);
+
+    const content = await request("/api/content");
+    const rows = content.data.branchStatsByYear["2026"];
+    const cs = rows.find((r) => r.branch === "Computer Engineering");
+    assert.equal(cs.totalStudents, 120);
+    assert.equal(cs.placedStudents, 115);
+    assert.equal(cs.unplacedStudents, 5);
+    assert.equal(cs.percent, 95.8);
+  });
+
+  test("rejects placed students greater than total students", async () => {
+    const res = await request("/api/admin/branch-stats/2026", {
+      method: "PUT",
+      cookie: session.tpo,
+      body: { rows: [{ branch: "Computer Engineering", totalStudents: 10, placedStudents: 11 }] },
+    });
+    assert.equal(res.status, 400);
+    assert.match(res.data.error, /cannot exceed total students/i);
+  });
+
+  test("rejects invalid branch, negative counts, and non-integer counts", async () => {
+    let res = await request("/api/admin/branch-stats/2026", {
+      method: "PUT",
+      cookie: session.tpo,
+      body: { rows: [{ branch: "Not A Branch", totalStudents: 10, placedStudents: 5 }] },
+    });
+    assert.equal(res.status, 400);
+    assert.match(res.data.error, /valid branch/i);
+
+    res = await request("/api/admin/branch-stats/2026", {
+      method: "PUT",
+      cookie: session.tpo,
+      body: { rows: [{ branch: "Computer Engineering", totalStudents: -1, placedStudents: 0 }] },
+    });
+    assert.equal(res.status, 400);
+
+    res = await request("/api/admin/branch-stats/2026", {
+      method: "PUT",
+      cookie: session.tpo,
+      body: { rows: [{ branch: "Computer Engineering", totalStudents: 10, placedStudents: 1.5 }] },
+    });
+    assert.equal(res.status, 400);
+  });
+
+  test("ignores client-supplied percent and computes it on the server", async () => {
+    const res = await request("/api/admin/branch-stats/2026", {
+      method: "PUT",
+      cookie: session.tpo,
+      body: { rows: [{ branch: "Computer Engineering", totalStudents: 100, placedStudents: 50, percent: 999 }] },
+    });
+    assert.equal(res.status, 200);
+    const content = await request("/api/content");
+    const cs = content.data.branchStatsByYear["2026"].find((r) => r.branch === "Computer Engineering");
+    assert.equal(cs.percent, 50);
+  });
+});
+
 describe("database migrations", () => {
   test("migrates an old-schema database and normalizes branches", () => {
     const oldPath = join(tempDir, "old.db");
