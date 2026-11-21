@@ -1479,3 +1479,42 @@ describe("backup script", () => {
     }
   });
 });
+
+describe("access-control matrix", () => {
+  const cases = [
+    { method: "GET", path: "/api/admin/content", allow: ["tpo", "tpoi"] },
+    { method: "PUT", path: "/api/admin/stats/bad-year", body: { studentsPlaced: 1, highest: "1", average: "1", companies: 1 }, allow: ["tpo", "tpoi"] },
+    { method: "POST", path: "/api/admin/companies", body: {}, allow: ["tpo", "tpoi"] },
+    { method: "POST", path: "/api/admin/companies/import", body: { year: "2026", csv: "" }, allow: ["tpo", "tpoi"] },
+    { method: "GET", path: "/api/admin/experiences", allow: ["tpo", "tpoi"] },
+    { method: "POST", path: "/api/admin/experiences/1/review", body: { action: "bogus" }, allow: ["tpo", "tpoi"] },
+    { method: "GET", path: "/api/admin/users", allow: ["tpo", "tpoi"] },
+    { method: "POST", path: "/api/admin/users", body: {}, allow: ["tpoi"] },
+    { method: "PUT", path: "/api/admin/users/1/role", body: { role: "invalid-role" }, allow: ["tpo", "tpoi"] },
+    { method: "GET", path: "/api/admin/audit", allow: ["tpoi"] },
+    { method: "GET", path: "/api/admin/drives", allow: ["tpo", "tpoi"] },
+    { method: "POST", path: "/api/admin/drives", body: {}, allow: ["tpo", "tpoi"] },
+    { method: "GET", path: "/api/admin/alumni", allow: ["tpo", "tpoi"] },
+    { method: "POST", path: "/api/admin/alumni/import", body: { csv: "" }, allow: ["tpo", "tpoi"] },
+    { method: "GET", path: "/api/bookmarks", allow: ["student", "contributor", "tpo", "tpoi"] },
+    { method: "PUT", path: "/api/me", body: { fullName: "" }, allow: ["student", "contributor", "tpo", "tpoi"] },
+    { method: "GET", path: "/api/notifications", allow: ["student", "contributor", "tpo", "tpoi"] },
+  ];
+
+  for (const c of cases) {
+    test(`${c.method} ${c.path} enforces role access`, async () => {
+      const anon = await request(c.path, { method: c.method, body: c.body });
+      assert.equal(anon.status, 401, `anon ${c.method} ${c.path}`);
+
+      for (const [role, cookie] of Object.entries(session)) {
+        const res = await request(c.path, { method: c.method, body: c.body, cookie });
+        if (c.allow.includes(role)) {
+          assert.notEqual(res.status, 401, `${role} should be authenticated for ${c.path}`);
+          assert.notEqual(res.status, 403, `${role} should be authorized for ${c.path}`);
+        } else {
+          assert.equal(res.status, 403, `${role} should be forbidden for ${c.path}`);
+        }
+      }
+    });
+  }
+});
