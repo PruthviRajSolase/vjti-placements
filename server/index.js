@@ -244,6 +244,44 @@ app.post("/api/auth/resend-verification", rateLimit("resend"), async (req, res) 
   res.json({ ok: true, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
 });
 
+app.post("/api/auth/forgot-password", rateLimit("forgot"), async (req, res) => {
+  const email = text(req.body?.email, 120).toLowerCase();
+  if (!email.endsWith(COLLEGE_DOMAIN)) {
+    return res.json({ ok: true });
+  }
+  const userRow = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+  if (userRow) {
+    const otp = await createEmailOtp(email, "reset_password");
+    if (!otp.ok) return res.status(429).json({ error: otp.error });
+    return res.json({ ok: true, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
+  }
+  res.json({ ok: true });
+});
+
+app.post("/api/auth/reset-password", rateLimit("reset"), async (req, res) => {
+  const email = text(req.body?.email, 120).toLowerCase();
+  const code = text(req.body?.code, 12);
+  const newPassword = typeof req.body?.newPassword === "string" ? req.body.newPassword : "";
+  if (!email.endsWith(COLLEGE_DOMAIN) || !/^\d{6}$/.test(code)) {
+    return res.status(400).json({ error: "Invalid or expired code." });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: "Password must be at least 8 characters." });
+  }
+  const userRow = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+  if (!userRow) return res.status(400).json({ error: "Invalid or expired code." });
+  const check = await verifyEmailOtp(email, "reset_password", code);
+  if (!check.ok) return res.status(400).json({ error: "Invalid or expired code." });
+  const hash = await bcrypt.hash(newPassword, 10);
+  withTransaction(() => {
+    db.prepare("UPDATE users SET password_hash = ?, token_version = token_version + 1, email_verified = 1, updated_at = datetime('now') WHERE id = ?").run(hash, userRow.id);
+    db.prepare("DELETE FROM email_otps WHERE email = ? AND purpose = 'reset_password'").run(email);
+  });
+  db.prepare("INSERT INTO audit_log (actor_id, action, target) VALUES (?, 'reset_password', ?)").run(userRow.id, email);
+  clearAuthCookie(res);
+  res.json({ ok: true });
+});
+
 app.post("/api/auth/login", rateLimit("login"), async (req, res) => {
   const email = text(req.body?.email, 120).toLowerCase();
   const password = typeof req.body?.password === "string" ? req.body.password : "";

@@ -54,6 +54,20 @@ export function AuthProvider({ children }) {
     });
   }
 
+  async function forgotPassword(email) {
+    return api("/auth/forgot-password", {
+      method: "POST",
+      body: { email },
+    });
+  }
+
+  async function resetPassword({ email, code, newPassword }) {
+    return api("/auth/reset-password", {
+      method: "POST",
+      body: { email, code, newPassword },
+    });
+  }
+
   async function signOut() {
     await api("/auth/logout", { method: "POST" });
     setUser(null);
@@ -66,7 +80,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, updateUser, verifyEmail, resendVerification }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, updateUser, verifyEmail, resendVerification, forgotPassword, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

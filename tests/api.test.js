@@ -1767,6 +1767,46 @@ describe("email verification OTP", () => {
   });
 });
 
+describe("password reset", () => {
+  test("forgot password does not reveal account existence", async () => {
+    const missing = await request("/api/auth/forgot-password", { method: "POST", body: { email: "missing@vjti.ac.in" } });
+    assert.equal(missing.status, 200);
+    assert.equal(missing.data.ok, true);
+    assert.equal(missing.data.devCode, undefined);
+  });
+
+  test("reset password sets new password, increments token_version, and kills old sessions", async () => {
+    const email = "resetflow@vjti.ac.in";
+    const reg = await request("/api/auth/register", { method: "POST", body: { fullName: "Reset Flow", email, password: "Password123!" } });
+    assert.equal(reg.status, 201);
+    const verify = await request("/api/auth/verify-email", { method: "POST", body: { email, code: reg.data.devCode } });
+    assert.equal(verify.status, 200);
+    const login = await request("/api/auth/login", { method: "POST", body: { email, password: "Password123!" } });
+    assert.equal(login.status, 200);
+    const oldCookie = login.cookie.split(";")[0];
+
+    const forgot = await request("/api/auth/forgot-password", { method: "POST", body: { email } });
+    assert.equal(forgot.status, 200);
+    assert.match(forgot.data.devCode || "", /^\d{6}$/);
+
+    const bad = await request("/api/auth/reset-password", { method: "POST", body: { email, code: forgot.data.devCode, newPassword: "short" } });
+    assert.equal(bad.status, 400);
+
+    const reset = await request("/api/auth/reset-password", { method: "POST", body: { email, code: forgot.data.devCode, newPassword: "NewPassword123!" } });
+    assert.equal(reset.status, 200);
+
+    const oldSession = await request("/api/auth/me", { cookie: oldCookie });
+    assert.equal(oldSession.status, 200);
+    assert.equal(oldSession.data.user, null);
+
+    const oldPw = await request("/api/auth/login", { method: "POST", body: { email, password: "Password123!" } });
+    assert.equal(oldPw.status, 401);
+
+    const newPw = await request("/api/auth/login", { method: "POST", body: { email, password: "NewPassword123!" } });
+    assert.equal(newPw.status, 200);
+  });
+});
+
 describe("launch mode", () => {
   let childL;
   let baseL;

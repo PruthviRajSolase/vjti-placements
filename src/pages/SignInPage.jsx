@@ -1,12 +1,6 @@
 /*
   Phase 2 — SignInPage.jsx
-  Now talks to the REAL API. No more "any password works" demo auth.
-
-  - Sign in: email + password -> POST /api/auth/login
-  - Sign up: college email + password -> POST /api/auth/register
-  - Verify: 6-digit email OTP before first sign-in
-  The server sets an httpOnly cookie; AuthContext remembers the returned
-  user so the Header and route guards can react immediately.
+  Handles sign-in, sign-up, email verification, and password reset.
 */
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -16,7 +10,7 @@ import { useAuth } from "../AuthContext.jsx";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function SignInPage() {
-  const { user, signIn, signUp, signOut, verifyEmail, resendVerification } = useAuth();
+  const { user, signIn, signUp, signOut, verifyEmail, resendVerification, forgotPassword, resetPassword } = useAuth();
   const [mode, setMode] = useState("signin");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,12 +22,15 @@ function SignInPage() {
   const [submitting, setSubmitting] = useState(false);
   const [verifyEmailAddr, setVerifyEmailAddr] = useState("");
   const [otpCode, setOtpCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
   const isSignUp = mode === "signup";
   const isVerify = mode === "verify";
+  const isForgot = mode === "forgot";
+  const isReset = mode === "reset";
 
   function switchMode(next) {
     setMode(next);
@@ -72,11 +69,7 @@ function SignInPage() {
     try {
       if (isSignUp) {
         const data = await signUp({
-          fullName: name,
-          email: mail,
-          password,
-          branch: college,
-          graduationYear: year,
+          fullName: name, email: mail, password, branch: college, graduationYear: year,
         });
         if (data?.needsVerification) {
           setVerifyEmailAddr(data.email || mail);
@@ -112,13 +105,9 @@ function SignInPage() {
 
   async function handleVerify(event) {
     event.preventDefault();
-    setError("");
-    setInfo("");
+    setError(""); setInfo("");
     const code = otpCode.trim();
-    if (!/^\d{6}$/.test(code)) {
-      setError("Enter the 6-digit code from your email.");
-      return;
-    }
+    if (!/^\d{6}$/.test(code)) { setError("Enter the 6-digit code from your email."); return; }
     setSubmitting(true);
     try {
       await verifyEmail(verifyEmailAddr, code);
@@ -130,25 +119,51 @@ function SignInPage() {
       setMode("signin");
       setEmail(verifyEmailAddr);
       setInfo("Email verified. Sign in with your password.");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setSubmitting(false); }
   }
 
   async function handleResend() {
-    setError("");
-    setInfo("");
+    setError(""); setInfo(""); setSubmitting(true);
+    try { await resendVerification(verifyEmailAddr); setInfo("If the account needs verification, a new code was sent."); }
+    catch (err) { setError(err.message); }
+    finally { setSubmitting(false); }
+  }
+
+  async function handleForgot(event) {
+    event.preventDefault();
+    setError(""); setInfo("");
+    const mail = email.trim().toLowerCase();
+    if (!mail.endsWith("@vjti.ac.in")) { setError("Use your @vjti.ac.in college email address."); return; }
     setSubmitting(true);
     try {
-      await resendVerification(verifyEmailAddr);
-      setInfo("If the account needs verification, a new code was sent.");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
+      await forgotPassword(mail);
+      setVerifyEmailAddr(mail);
+      setOtpCode("");
+      setNewPassword("");
+      setMode("reset");
+      setInfo("If an account exists for that email, a reset code was sent.");
+    } catch (err) { setError(err.message); }
+    finally { setSubmitting(false); }
+  }
+
+  async function handleReset(event) {
+    event.preventDefault();
+    setError(""); setInfo("");
+    const code = otpCode.trim();
+    if (!/^\d{6}$/.test(code)) { setError("Enter the 6-digit code from your email."); return; }
+    if (newPassword.length < 8) { setError("Password must be at least 8 characters."); return; }
+    setSubmitting(true);
+    try {
+      await resetPassword({ email: verifyEmailAddr, code, newPassword });
+      setMode("signin");
+      setEmail(verifyEmailAddr);
+      setPassword("");
+      setNewPassword("");
+      setOtpCode("");
+      setInfo("Password reset. Sign in with your new password.");
+    } catch (err) { setError(err.message); }
+    finally { setSubmitting(false); }
   }
 
   if (user) {
@@ -156,17 +171,11 @@ function SignInPage() {
       <section className="auth-page">
         <div className="auth-card">
           <h1>You're signed in</h1>
-          <p className="auth-sub">
-            Signed in as <strong>{user.email}</strong> — role: <strong>{user.role}</strong>
-          </p>
+          <p className="auth-sub">Signed in as <strong>{user.email}</strong> — role: <strong>{user.role}</strong></p>
           <div className="auth-actions">
-            {["tpo", "tpoi"].includes(user.role) && (
-              <Link className="btn-primary" to="/admin">Open admin panel</Link>
-            )}
+            {["tpo", "tpoi"].includes(user.role) && <Link className="btn-primary" to="/admin">Open admin panel</Link>}
             <Link className="btn-primary" to="/">Go to homepage</Link>
-            <button type="button" className="btn-signout" onClick={signOut}>
-              Sign out
-            </button>
+            <button type="button" className="btn-signout" onClick={signOut}>Sign out</button>
           </div>
         </div>
       </section>
@@ -178,32 +187,64 @@ function SignInPage() {
       <section className="auth-page">
         <div className="auth-card">
           <h1>Verify your email</h1>
-          <p className="auth-sub">
-            Enter the 6-digit code sent to <strong>{verifyEmailAddr}</strong>.
-          </p>
+          <p className="auth-sub">Enter the 6-digit code sent to <strong>{verifyEmailAddr}</strong>.</p>
           <form className="auth-form" onSubmit={handleVerify} noValidate>
             <div className="field">
               <label htmlFor="verify-code">Verification code</label>
-              <input
-                id="verify-code" type="text" inputMode="numeric" autoComplete="one-time-code"
-                maxLength={6} placeholder="123456" value={otpCode}
-                onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, ""))}
-              />
+              <input id="verify-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                placeholder="123456" value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))} />
             </div>
             {error && <p className="form-error" role="alert">{error}</p>}
             {info && <p className="auth-sub" role="status">{info}</p>}
-            <button className="btn-primary" type="submit" disabled={submitting}>
-              {submitting ? "Please wait…" : "Verify email"}
-            </button>
+            <button className="btn-primary" type="submit" disabled={submitting}>{submitting ? "Please wait…" : "Verify email"}</button>
           </form>
           <div className="auth-actions" style={{ marginTop: 12 }}>
-            <button type="button" className="btn-ghost" onClick={handleResend} disabled={submitting}>
-              Resend code
-            </button>
-            <button type="button" className="btn-ghost" onClick={() => switchMode("signin")} disabled={submitting}>
-              Back to sign in
-            </button>
+            <button type="button" className="btn-ghost" onClick={handleResend} disabled={submitting}>Resend code</button>
+            <button type="button" className="btn-ghost" onClick={() => switchMode("signin")} disabled={submitting}>Back to sign in</button>
           </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (isForgot || isReset) {
+    return (
+      <section className="auth-page">
+        <div className="auth-card">
+          <h1>{isForgot ? "Reset your password" : "Set a new password"}</h1>
+          <p className="auth-sub">
+            {isForgot ? "Enter your college email and we’ll send a reset code if an account exists." : <>Enter the code sent to <strong>{verifyEmailAddr}</strong> and your new password.</>}
+          </p>
+          <form className="auth-form" onSubmit={isForgot ? handleForgot : handleReset} noValidate>
+            {isForgot ? (
+              <div className="field">
+                <label htmlFor="reset-email">College email</label>
+                <input id="reset-email" type="email" autoComplete="email" placeholder="you@vjti.ac.in" value={email}
+                  onChange={(e) => setEmail(e.target.value)} />
+              </div>
+            ) : (
+              <>
+                <div className="field">
+                  <label htmlFor="reset-code">Reset code</label>
+                  <input id="reset-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                    placeholder="123456" value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))} />
+                </div>
+                <div className="field">
+                  <label htmlFor="reset-password">New password</label>
+                  <input id="reset-password" type="password" autoComplete="new-password" placeholder="At least 8 characters"
+                    value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                </div>
+              </>
+            )}
+            {error && <p className="form-error" role="alert">{error}</p>}
+            {info && <p className="auth-sub" role="status">{info}</p>}
+            <button className="btn-primary" type="submit" disabled={submitting}>
+              {submitting ? "Please wait…" : isForgot ? "Send reset code" : "Reset password"}
+            </button>
+          </form>
+          <p className="auth-switch">
+            <button type="button" onClick={() => switchMode("signin")}>Back to sign in</button>
+          </p>
         </div>
       </section>
     );
@@ -213,75 +254,56 @@ function SignInPage() {
     <section className="auth-page">
       <div className="auth-card">
         <h1>{isSignUp ? "Create your account" : "Welcome back"}</h1>
-        <p className="auth-sub">
-          {isSignUp
-            ? "Use your VJTI email to join the placement portal."
-            : "Sign in with your VJTI email and password."}
-        </p>
+        <p className="auth-sub">{isSignUp ? "Use your VJTI email to join the placement portal." : "Sign in with your VJTI email and password."}</p>
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {isSignUp && (
             <>
               <div className="field">
                 <label htmlFor="auth-name">Full name</label>
-                <input
-                  id="auth-name" type="text" autoComplete="name"
-                  placeholder="Asha Patil" value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                />
+                <input id="auth-name" type="text" autoComplete="name" placeholder="Asha Patil" value={fullName}
+                  onChange={(e) => setFullName(e.target.value)} />
               </div>
               <div className="field">
                 <label htmlFor="auth-branch">Branch (optional)</label>
-                <select
-                  id="auth-branch"
-                  value={branch}
-                  onChange={(event) => setBranch(event.target.value)}
-                >
+                <select id="auth-branch" value={branch} onChange={(e) => setBranch(e.target.value)}>
                   <option value="">Select a branch</option>
-                  {BRANCHES.map((item) => (
-                    <option key={item} value={item}>{item}</option>
-                  ))}
+                  {BRANCHES.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
               </div>
               <div className="field">
                 <label htmlFor="auth-year">Graduation year (optional)</label>
-                <input
-                  id="auth-year" type="text" inputMode="numeric" maxLength={4}
-                  placeholder="2027" value={graduationYear}
-                  onChange={(event) => setGraduationYear(event.target.value)}
-                />
+                <input id="auth-year" type="text" inputMode="numeric" maxLength={4} placeholder="2027" value={graduationYear}
+                  onChange={(e) => setGraduationYear(e.target.value)} />
               </div>
             </>
           )}
 
           <div className="field">
             <label htmlFor="auth-email">College email</label>
-            <input
-              id="auth-email" type="email" autoComplete="email"
-              placeholder="you@vjti.ac.in" value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
+            <input id="auth-email" type="email" autoComplete="email" placeholder="you@vjti.ac.in" value={email}
+              onChange={(e) => setEmail(e.target.value)} />
           </div>
 
           <div className="field">
             <label htmlFor="auth-password">Password</label>
-            <input
-              id="auth-password" type="password"
-              autoComplete={isSignUp ? "new-password" : "current-password"}
-              placeholder="At least 8 characters" value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <input id="auth-password" type="password" autoComplete={isSignUp ? "new-password" : "current-password"}
+              placeholder="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
 
           {error && <p className="form-error" role="alert">{error}</p>}
           {info && <p className="auth-sub" role="status">{info}</p>}
 
           <button className="btn-primary" type="submit" disabled={submitting}>
-            {submitting
-              ? "Please wait…"
-              : isSignUp ? "Create account" : "Sign in"}
+            {submitting ? "Please wait…" : isSignUp ? "Create account" : "Sign in"}
           </button>
         </form>
+
+        {!isSignUp && (
+          <p className="auth-switch">
+            <button type="button" onClick={() => { setEmail(email); switchMode("forgot"); }}>Forgot password?</button>
+          </p>
+        )}
 
         <p className="auth-switch">
           {isSignUp ? "Already have an account?" : "New here?"}{" "}
