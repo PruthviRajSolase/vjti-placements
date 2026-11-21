@@ -184,6 +184,12 @@ export function getPublicContent() {
     });
   }
 
+  for (const [year, rows] of Object.entries(branchStatsByYear)) {
+    if (rows.length > 0 && stats[year]) {
+      stats[year].studentsPlaced = rows.reduce((sum, row) => sum + row.placedStudents, 0);
+    }
+  }
+
   const years = Object.keys(stats).sort().reverse();
   const experiences = publicExperiences();
   return {

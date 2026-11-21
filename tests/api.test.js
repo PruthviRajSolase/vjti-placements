@@ -344,27 +344,20 @@ describe("permissions and admin content", () => {
     assert.equal((await request("/api/admin/ping", { cookie: session.student })).status, 403);
   });
 
-  test("TPO edits stats and the public site reflects the change", async () => {
-    const before = await request("/api/content");
-    const original = before.data.stats["2026"].studentsPlaced;
-    const saved = await request("/api/admin/stats/2026", {
+  test("headline Students placed is derived from branch rows when present, else falls back to stats", async () => {
+    const content = await request("/api/content");
+    const rows = content.data.branchStatsByYear["2026"] || [];
+    const sum = rows.reduce((n, r) => n + r.placedStudents, 0);
+    assert.equal(content.data.stats["2026"].studentsPlaced, sum);
+
+    // Year without branch rows falls back to stored stats.
+    const saved = await request("/api/admin/stats/2099", {
       method: "PUT", cookie: session.tpo,
-      body: {
-        studentsPlaced: original + 1, highest: "₹58 LPA",
-        average: "₹18 LPA", companies: 120,
-      },
+      body: { studentsPlaced: 77, highest: "₹10 LPA", average: "₹5 LPA", companies: 3 },
     });
     assert.equal(saved.status, 200);
     const after = await request("/api/content");
-    assert.equal(after.data.stats["2026"].studentsPlaced, original + 1);
-
-    await request("/api/admin/stats/2026", {
-      method: "PUT", cookie: session.tpo,
-      body: {
-        studentsPlaced: original, highest: "₹58 LPA",
-        average: "₹18 LPA", companies: 120,
-      },
-    });
+    assert.equal(after.data.stats["2099"].studentsPlaced, 77);
   });
 
   test("TPO creates, edits and deletes a company", async () => {
