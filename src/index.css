@@ -1010,6 +1010,29 @@ main > section, footer {
   padding: 80px 24px;
 }
 
+.page-loading-skeleton { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.skeleton-hero, .skeleton-card {
+  background: linear-gradient(90deg, var(--surface-alt), var(--border), var(--surface-alt));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s linear infinite;
+  border-radius: var(--radius);
+}
+.skeleton-hero { height: 180px; margin-bottom: 20px; }
+.skeleton-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin-bottom: 20px; }
+.skeleton-card { height: 110px; }
+@keyframes skeleton-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (max-width: 760px) { .skeleton-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+
+.empty-state-compact {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  background: var(--surface-alt);
+}
+
 .content-error h1 { color: var(--text); }
 
 /* Demo credential list on the sign-in card */
@@ -1128,12 +1151,16 @@ main > section, footer {
 .admin-actions button:hover { border-color: var(--accent); }
 
 .admin-message {
-  max-width: 1100px;
-  margin: 0 auto 20px;
-  padding: 12px 20px;
-  border-radius: var(--radius);
+  position: fixed;
+  top: 88px;
+  right: 16px;
+  z-index: 60;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border-radius: 12px;
   font-size: 0.92rem;
   font-weight: 600;
+  box-shadow: var(--shadow);
 }
 
 .admin-message.success {

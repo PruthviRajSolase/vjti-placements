@@ -443,7 +443,7 @@ export default function AdminAlumniPage() {
             ))}
           </div>
           {!selected ? (
-            <p className="no-results">Select a contact below to preview and send an email.</p>
+            <p className="empty-state-compact">Select a contact below to preview and send an email.</p>
           ) : (
             <div className="alumni-composer">
               <p className="section-sub"><strong>To:</strong> {selected.fullName} &lt;{selected.email}&gt;</p>

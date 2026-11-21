@@ -95,7 +95,14 @@ function App() {
 
   if (authLoading || contentLoading || !content) {
     return (
-      <main>
+      <main className="page-loading-skeleton" aria-live="polite">
+        <div className="skeleton-hero" />
+        <div className="skeleton-grid">
+          <div className="skeleton-card" />
+          <div className="skeleton-card" />
+          <div className="skeleton-card" />
+          <div className="skeleton-card" />
+        </div>
         <p className="page-loading">Loading placement data…</p>
       </main>
     );
