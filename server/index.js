@@ -6,7 +6,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import bcrypt from "bcryptjs";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BRANCHES, normalizeBranch } from "../src/branches.js";
@@ -1646,6 +1646,36 @@ app.use((err, _req, res, _next) => {
 const startupIssues = [];
 for (const issue of authStartupIssues()) startupIssues.push(issue);
 for (const issue of smtpStartupIssues()) startupIssues.push(issue);
+
+const isProductionLaunch = process.env.NODE_ENV === "production" && isLaunchMode;
+if (isProductionLaunch) {
+  if (!process.env.TRUST_PROXY) startupIssues.push("TRUST_PROXY must be set when running behind a reverse proxy (use 1, true, or a proxy IP).");
+  const dbFile = process.env.DB_PATH || join(dirname(fileURLToPath(import.meta.url)), "data", "placements.db");
+  try {
+    mkdirSync(dirname(dbFile), { recursive: true });
+    const probe = join(dirname(dbFile), `.write-probe-${process.pid}-${Date.now()}`);
+    writeFileSync(probe, "ok");
+    unlinkSync(probe);
+  } catch {
+    startupIssues.push(`DB_PATH directory is not writable: ${dirname(dbFile)}`);
+  }
+
+  const staffCount = db.prepare("SELECT COUNT(*) AS n FROM users WHERE role IN ('tpo','tpoi')").get().n;
+  if (staffCount === 0) {
+    const tpoiEmail = (process.env.TPOI_EMAIL || "").trim().toLowerCase();
+    const tpoiPassword = typeof process.env.TPOI_PASSWORD === "string" ? process.env.TPOI_PASSWORD : "";
+    const tpoiName = (process.env.TPOI_NAME || "TPO In-Charge").trim() || "TPO In-Charge";
+    if (!tpoiEmail) startupIssues.push("TPOI_EMAIL is required when the database has no staff account.");
+    if (!tpoiPassword || tpoiPassword.length < 8) startupIssues.push("TPOI_PASSWORD is required (min 8 chars) when the database has no staff account.");
+    if (startupIssues.length === 0) {
+      const hash = bcrypt.hashSync(tpoiPassword, 10);
+      db.prepare(
+        "INSERT INTO users (full_name, email, password_hash, role, email_verified) VALUES (?, ?, ?, 'tpoi', 1)"
+      ).run(tpoiName, tpoiEmail, hash);
+      console.log(`Created initial TPOI account for ${tpoiEmail}.`);
+    }
+  }
+}
 
 if (startupIssues.length > 0) {
   console.error("Startup check failed:");

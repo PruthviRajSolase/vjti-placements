@@ -2160,3 +2160,78 @@ describe('email send caps', () => {
     }
   });
 });
+
+describe('launch startup safety', () => {
+  test('reports all missing production+launch startup items at once', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'vjti-startup-all-'));
+    const env = { ...process.env, NODE_ENV: 'production', APP_MODE: 'launch', DB_PATH: join(dir, 'placements.db'), API_PORT: '0' };
+    delete env.JWT_SECRET;
+    delete env.TRUST_PROXY;
+    delete env.SMTP_HOST;
+    delete env.SMTP_PORT;
+    delete env.SMTP_USER;
+    delete env.SMTP_PASS;
+    delete env.MAIL_FROM;
+    delete env.TPOI_EMAIL;
+    delete env.TPOI_PASSWORD;
+    assert.throws(() => execFileSync(process.execPath, ['server/index.js'], { cwd: root, env, stdio: 'pipe' }), (err) => {
+      const out = String(err.stderr || '') + String(err.stdout || '');
+      assert.match(out, /Startup check failed/);
+      assert.match(out, /JWT_SECRET/);
+      assert.match(out, /SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and MAIL_FROM/);
+      assert.match(out, /TRUST_PROXY/);
+      assert.match(out, /TPOI_EMAIL/);
+      assert.match(out, /TPOI_PASSWORD/);
+      assert.doesNotMatch(out, /supersecret|password123/i);
+      return true;
+    });
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test('creates pre-verified TPOI on first production+launch start when no staff exists', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'vjti-startup-tpoi-'));
+    const dbPath = join(dir, 'placements.db');
+    const child = spawn(process.execPath, ['server/index.js'], {
+      cwd: root,
+      env: {
+        ...process.env,
+        NODE_ENV: 'production',
+        APP_MODE: 'launch',
+        DB_PATH: dbPath,
+        API_PORT: '0',
+        JWT_SECRET: 'test-secret-that-is-at-least-32-chars',
+        TRUST_PROXY: '1',
+        SMTP_HOST: 'smtp.example.com',
+        SMTP_PORT: '587',
+        SMTP_USER: 'u',
+        SMTP_PASS: 'p',
+        MAIL_FROM: 'Test <test@example.com>',
+        TPOI_EMAIL: 'first@vjti.ac.in',
+        TPOI_PASSWORD: 'FirstPassword123!',
+        TPOI_NAME: 'First Admin',
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let base = '';
+    await new Promise((resolveReady, reject) => {
+      let buf = '';
+      const t = setTimeout(() => reject(new Error('startup timeout')), 15000);
+      child.stdout.on('data', (d) => { buf += d.toString(); const m = buf.match(/http:\/\/localhost:(\d+)/); if (m) { base = 'http://127.0.0.1:' + m[1]; clearTimeout(t); resolveReady(); } });
+      child.once('exit', (c) => { clearTimeout(t); reject(new Error('exit ' + c + ' ' + buf)); });
+    });
+    try {
+      const db = new DatabaseSync(dbPath);
+      const user = db.prepare("SELECT email, role, email_verified, full_name FROM users WHERE email = ?").get('first@vjti.ac.in');
+      assert.equal(user.role, 'tpoi');
+      assert.equal(Number(user.email_verified), 1);
+      assert.equal(user.full_name, 'First Admin');
+      db.close();
+      const health = await (await fetch(base + '/api/health')).json();
+      assert.equal(health.ok, true);
+    } finally {
+      child.kill();
+      await new Promise((d) => child.once('exit', d));
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

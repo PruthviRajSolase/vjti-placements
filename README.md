@@ -64,7 +64,7 @@ Environment variables are optional for local development. Copy [`.env.example`](
 | `DB_PATH` | Override the SQLite file location (default `server/data/placements.db`) |
 | `API_PORT` | Change the API/production server port (default `3001`) |
 | `APP_MODE` | `demo` (default) or `launch`. Launch mode hides/disables TPO placement surfaces but keeps experience sharing, review, and admin accounts/audit. |
-| `TRUST_PROXY` | Express trust proxy setting for deployments behind a reverse proxy (`1`, `true`, or proxy IP). Needed so rate limiting sees real client IPs. |
+| `TRUST_PROXY` | Express trust proxy setting for deployments behind a reverse proxy (`1`, `true`, or proxy IP). Required in production + `APP_MODE=launch`; needed so rate limiting sees real client IPs. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | SMTP settings for email verification and password reset OTPs. If SMTP is missing outside production, OTP/reset codes are logged to the server console. In production with `APP_MODE=launch`, missing SMTP settings cause startup to fail; never log OTP codes or SMTP secrets in production. |
 | `MAX_EMAILS_PER_DAY` | Global OTP/reset email cap per rolling 24h (default `150`). Per-address cap is 5/hour. |
 | `PLAYWRIGHT_CHANNEL` | Set to `msedge` to run browser tests in Edge on Windows |

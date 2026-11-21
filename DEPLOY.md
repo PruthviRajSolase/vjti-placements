@@ -31,7 +31,7 @@ Mount a persistent volume at the directory containing your SQLite DB (default: `
 | `APP_MODE` | Yes | Set to `launch` for the student deployment. |
 | `JWT_SECRET` | Yes | Session signing secret. Must be at least 32 characters; server refuses to start in production without it. |
 | `DB_PATH` | Recommended | SQLite file path on a persistent volume, e.g. `/data/placements.db`. Default is `server/data/placements.db`. |
-| `TRUST_PROXY` | Recommended behind proxy | Express trust proxy setting (`1`, `true`, or proxy IP). Required so rate limiting sees real client IPs behind a host reverse proxy. |
+| `TRUST_PROXY` | Yes in production launch | Express trust proxy setting (`1`, `true`, or proxy IP). Required so rate limiting sees real client IPs behind a host reverse proxy. |
 | `SMTP_HOST` | Yes in production launch | SMTP host for verification/reset OTP emails (e.g. `smtp.gmail.com`). |
 | `SMTP_PORT` | Yes in production launch | SMTP port (`587` STARTTLS or `465` TLS). |
 | `SMTP_USER` | Yes in production launch | SMTP username. |
@@ -57,7 +57,7 @@ Create the initial admin account once:
 npm run seed:launch
 ```
 
-This creates/updates only the pre-verified TPOI account from `TPOI_*` env vars. It creates no sample content.
+This creates/updates only the pre-verified TPOI account from `TPOI_*` env vars. It creates no sample content. In production + launch, if the database has no staff account, startup can also create the initial pre-verified TPOI account when `TPOI_EMAIL` and `TPOI_PASSWORD` are set.
 
 ## Backups and restore
 

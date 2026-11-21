@@ -381,7 +381,7 @@ test("launch mode home page hides placement sections", async ({ browser }) => {
   });
   const child = spawn(process.execPath, ["server/index.js"], {
     cwd: root,
-    env: { ...process.env, DB_PATH: dbPath, API_PORT: "3109", NODE_ENV: "production", JWT_SECRET: "ui-test-secret-key-that-is-at-least-32-chars", APP_MODE: "launch", SMTP_HOST: "smtp.example.com", SMTP_PORT: "587", SMTP_USER: "test@example.com", SMTP_PASS: "test-pass", MAIL_FROM: "Test <test@example.com>" },
+    env: { ...process.env, DB_PATH: dbPath, API_PORT: "3109", NODE_ENV: "production", JWT_SECRET: "ui-test-secret-key-that-is-at-least-32-chars", APP_MODE: "launch", TRUST_PROXY: "1", SMTP_HOST: "smtp.example.com", SMTP_PORT: "587", SMTP_USER: "test@example.com", SMTP_PASS: "test-pass", MAIL_FROM: "Test <test@example.com>" },
     stdio: ["ignore", "pipe", "pipe"],
   });
   await new Promise((resolveReady, reject) => {
