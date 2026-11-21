@@ -113,7 +113,7 @@ function SubmitExperiencePage() {
           <label>
             Company <span className="required">*</span>
             <input
-              type="text" required maxLength={120} placeholder="e.g. Microsoft"
+              type="text" required maxLength={120} placeholder="e.g. Northbridge Software"
               value={form.company} onChange={(e) => update("company", e.target.value)}
             />
           </label>
@@ -149,7 +149,7 @@ function SubmitExperiencePage() {
           Title <span className="required">*</span>
           <input
             type="text" required maxLength={160}
-            placeholder="e.g. Microsoft — Software Engineer (2026)"
+            placeholder="e.g. Northbridge Software — Software Engineer (2026)"
             value={form.heading} onChange={(e) => update("heading", e.target.value)}
           />
         </label>

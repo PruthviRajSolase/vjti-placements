@@ -422,7 +422,7 @@ export default function AdminAlumniPage() {
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
               rows={4}
-              placeholder={'full_name,email,branch,graduation_year,placed_company,placed_role,placed_year,current_company\nNeha Kulkarni,neha@example.com,Computer Engineering,2022,Microsoft,SDE,2022,Microsoft'}
+              placeholder={'full_name,email,branch,graduation_year,placed_company,placed_role,placed_year,current_company\nNeha Kulkarni,neha@example.com,Computer Engineering,2022,Northbridge Software,SDE,2022,Northbridge Software'}
             />
           </label>
           <button className="btn-primary admin-submit" type="submit" disabled={busy}>Import contacts</button>

@@ -1,11 +1,11 @@
 /*
   ============================================================
   STEP 8 — CompanyPage.jsx: THE DYNAMIC ROUTE PAGE ⭐
-  URL: /company/:slug    e.g. /company/jp_morgan_chase_co
+  URL: /company/:slug    e.g. /company/summit_bank_group
   ============================================================
 
   useParams() gives us an object of the URL's dynamic segments:
-  for /company/microsoft it returns { slug: "microsoft" }.
+  for /company/northbridge_software it returns { slug: "northbridge_software" }.
   This is how ONE component serves EVERY company — the URL is
   the input, the page is the output.
 

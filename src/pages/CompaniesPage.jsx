@@ -7,7 +7,7 @@
 
   NEW CONCEPTS:
   - <Link to={...}> with a TEMPLATE LITERAL — every card gets
-    its own URL like /company/microsoft.
+    its own URL like /company/northbridge_software.
   - The year tabs here share App's state: change the year on
     THIS page and the homepage stats update too. One state,
     many pages.

@@ -15,12 +15,12 @@ npm run dev:full       # starts API (:3001) AND web (:5173) together
 - Open **http://localhost:5173/** in the browser you will present from.
 - Confirm the demo banner is visible at the top: *"Demo build — all statistics and experiences shown here are sample data, not official TPO records."*
 - Open `http://localhost:3001/api/content` in a second tab to prove the data comes from a database, not a hardcoded file.
-- `seed:demo` also inserts **six approved write-ups** (J.P. Morgan, Microsoft, L&T, Cisco, Morgan Stanley, Goldman Sachs) so the **Prep insights** page and the experience filters have a meaningful ranking. They are owned by the three seeded author accounts.
-- `seed:demo` also inserts **two pending submissions** — an anonymous Amazon one from the student and a named Barclays one from a contributor — so the review queue is never empty.
-- It also gives the student **two saved companies** (Microsoft and J.P. Morgan Chase & Co.), so the **Saved** page in §3b has content immediately.
+- `seed:demo` also inserts **six approved write-ups** (Summit Bank Group, Northbridge Software, Keystone Engineering, HexaNet Systems, Crestview Capital, Ironvale Partners) so the **Prep insights** page and the experience filters have a meaningful ranking. They are owned by the three seeded author accounts.
+- `seed:demo` also inserts **two pending submissions** — an anonymous Bluepeak Retail one from the student and a named Silvergate Bank one from a contributor — so the review queue is never empty.
+- It also gives the student **two saved companies** (Northbridge Software and Summit Bank Group), so the **Saved** page in §3b has content immediately.
 - The bell in the header starts with sample notifications: staff see two unread submissions, the student sees one unread approval and the contributor one already-read review note (§5b). Reseeding clears old notifications first, so the badge is predictable.
 - `seed:demo` also inserts sample **alumni outreach contacts** in different states (contacted/interested/referred/no-response, including **Meera Iyer** as not contacted), so §5c has data to select, bulk-update and track.
-- It also seeds **three upcoming drives** (Microsoft, J.P. Morgan Chase & Co., Tata Motors) and **two private student applications** (Applied and Online assessment), so §3c has content immediately.
+- It also seeds **three upcoming drives** (Northbridge Software, Summit Bank Group, Harbor Automotive) and **two private student applications** (Applied and Online assessment), so §3c has content immediately.
 - **Gotcha:** if `/api/content` in the browser shows HTML instead of JSON, the Vite dev server is stale. Stop it and rerun `npm run dev:full` (see §7).
 
 ### Demo accounts
@@ -44,11 +44,11 @@ All of these are created by `npm run seed:demo`; none are real people.
 Click through the **public homepage** (`/`):
 
 1. Point at the four stat cards (512 placed, ₹58 LPA highest, etc.).
-2. Scroll to **Companies — 2026**; type `micro` in the search box → list narrows to Microsoft; click the **IT** pill → filters combine.
-3. Click **Microsoft** → the detail page shows every year this company visited and its packages.
+2. Scroll to **Companies — 2026**; type `micro` in the search box → list narrows to Northbridge Software; click the **IT** pill → filters combine.
+3. Click **Northbridge Software** → the detail page shows every year this company visited and its packages.
 4. Scroll to **Interview Experiences** → six write-ups with names and branches.
-5. Type `dsa` in **Search** → four write-ups remain (J.P. Morgan, Microsoft, Cisco, Goldman Sachs). Click **Clear filters**.
-6. Choose **Microsoft** in the Company dropdown, then the **On-campus** topic pill → filters combine; point at the "Showing 1 of 6 write-ups" count. Mention that the filters live in the URL, so this view is shareable.
+5. Type `dsa` in **Search** → four write-ups remain (Summit Bank Group, Northbridge Software, HexaNet Systems, Ironvale Partners). Click **Clear filters**.
+6. Choose **Northbridge Software** in the Company dropdown, then the **On-campus** topic pill → filters combine; point at the "Showing 1 of 6 write-ups" count. Mention that the filters live in the URL, so this view is shareable.
 7. Click the card → the detail page shows the full write-up, clickable topic chips and related write-ups. Click **← All experiences** → the same filtered view comes back.
 8. Switch year tabs 2026 → 2025 → 2024.
 
@@ -113,7 +113,7 @@ You are still signed in as the **student**. These two screens are the "little th
 
 1. Click **Saved** in the nav. Two companies are already there from the seed.
    > "This shortlist is stored against my account on the server — not in the browser. Sign in as anyone else and it's empty."
-2. Click **Microsoft** on a saved row → the company detail page. Press the **★ Saved** button beside the back link to remove it → the row disappears from **Saved**. Go back to **Companies**, find Microsoft and press **☆ Save** on its card → it returns.
+2. Click **Northbridge Software** on a saved row → the company detail page. Press the **★ Saved** button beside the back link to remove it → the row disappears from **Saved**. Go back to **Companies**, find Northbridge Software and press **☆ Save** on its card → it returns.
 3. Click the **Hi, Asha Patil** chip in the header (or open `/account`). Change **Full name** to `Asha Patil (Final year)` and click **Save details**. The header name updates immediately. Point at the read-only college email and the note: email and role are managed by the placement office; the API ignores attempts to change them.
 4. In **Change password**, deliberately type a wrong current password and click **Update password** → *"Current password is incorrect."* Explain that the server verifies the old hash before accepting a new one, and that both profile and password changes appear in the audit log. Do **not** complete a real password change unless you reseed afterwards.
 5. Click **Sign out**. The **Saved** link disappears; visiting `/saved` directly sends you to sign-in.
@@ -128,9 +128,9 @@ Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) — §3b
 
 1. Click **Drives** in the nav. Three drives are already published with package, location, deadline countdown and eligibility pills.
    > "This is the live board, not last year's history. The TPO publishes one record here and every student sees the same deadline and eligibility."
-2. Type `tata` in **Search drives** → only **Tata Motors** remains. Clear the search, tick **Only drives for my batch** → all three still show because Asha is IT/2027 and each drive includes her batch or is open to all. Say that this filter reads the account's branch/year from the session, not from the browser.
-3. Microsoft and J.P. Morgan already say **Tracking ✓** (seeded applications). Click **+ Track application** on **Tata Motors** → the app creates a private row on the server and opens `/my-applications` with a green *"Now tracking Tata Motors"* notice.
-4. The board has columns **Applied → Online assessment → Interview → Offer** (plus Rejected/Withdrawn when used). On the **J.P. Morgan Chase & Co.** card, change **Stage** to `Interview`, type a private note like `Technical round confirmed.`, click **Save** → the card moves columns.
+2. Type `tata` in **Search drives** → only **Harbor Automotive** remains. Clear the search, tick **Only drives for my batch** → all three still show because Asha is IT/2027 and each drive includes her batch or is open to all. Say that this filter reads the account's branch/year from the session, not from the browser.
+3. Northbridge Software and Summit Bank Group already say **Tracking ✓** (seeded applications). Click **+ Track application** on **Harbor Automotive** → the app creates a private row on the server and opens `/my-applications` with a green *"Now tracking Harbor Automotive"* notice.
+4. The board has columns **Applied → Online assessment → Interview → Offer** (plus Rejected/Withdrawn when used). On the **Summit Bank Group** card, change **Stage** to `Interview`, type a private note like `Technical round confirmed.`, click **Save** → the card moves columns.
    > "Each student owns their own pipeline. The notes are private — they are stored against my account and the API refuses to read or change anyone else's row."
 5. **Sign out**, sign in as `contributor@vjti.ac.in` / `Contributor123!`, open `/my-applications` → the board is empty. Sign back out. That proves the rows are per user, not a shared list.
 6. (Optional, 30 seconds) Sign in as `tpo@vjti.ac.in` / `Tpo1234!`, open **Admin → Placement drives**. Point at the **Tracking** and **Self-reported offers** columns (Tata now has one applicant), then publish a test drive with deadline `2026-12-31`, eligible branch `Information Technology` and year `2027`. The green confirmation says eligible students were notified; sign in as the student again and the bell shows a **New drive** message linking to `/drives`.
@@ -143,15 +143,15 @@ Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) — §3b
 
 Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) after the §3c sign-out. If you skipped §3b/§3c, sign in now.
 
-1. Click **My experiences** in the nav. There's a seeded Amazon write-up with an amber **Awaiting review** badge and an **Anonymous** chip.
+1. Click **My experiences** in the nav. There's a seeded Bluepeak Retail write-up with an amber **Awaiting review** badge and an **Anonymous** chip.
 
    > "A student submitted this and chose to be anonymous. It's not on the public site yet — that's the whole point."
 
 2. Click **+ Share a new experience**. Point at the three-step strip (*You submit → TPO reviews → Published*), then fill in:
-   - Company: `Google`
+   - Company: `Peregrine Systems`
    - Role: `Software Engineer`
    - Placement year: `2026`
-   - Title: `Google — SDE (2026)`
+   - Title: `Peregrine Systems — SDE (2026)`
    - Body: `OA had two coding questions in 90 minutes, then three interview rounds on DSA, system design and behavioural questions. Timed mock interviews helped the most.`
    - Tags: `Online Assessment, System Design, On-campus`
    - Choose **Anonymous** — point at the note: *"the TPO still sees your real name."*
@@ -161,8 +161,8 @@ Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) after th
 
    > "This is the trust bit. The student asked for anonymity, so juniors see ‘Anonymous senior’ — but the TPO always knows who wrote it."
 
-6. Click **Approve & publish** on the Google submission. Green confirmation appears. Click **Home** → the new write-up is on the public page with the **Anonymous senior** byline, while the queue still shows the real name. If you scroll to **What seniors say to prepare**, the counts have already picked up the new tags — that is §4b.
-7. (Optional, 30 seconds) On the Barclays item, type a note and click **Request changes**. Sign in as `contributor@vjti.ac.in` / `Contributor123!`, open **My experiences** → the item now shows **Changes requested** and the exact feedback. Edit it → it goes back to **Awaiting review**.
+6. Click **Approve & publish** on the Peregrine Systems submission. Green confirmation appears. Click **Home** → the new write-up is on the public page with the **Anonymous senior** byline, while the queue still shows the real name. If you scroll to **What seniors say to prepare**, the counts have already picked up the new tags — that is §4b.
+7. (Optional, 30 seconds) On the Silvergate Bank item, type a note and click **Request changes**. Sign in as `contributor@vjti.ac.in` / `Contributor123!`, open **My experiences** → the item now shows **Changes requested** and the exact feedback. Edit it → it goes back to **Awaiting review**.
 
 > "One review click publishes; a rejection or change request is a real two-way conversation with the student, not a silent deletion. Nothing reaches the public site without staff approval."
 
@@ -176,14 +176,14 @@ If asked **"How do students become contributors?"** — they register with a `@v
 
 No extra sign-in: this page is public, and you are still signed in as TPO from §4. This is the answer to *"I've read the experiences — what should I actually study?"*
 
-1. Scroll to the bottom of the homepage: **What seniors say to prepare** shows the top three actionable themes with counts and a one-line action each, e.g. *"Mentioned in 4 of 7 write-ups"*. Point out that the counts include the Google write-up you just approved.
+1. Scroll to the bottom of the homepage: **What seniors say to prepare** shows the top three actionable themes with counts and a one-line action each, e.g. *"Mentioned in 4 of 7 write-ups"*. Point out that the counts include the Peregrine Systems write-up you just approved.
 2. Click **Full prep plan →** (or the **Prep insights** nav link) → `/prep-insights`.
    - The three stat cards read **7 approved write-ups**, distinct themes and common themes.
    - **Your prep checklist** is the five most repeated *actionable* themes with a concrete next step each.
    - **All themes** shows a frequency bar per theme, the companies that mentioned it, and links to the source write-ups (`#id`) or a pre-filtered experience list.
-3. Point at **DSA**: `4 of 7 · 57%`, seen at J.P. Morgan, Microsoft, Cisco and Goldman Sachs. Click one `#id` link → the approved write-up it came from.
+3. Point at **DSA**: `4 of 7 · 57%`, seen at Summit Bank Group, Northbridge Software, HexaNet Systems and Ironvale Partners. Click one `#id` link → the approved write-up it came from.
 4. Scroll to a process tag like **On-campus**: it appears at the top of the ranking but is marked as a process fact, not a prep task, so it is excluded from the checklist.
-5. Say the trust line: *"Only approved write-ups feed this. The Amazon and Barclays submissions still waiting in the review queue cannot influence a single number, and no real name or email is exposed."*
+5. Say the trust line: *"Only approved write-ups feed this. The Bluepeak Retail and Silvergate Bank submissions still waiting in the review queue cannot influence a single number, and no real name or email is exposed."*
 
 > "The TPO doesn't write this list by hand. Every approval recomputes the ranking from the tags students actually used, so the advice stays current as more seniors contribute. It is frequency — what keeps coming up — not a guarantee, so it tells a student where to start rather than what to memorise."
 
@@ -224,10 +224,10 @@ You are still signed in as **TPOI** from §5. These two features make the workfl
 **In-app notifications**
 
 1. Point at the **🔔 bell** in the header — it has a red unread badge (`2` from the seeded pending submissions; more if you submitted in §4). Click it.
-2. The **Notifications** page lists "New experience to review" with the Amazon/Barclays titles and an **Open →** link to the review queue.
+2. The **Notifications** page lists "New experience to review" with the Bluepeak Retail/Silvergate Bank titles and an **Open →** link to the review queue.
    > "Every new or resubmitted write-up tells the staff inbox. Nothing depends on someone refreshing the review page."
 3. Click **Mark all as read** → the message changes to *"You're all caught up"* and the badge disappears.
-4. Sign out, sign in as `student@vjti.ac.in` / `Student123!`. The bell shows an unread badge again. Click it → **"Your experience was approved"** (plus the Google one if you did §4). Click **Open →** → the published write-up.
+4. Sign out, sign in as `student@vjti.ac.in` / `Student123!`. The bell shows an unread badge again. Click it → **"Your experience was approved"** (plus the Peregrine Systems one if you did §4). Click **Open →** → the published write-up.
    > "The student gets the decision and a direct link, even when the write-up is anonymous to everyone else. The note from a change request or rejection appears here too."
 5. On `/notifications`, click **Mark as read** on one row and show that only that row loses its highlight.
 
@@ -306,9 +306,9 @@ Write the answers down. They decide what gets built next.
 | Save button does nothing / shows a sign-in link | You are signed out. Sign in first — bookmarks are per user and the button becomes a ★ toggle. |
 | Account page says "Current password is incorrect" | That is correct behaviour if you typed the wrong old password. Use `Student123!` for the seeded student, or reseed with `npm run seed:demo`. |
 | The bell has no unread badge | You are signed out, you already clicked **Mark all as read**, or you are the contributor (whose seeded note is already read). Run `npm run seed:demo` to restore the sample notifications. |
-| `/prep-insights` is empty or shows a theme you didn't expect | The page needs at least one **approved** write-up. Run `npm run seed:demo`; pending submissions are ignored by design. Counts change after §4 because the Google write-up was approved. |
+| `/prep-insights` is empty or shows a theme you didn't expect | The page needs at least one **approved** write-up. Run `npm run seed:demo`; pending submissions are ignored by design. Counts change after §4 because the Peregrine Systems write-up was approved. |
 | `/drives` looks empty | Run `npm run seed:demo` — it inserts three drives. Also check the status filter isn't set to **Closed** or that the search box isn't still filtering. |
-| "Track application" says *You are already tracking this drive* | That drive's Microsoft/J.P. Morgan seeded application already exists for the demo student. Use **Tracking ✓** to open the board, or track Tata Motors instead. |
+| "Track application" says *You are already tracking this drive* | That drive's Northbridge Software/Summit Bank Group seeded application already exists for the demo student. Use **Tracking ✓** to open the board, or track Harbor Automotive instead. |
 | A drive publish shows no student notification | Notifications are targeted by branch + graduation year only. Use eligible branch `Information Technology` and year `2027` for the demo student, or leave both blank for everyone. |
 | CSV import says "Missing CSV column" | The first line must be exactly `name,role,package,hired,branches` (order does not matter, names do). The error lists the expected header. |
 | CSV import reports "Line 2: …" errors | Check that `package` is a number ≥ 0, `hired` is a whole number ≥ 0, and no company name is duplicated. No rows were written — fix the file and try again. |

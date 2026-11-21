@@ -56,29 +56,29 @@ const STATS_BY_YEAR = {
    ------------------------------------------------------------ */
 const COMPANIES_BY_YEAR = {
   "2026": [
-    { name: "J.P. Morgan Chase & Co.", role: "Software Engineer",         package: 32.5, hired: 14, branches: ["CS", "IT", "Extc"] },
-    { name: "Microsoft",               role: "Software Engineer",         package: 51.6, hired: 6,  branches: ["CS", "IT"] },
-    { name: "Morgan Stanley",          role: "Technology Analyst",        package: 28.0, hired: 9,  branches: ["CS", "IT"] },
-    { name: "Goldman Sachs",           role: "Analyst",                   package: 27.5, hired: 5,  branches: ["CS", "IT", "Extc"] },
-    { name: "Cisco Systems",           role: "Software Engineer",         package: 24.5, hired: 8,  branches: ["CS", "IT", "Extc"] },
-    { name: "Qualcomm",                role: "Hardware Engineer",         package: 22.0, hired: 7,  branches: ["Extc", "Electrical"] },
-    { name: "Tata Consultancy Services", role: "Assistant System Engineer", package: 9.2, hired: 45, branches: ["CS", "IT", "Extc", "Electrical", "Mech", "Civil", "Textile"] },
-    { name: "Larsen & Toubro",         role: "Graduate Engineer Trainee", package: 8.5,  hired: 22, branches: ["Mech", "Civil", "Electrical"] },
+    { name: "Summit Bank Group", role: "Software Engineer",         package: 32.5, hired: 14, branches: ["CS", "IT", "Extc"] },
+    { name: "Northbridge Software",               role: "Software Engineer",         package: 51.6, hired: 6,  branches: ["CS", "IT"] },
+    { name: "Crestview Capital",          role: "Technology Analyst",        package: 28.0, hired: 9,  branches: ["CS", "IT"] },
+    { name: "Ironvale Partners",           role: "Analyst",                   package: 27.5, hired: 5,  branches: ["CS", "IT", "Extc"] },
+    { name: "HexaNet Systems",           role: "Software Engineer",         package: 24.5, hired: 8,  branches: ["CS", "IT", "Extc"] },
+    { name: "Orion Semiconductor",                role: "Hardware Engineer",         package: 22.0, hired: 7,  branches: ["Extc", "Electrical"] },
+    { name: "Asterline Consulting", role: "Assistant System Engineer", package: 9.2, hired: 45, branches: ["CS", "IT", "Extc", "Electrical", "Mech", "Civil", "Textile"] },
+    { name: "Keystone Engineering",         role: "Graduate Engineer Trainee", package: 8.5,  hired: 22, branches: ["Mech", "Civil", "Electrical"] },
   ],
 
   "2025": [
-    { name: "Microsoft",               role: "Software Engineer",   package: 48.0, hired: 5,  branches: ["CS", "IT"] },
-    { name: "J.P. Morgan Chase & Co.", role: "Software Engineer",   package: 30.0, hired: 11, branches: ["CS", "IT", "Extc"] },
-    { name: "Cisco Systems",           role: "Software Engineer",   package: 23.0, hired: 7,  branches: ["CS", "IT", "Extc"] },
-    { name: "Tata Consultancy Services", role: "Assistant System Engineer", package: 9.0, hired: 40, branches: ["CS", "IT", "Extc", "Electrical", "Mech", "Civil", "Textile"] },
-    { name: "Larsen & Toubro",         role: "Graduate Engineer Trainee", package: 8.0, hired: 18, branches: ["Mech", "Civil", "Electrical"] },
+    { name: "Northbridge Software",               role: "Software Engineer",   package: 48.0, hired: 5,  branches: ["CS", "IT"] },
+    { name: "Summit Bank Group", role: "Software Engineer",   package: 30.0, hired: 11, branches: ["CS", "IT", "Extc"] },
+    { name: "HexaNet Systems",           role: "Software Engineer",   package: 23.0, hired: 7,  branches: ["CS", "IT", "Extc"] },
+    { name: "Asterline Consulting", role: "Assistant System Engineer", package: 9.0, hired: 40, branches: ["CS", "IT", "Extc", "Electrical", "Mech", "Civil", "Textile"] },
+    { name: "Keystone Engineering",         role: "Graduate Engineer Trainee", package: 8.0, hired: 18, branches: ["Mech", "Civil", "Electrical"] },
   ],
 
   "2024": [
-    { name: "Microsoft",               role: "Software Engineer",   package: 45.0, hired: 4,  branches: ["CS", "IT"] },
-    { name: "Goldman Sachs",           role: "Analyst",             package: 26.0, hired: 6,  branches: ["CS", "IT", "Extc"] },
-    { name: "Tata Consultancy Services", role: "Assistant System Engineer", package: 8.8, hired: 38, branches: ["CS", "IT", "Extc", "Electrical", "Mech", "Civil", "Textile"] },
-    { name: "Larsen & Toubro",         role: "Graduate Engineer Trainee", package: 7.6, hired: 16, branches: ["Mech", "Civil", "Electrical"] },
+    { name: "Northbridge Software",               role: "Software Engineer",   package: 45.0, hired: 4,  branches: ["CS", "IT"] },
+    { name: "Ironvale Partners",           role: "Analyst",             package: 26.0, hired: 6,  branches: ["CS", "IT", "Extc"] },
+    { name: "Asterline Consulting", role: "Assistant System Engineer", package: 8.8, hired: 38, branches: ["CS", "IT", "Extc", "Electrical", "Mech", "Civil", "Textile"] },
+    { name: "Keystone Engineering",         role: "Graduate Engineer Trainee", package: 7.6, hired: 16, branches: ["Mech", "Civil", "Electrical"] },
   ],
 };
 
@@ -122,24 +122,24 @@ const BRANCH_STATS_BY_YEAR = {
    ------------------------------------------------------------ */
 const EXPERIENCES = [
   {
-    company: "J.P. Morgan Chase & Co.",
-    heading: "J.P. Morgan Chase & Co. — SDE Intern + PPO",
+    company: "Summit Bank Group",
+    heading: "Summit Bank Group — SDE Intern + PPO",
     excerpt:
       "Two rounds: a DSA round (2 medium Leetcode-style questions) and a tech-HR round discussing my resume projects. The interviewers were friendly and pushed me to think aloud...",
     tags: ["DSA", "Resume Projects", "On-campus"],
     author: { name: "Aditya S.", branch: "Computer Engineering", year: "2026" },
   },
   {
-    company: "Microsoft",
-    heading: "Microsoft — Software Engineer",
+    company: "Northbridge Software",
+    heading: "Northbridge Software — Software Engineer",
     excerpt:
       "Online assessment first (2 coding questions in 90 minutes), then 3 interview rounds focusing on data structures, system design basics and behavioral questions...",
     tags: ["Online Assessment", "3 Rounds", "On-campus"],
     author: { name: "Priya K.", branch: "Information Technology", year: "2026" },
   },
   {
-    company: "Larsen & Toubro",
-    heading: "Larsen & Toubro — GET (Mechanical)",
+    company: "Keystone Engineering",
+    heading: "Keystone Engineering — GET (Mechanical)",
     excerpt:
       "Written test on core mechanical concepts followed by a technical interview about manufacturing processes and my B.Tech project on CNC automation...",
     tags: ["Core Mechanical", "Written Test", "On-campus"],

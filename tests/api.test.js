@@ -119,7 +119,7 @@ describe("public API", () => {
     }
     const pending = await request("/api/admin/experiences", { cookie: session.tpo });
     assert.equal(pending.data.counts.pending, 2);
-    for (const company of ["Amazon", "Barclays"]) {
+    for (const company of ["Bluepeak Retail", "Silvergate Bank"]) {
       assert.ok(!data.experiences.some((e) => e.company === company));
     }
   });
@@ -179,7 +179,7 @@ describe("prep insights from approved experiences", () => {
     assert.equal(dsa.count, 4);
     assert.equal(dsa.share, 67);
     assert.equal(dsa.category, "Technical");
-    assert.ok(dsa.companies.includes("Microsoft"));
+    assert.ok(dsa.companies.includes("Northbridge Software"));
     assert.ok(dsa.advice.length > 40);
     assert.ok(dsa.action.length > 20);
     assert.equal(dsa.actionable, true);
@@ -200,7 +200,7 @@ describe("prep insights from approved experiences", () => {
     const publicIds = new Set(data.experiences.map((experience) => experience.id));
     for (const topic of data.prepInsights.topics) {
       for (const id of topic.experienceIds) assert.ok(publicIds.has(id));
-      assert.ok(!topic.companies.some((company) => ["Amazon", "Barclays"].includes(company)));
+      assert.ok(!topic.companies.some((company) => ["Bluepeak Retail", "Silvergate Bank"].includes(company)));
     }
   });
 
@@ -422,7 +422,7 @@ describe("experience review workflow", () => {
   test("students cannot read or act on the review queue", async () => {
     assert.equal((await request("/api/admin/experiences", { cookie: session.student })).status, 403);
     const queue = await request("/api/admin/experiences", { cookie: session.tpo });
-    const target = queue.data.experiences.find((e) => e.company === "Amazon");
+    const target = queue.data.experiences.find((e) => e.company === "Bluepeak Retail");
     assert.equal(target.visibility, "anonymous");
     assert.equal(target.author.realName, "Asha Patil");
     assert.ok(target.author.email);
@@ -527,7 +527,7 @@ describe("experience review workflow", () => {
 
   test("rejection keeps the note but stays off the public site", async () => {
     const queue = await request("/api/admin/experiences", { cookie: session.tpo });
-    const target = queue.data.experiences.find((e) => e.company === "Barclays");
+    const target = queue.data.experiences.find((e) => e.company === "Silvergate Bank");
     const rejected = await request(`/api/admin/experiences/${target.id}/review`, {
       method: "POST", cookie: session.tpo,
       body: { action: "reject", note: "Include the exact role title next time." },
@@ -538,7 +538,7 @@ describe("experience review workflow", () => {
     assert.match(row.reviewNote, /role title/);
     assert.ok(row.reviewedBy);
     assert.ok(!(await request("/api/content")).data.experiences
-      .some((e) => e.company === "Barclays"));
+      .some((e) => e.company === "Silvergate Bank"));
   });
 });
 
@@ -621,9 +621,9 @@ describe("saved companies and account settings", () => {
   test("anonymous callers cannot read or write bookmarks or profile", async () => {
     assert.equal((await request("/api/bookmarks")).status, 401);
     assert.equal((await request("/api/bookmarks", {
-      method: "POST", body: { slug: "microsoft" },
+      method: "POST", body: { slug: "northbridge_software" },
     })).status, 401);
-    assert.equal((await request("/api/bookmarks/microsoft", { method: "DELETE" })).status, 401);
+    assert.equal((await request("/api/bookmarks/northbridge_software", { method: "DELETE" })).status, 401);
     assert.equal((await request("/api/me", {
       method: "PUT", body: { fullName: "Anyone" },
     })).status, 401);
@@ -636,7 +636,7 @@ describe("saved companies and account settings", () => {
     const mine = await request("/api/bookmarks", { cookie: session.student });
     assert.equal(mine.status, 200);
     assert.deepEqual(mine.data.bookmarks.map((b) => b.slug).sort(),
-      ["jp_morgan_chase_co", "microsoft"]);
+      ["northbridge_software", "summit_bank_group"]);
     assert.ok(mine.data.bookmarks.every((b) => b.name && b.createdAt));
     const other = await request("/api/bookmarks", { cookie: session.contributor });
     assert.equal(other.data.bookmarks.length, 0);
@@ -650,7 +650,7 @@ describe("saved companies and account settings", () => {
 
     for (let i = 0; i < 2; i += 1) {
       const added = await request("/api/bookmarks", {
-        method: "POST", cookie: session.student, body: { slug: "cisco_systems" },
+        method: "POST", cookie: session.student, body: { slug: "hexanet_systems" },
       });
       assert.equal(added.status, 201);
     }
@@ -660,13 +660,13 @@ describe("saved companies and account settings", () => {
       .data.bookmarks.length, 0);
 
     // A contributor cannot delete the student's bookmark by guessing its slug.
-    await request("/api/bookmarks/cisco_systems", {
+    await request("/api/bookmarks/hexanet_systems", {
       method: "DELETE", cookie: session.contributor,
     });
     assert.ok((await request("/api/bookmarks", { cookie: session.student }))
-      .data.bookmarks.some((b) => b.slug === "cisco_systems"));
+      .data.bookmarks.some((b) => b.slug === "hexanet_systems"));
 
-    assert.equal((await request("/api/bookmarks/cisco_systems", {
+    assert.equal((await request("/api/bookmarks/hexanet_systems", {
       method: "DELETE", cookie: session.student,
     })).status, 200);
     assert.equal((await request("/api/bookmarks", { cookie: session.student }))
@@ -932,8 +932,8 @@ describe("staff CSV import", () => {
 describe("alumni outreach", () => {
   const csv = [
     "full_name,email,branch,graduation_year,placed_company,placed_role,placed_year,current_company",
-    "Alumni One,alumni.one@example.com,Computer Engineering,2022,Microsoft,SDE,2022,Microsoft",
-    "Alumni Two,alumni.two@example.com,Information Technology,2021,Google,SWE,2021,Google",
+    "Alumni One,alumni.one@example.com,Computer Engineering,2022,Northbridge Software,SDE,2022,Northbridge Software",
+    "Alumni Two,alumni.two@example.com,Information Technology,2021,Peregrine Systems,SWE,2021,Peregrine Systems",
   ].join("\n");
 
   test("alumni outreach requires a staff session", async () => {
@@ -984,7 +984,7 @@ describe("alumni outreach", () => {
     let list = (await request("/api/admin/alumni", { cookie: session.tpo })).data.alumni;
     let one = list.find((a) => a.email === "alumni.one@example.com");
     assert.ok(one);
-    assert.equal(one.placedCompany, "Microsoft");
+    assert.equal(one.placedCompany, "Northbridge Software");
     assert.equal(one.outreachStatus, "not_contacted");
 
     const updatedOne = await request(`/api/admin/alumni/${one.id}`, {
@@ -994,20 +994,20 @@ describe("alumni outreach", () => {
         outreachType: "placement",
         followUpAt: "2026-12-01 10:00:00",
         responseNote: "Wants to help.",
-        referralCompany: "Microsoft",
+        referralCompany: "Northbridge Software",
         referralContact: "HR Team",
         referralDetails: "Intro offered",
-        currentCompany: "Microsoft",
+        currentCompany: "Northbridge Software",
         lastContactedAt: "2026-11-20 09:00:00",
       },
     });
     assert.equal(updatedOne.status, 200);
 
     const changedCsv = csv
-      .replace("Alumni One,alumni.one@example.com,Computer Engineering,2022,Microsoft,SDE,2022,Microsoft",
-        "Alumni One,alumni.one@example.com,Computer Engineering,2022,Microsoft,SDE,2022,Microsoft India")
-      .replace("Alumni Two,alumni.two@example.com,Information Technology,2021,Google,SWE,2021,Google",
-        "Alumni Two Updated,alumni.two@example.com,Information Technology,2021,Google,SWE,2021,Alphabet");
+      .replace("Alumni One,alumni.one@example.com,Computer Engineering,2022,Northbridge Software,SDE,2022,Northbridge Software",
+        "Alumni One,alumni.one@example.com,Computer Engineering,2022,Northbridge Software,SDE,2022,Northbridge Software India")
+      .replace("Alumni Two,alumni.two@example.com,Information Technology,2021,Peregrine Systems,SWE,2021,Peregrine Systems",
+        "Alumni Two Updated,alumni.two@example.com,Information Technology,2021,Peregrine Systems,SWE,2021,Alphabet");
     const second = await request("/api/admin/alumni/import", {
       method: "POST", cookie: session.tpo, body: { csv: changedCsv },
     });
@@ -1017,10 +1017,10 @@ describe("alumni outreach", () => {
     list = (await request("/api/admin/alumni", { cookie: session.tpo })).data.alumni;
     one = list.find((a) => a.email === "alumni.one@example.com");
     const two = list.find((a) => a.email === "alumni.two@example.com");
-    assert.equal(one.currentCompany, "Microsoft India");
+    assert.equal(one.currentCompany, "Northbridge Software India");
     assert.equal(one.outreachStatus, "interested");
     assert.equal(one.responseNote, "Wants to help.");
-    assert.equal(one.referralCompany, "Microsoft");
+    assert.equal(one.referralCompany, "Northbridge Software");
     assert.equal(two.fullName, "Alumni Two Updated");
     assert.equal(two.currentCompany, "Alphabet");
   });
@@ -1193,10 +1193,10 @@ describe("drives and applications", () => {
     const list = await request("/api/drives");
     assert.equal(list.status, 200);
     assert.ok(list.data.drives.length >= 3);
-    const microsoft = list.data.drives.find((drive) => drive.company === "Microsoft");
-    assert.ok(microsoft);
-    assert.equal(microsoft.registrationDeadline, "2026-12-05");
-    assert.deepEqual(microsoft.eligibilityBranches, ["Computer Engineering", "Information Technology"]);
+    const northbridge = list.data.drives.find((drive) => drive.company === "Northbridge Software");
+    assert.ok(northbridge);
+    assert.equal(northbridge.registrationDeadline, "2026-12-05");
+    assert.deepEqual(northbridge.eligibilityBranches, ["Computer Engineering", "Information Technology"]);
 
     assert.equal((await request("/api/admin/drives")).status, 401);
     assert.equal((await request("/api/admin/drives", { cookie: session.student })).status, 403);
@@ -1295,12 +1295,12 @@ describe("drives and applications", () => {
     assert.equal((await request("/api/applications", { cookie: session.contributor })).data.applications.length, 0);
 
     const drives = (await request("/api/drives")).data.drives;
-    const microsoft = drives.find((drive) => drive.company === "Microsoft");
-    const tata = drives.find((drive) => drive.company === "Tata Motors");
-    assert.ok(microsoft && tata);
+    const northbridge = drives.find((drive) => drive.company === "Northbridge Software");
+    const harbor = drives.find((drive) => drive.company === "Harbor Automotive");
+    assert.ok(northbridge && harbor);
 
     assert.equal((await request("/api/applications", {
-      method: "POST", cookie: session.student, body: { driveId: microsoft.id },
+      method: "POST", cookie: session.student, body: { driveId: northbridge.id },
     })).status, 409);
     assert.equal((await request("/api/applications", {
       method: "POST", cookie: session.student, body: { driveId: 999999 },
@@ -1309,11 +1309,11 @@ describe("drives and applications", () => {
       method: "POST", cookie: session.student, body: {},
     })).status, 400);
     assert.equal((await request("/api/applications", {
-      method: "POST", cookie: session.student, body: { driveId: tata.id, status: "bogus" },
+      method: "POST", cookie: session.student, body: { driveId: harbor.id, status: "bogus" },
     })).status, 400);
 
     const contributed = await request("/api/applications", {
-      method: "POST", cookie: session.contributor, body: { driveId: tata.id, notes: "Interested in Pune." },
+      method: "POST", cookie: session.contributor, body: { driveId: harbor.id, notes: "Interested in Pune." },
     });
     assert.equal(contributed.status, 201);
     const foreignId = contributed.data.application.id;
@@ -1324,7 +1324,7 @@ describe("drives and applications", () => {
       method: "DELETE", cookie: session.student,
     })).status, 404);
 
-    const ownId = mine.data.applications.find((item) => item.company === "Microsoft").id;
+    const ownId = mine.data.applications.find((item) => item.company === "Northbridge Software").id;
     const updated = await request(`/api/applications/${ownId}`, {
       method: "PUT", cookie: session.student,
       body: { status: "interview", notes: "Technical round on Friday." },

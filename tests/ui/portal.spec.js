@@ -22,7 +22,7 @@ test("public pages load API content and filters update the lists", async ({ page
   await expect(page.locator(".stat-card")).toHaveCount(4);
 
   const companySearch = page.getByPlaceholder("Search company or role…");
-  await companySearch.fill("micro");
+  await companySearch.fill("north");
   await expect(page.locator(".company-table tbody tr")).toHaveCount(1);
   await expect(page.getByText("Showing 1 of 8 companies")).toBeVisible();
 
@@ -58,16 +58,16 @@ test("signed-in bookmarks are private and can be toggled from cards and detail p
   await page.getByRole("link", { name: "Saved" }).click();
   await expect(page.getByRole("heading", { name: "Saved companies" })).toBeVisible();
   await expect(page.locator(".saved-item")).toHaveCount(2);
-  await expect(page.locator(".saved-item", { hasText: "Microsoft" })).toBeVisible();
-  await expect(page.locator(".saved-item", { hasText: "J.P. Morgan Chase & Co." })).toBeVisible();
+  await expect(page.locator(".saved-item", { hasText: "Northbridge Software" })).toBeVisible();
+  await expect(page.locator(".saved-item", { hasText: "Summit Bank Group" })).toBeVisible();
 
-  await page.locator(".saved-item", { hasText: "Microsoft" })
+  await page.locator(".saved-item", { hasText: "Northbridge Software" })
     .getByRole("button", { name: "Remove from saved companies" })
     .click();
   await expect(page.locator(".saved-item")).toHaveCount(1);
-  await expect(page.locator(".saved-item", { hasText: "Microsoft" })).toHaveCount(0);
+  await expect(page.locator(".saved-item", { hasText: "Northbridge Software" })).toHaveCount(0);
 
-  await page.goto("/company/microsoft");
+  await page.goto("/company/northbridge_software");
   await page.getByRole("button", { name: "Save company" }).click();
   await expect(page.getByRole("button", { name: "Remove from saved companies" })).toBeVisible();
 
@@ -206,7 +206,7 @@ test("TPO personalizes an outreach template and marks a contact contacted", asyn
   const preview = composer.locator(".alumni-preview");
   await expect(preview).toContainText("Invitation to participate in VJTI placement campus drive");
   await expect(preview).toContainText("Meera Iyer");
-  await expect(preview).toContainText("Larsen & Toubro");
+  await expect(preview).toContainText("Keystone Engineering");
   await expect(preview).not.toContainText("{name}");
 
   await page.getByRole("button", { name: "Internship drive" }).click();
@@ -233,13 +233,13 @@ test("TPO records an alumni response and referral details", async ({ page }) => 
   await edit.getByLabel("Drive type").selectOption("both");
   await edit.getByLabel("Response / notes").fill("Happy to introduce the campus team.");
   await edit.getByLabel("Referral details").fill("Asked for the 2027 brochure.");
-  await edit.getByPlaceholder("Company alumni can help bring").fill("Google");
-  await edit.getByPlaceholder("HR/recruiter name, email, etc.").fill("Google Campus Team");
+  await edit.getByPlaceholder("Company alumni can help bring").fill("Peregrine Systems");
+  await edit.getByPlaceholder("HR/recruiter name, email, etc.").fill("Peregrine Systems Campus Team");
   await edit.getByRole("button", { name: "Save outreach update" }).click();
 
   await expect(page.locator(".admin-message.success")).toContainText("Alumni outreach updated.");
   await expect(row.locator(".status-badge")).toContainText("Interested");
-  await expect(row).toContainText("Google");
+  await expect(row).toContainText("Peregrine Systems");
   await expect(row).toContainText("Happy to introduce the campus team.");
 });
 
@@ -270,31 +270,31 @@ test("drives can be filtered and a student can track one", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Upcoming drives" })).toBeVisible();
   await expect(page.locator(".drive-card")).toHaveCount(3);
 
-  await page.getByRole("searchbox", { name: "Search drives" }).fill("tata");
+  await page.getByRole("searchbox", { name: "Search drives" }).fill("harbor");
   await expect(page.locator(".drive-card")).toHaveCount(1);
-  await expect(page.locator(".drive-card")).toContainText("Tata Motors");
+  await expect(page.locator(".drive-card")).toContainText("Harbor Automotive");
 
   await signIn(page, "student@vjti.ac.in", "Student123!");
   await page.goto("/drives");
-  await page.getByRole("searchbox", { name: "Search drives" }).fill("tata");
+  await page.getByRole("searchbox", { name: "Search drives" }).fill("harbor");
   await page.getByRole("button", { name: "+ Track application" }).click();
 
   await expect(page).toHaveURL(/\/my-applications$/);
-  await expect(page.locator(".admin-message.success")).toContainText("Now tracking Tata Motors");
-  await expect(page.locator(".application-card", { hasText: "Tata Motors" })).toBeVisible();
+  await expect(page.locator(".admin-message.success")).toContainText("Now tracking Harbor Automotive");
+  await expect(page.locator(".application-card", { hasText: "Harbor Automotive" })).toBeVisible();
 });
 
 test("a student moves an application forward with private notes", async ({ page }) => {
   await signIn(page, "student@vjti.ac.in", "Student123!");
   await page.goto("/my-applications");
-  const card = page.locator(".application-card", { hasText: "J.P. Morgan Chase & Co." });
-  await card.getByLabel("Stage for J.P. Morgan Chase & Co.").selectOption("interview");
-  await card.getByLabel("Notes for J.P. Morgan Chase & Co.").fill("Technical round confirmed.");
+  const card = page.locator(".application-card", { hasText: "Summit Bank Group" });
+  await card.getByLabel("Stage for Summit Bank Group").selectOption("interview");
+  await card.getByLabel("Notes for Summit Bank Group").fill("Technical round confirmed.");
   await card.getByRole("button", { name: "Save" }).click();
 
   await expect(page.locator(".admin-message.success")).toContainText("Application updated.");
   const interview = page.locator(".pipeline-column", { has: page.getByRole("heading", { name: /^Interview/ }) });
-  await expect(interview.locator(".application-card", { hasText: "J.P. Morgan Chase & Co." })).toBeVisible();
+  await expect(interview.locator(".application-card", { hasText: "Summit Bank Group" })).toBeVisible();
 });
 
 test("TPO publishes a drive and it appears on the public page", async ({ page }) => {

@@ -190,7 +190,7 @@ D:\Placement
 - `COMPANIES_BY_YEAR` — 8 companies (2026), 5 (2025), 4 (2024). Fields: `name`, `role`, `package` (LPA number), `hired`, `branches[]`.
 - `BRANCH_STATS_BY_YEAR` — 7 engineering branches × 3 years with placement percentages.
 - `EXPERIENCES` — 6 approved write-ups: `company`, `heading`, `excerpt`, `tags[]`, `author { name, branch, year }`. Tags are the raw material for prep insights.
-- `slugify(name)` — `"J.P. Morgan Chase & Co."` → `"jp_morgan_chase_co"` (lowercase, `&` → `and`, non-alphanumeric runs → `_`, trim).
+- `slugify(name)` — `"Summit Bank Group"` → `"summit_bank_group"` (lowercase, `&` → `and`, non-alphanumeric runs → `_`, trim).
 - `COMPANIES_BY_SLUG` — startup-built index: `slug → { year → company }`, which powers the dynamic detail route without repeated searches.
 
 ### 4.2 Homepage (`/`)
@@ -276,7 +276,7 @@ D:\Placement
 - Deep links work in production: `npm start` serves `/experience/:id` through the SPA fallback (verified).
 
 ### 4.13 Saved companies & account settings — Phase 6
-- `/saved` is a **private shortlist**. `GET /api/bookmarks` returns only rows whose `user_id` matches the session cookie; the browser never filters a global list. The seeded student has two saves (Microsoft and J.P. Morgan Chase & Co.).
+- `/saved` is a **private shortlist**. `GET /api/bookmarks` returns only rows whose `user_id` matches the session cookie; the browser never filters a global list. The seeded student has two saves (Northbridge Software and Summit Bank Group).
 - The same `BookmarkButton` works on company cards, the company detail page and the Saved list. Saving an unknown slug is refused server-side (404), and duplicate saves are idempotent (`ON CONFLICT DO NOTHING`). Deletes are scoped to `user_id`, so guessing another user's slug cannot remove their bookmark.
 - Signed-out visitors are sent to `/signin` with a `state.from` return path; providers clear the cache on sign-out and reload it on sign-in.
 - `/account` edits `full_name`, `branch` and `graduation_year` via `PUT /api/me`, then calls `updateUser()` so the header name changes immediately. `email` and `role` are shown read-only and are **not accepted** by the API — this page cannot be used to escalate privileges.
@@ -402,7 +402,7 @@ Rule in use: **lift state up** when more than one component needs it; otherwise 
   currentYear: "2026",
   stats: { "2026": { studentsPlaced, highest, average, companies }, ... },
   companiesByYear: { "2026": [ { name, role, package, hired, branches[] }, ... ] },
-  companiesBySlug: { "microsoft": { "2026": {...}, "2025": {...} } },
+  companiesBySlug: { "northbridge_software": { "2026": {...}, "2025": {...} } },
   branchStatsByYear: { "2026": [ { branch, percent }, ... ] },
   experiences: [
     { id, company, role, placementYear, heading, excerpt, tags[],
@@ -685,7 +685,7 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 
 ### 2026-11-18 — Phase 6: saved companies and account settings
 
-- `server/schema.sql` added `saved_companies` (`user_id + slug` unique, cascade on user delete); `server/seed-demo.js` now clears bookmarks on reseed and gives the student two sample saves (Microsoft and J.P. Morgan Chase & Co.).
+- `server/schema.sql` added `saved_companies` (`user_id + slug` unique, cascade on user delete); `server/seed-demo.js` now clears bookmarks on reseed and gives the student two sample saves (Northbridge Software and Summit Bank Group).
 - `server/index.js` added `GET`/`POST`/`DELETE /api/bookmarks`, `PUT /api/me` and `POST /api/me/password`. Every route requires a session; bookmarks are filtered/written with `req.user.id`, unknown slugs 404, duplicate saves are ignored, deletes cannot touch another user's rows, profile writes ignore `email`/`role`, and password changes verify the current hash. Both profile and password changes append to `audit_log`.
 - Frontend: `AuthContext.updateUser()`, a new `BookmarksContext`, `RequireAuth`, a shared `BookmarkButton`, a refactored `CompanyCard` (link and button as siblings, not nested), bookmark controls on company cards/detail/Saved list, and two new routes/pages: `/saved` (private shortlist) and `/account` (profile + password forms). Header now links to both; `main.jsx` wraps the app in `BookmarksProvider`.
 - Styles: section 20 in `src/index.css` covers `.bookmark-btn` (`floating`, `saved`, disabled), `.company-card-link`, `.company-detail-actions`, the saved list, account forms, `.form-success`, dark-theme success colours and mobile fallbacks.
@@ -729,7 +729,7 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 - `server/index.js` now serves the built SPA in production: after all API routes it returns JSON 404s for unknown `/api/*` paths, then serves `dist/` via `express.static` and falls back to `index.html` for client-side routes (Express 5 needs a `/.*/` RegExp instead of `*`). It also prints the real bound port, so `API_PORT=0` works for tests.
 - Added `server/start.js` (`NODE_ENV=production` then import the API) and the `npm start` script; added `public/_redirects` for static hosts.
 - `server/db.js` now honours `DB_PATH`, so tests can use an isolated SQLite file without touching demo data.
-- Verified with `npm run build` then `npm start` on port 3010: `/`, `/admin` and `/company/microsoft` all return the SPA HTML; `/api/health` returns JSON; `/api/does-not-exist` returns `404 {"error":"Not found."}`.
+- Verified with `npm run build` then `npm start` on port 3010: `/`, `/admin` and `/company/northbridge_software` all return the SPA HTML; `/api/health` returns JSON; `/api/does-not-exist` returns `404 {"error":"Not found."}`.
 
 ### 2026-11-18 — Phase 4: staff controls + audit log
 

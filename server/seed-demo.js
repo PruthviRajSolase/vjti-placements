@@ -135,8 +135,8 @@ const student = userId("student@vjti.ac.in");
 const insertBookmark = db.prepare(
   `INSERT OR IGNORE INTO saved_companies (user_id, slug, company_name) VALUES (?, ?, ?)`
 );
-insertBookmark.run(student, "microsoft", "Microsoft");
-insertBookmark.run(student, "jp_morgan_chase_co", "J.P. Morgan Chase & Co.");
+insertBookmark.run(student, "northbridge_software", "Northbridge Software");
+insertBookmark.run(student, "summit_bank_group", "Summit Bank Group");
 
 const authorEmails = [
   "aditya@vjti.ac.in",
@@ -195,10 +195,10 @@ for (const [index, exp] of EXPERIENCES.entries()) {
 // Two pending submissions give the TPO something to review in the demo.
 insertExperience.run(
   student,
-  "Amazon",
+  "Bluepeak Retail",
   "Software Engineer",
   "2026",
-  "Amazon — SDE (2026)",
+  "Bluepeak Retail — SDE (2026)",
   "OA had three DSA questions and one debugging task. Two interview rounds focused on data structures, a system design discussion and leadership principles. Practising timed mock interviews helped the most.",
   JSON.stringify(["Online Assessment", "System Design", "On-campus"]),
   "anonymous",
@@ -206,10 +206,10 @@ insertExperience.run(
 );
 insertExperience.run(
   contributor,
-  "Barclays",
+  "Silvergate Bank",
   "Graduate Analyst",
   "2026",
-  "Barclays — Graduate Analyst",
+  "Silvergate Bank — Graduate Analyst",
   "Aptitude test followed by a technical interview on SQL, OOPs and a puzzle. The final round was with the manager and focused on projects and willingness to relocate.",
   JSON.stringify(["Aptitude", "SQL", "On-campus"]),
   "named",
@@ -229,17 +229,17 @@ const tpoi = userId("tpoi@vjti.ac.in");
 for (const staffId of [tpo, tpoi]) {
   insertNotification.run(
     staffId, "submission", "New experience to review",
-    "Amazon: Amazon — SDE (2026)", "/admin/reviews", null
+    "Bluepeak Retail: Bluepeak Retail — SDE (2026)", "/admin/reviews", null
   );
   insertNotification.run(
     staffId, "submission", "New experience to review",
-    "Barclays: Barclays — Graduate Analyst", "/admin/reviews", null
+    "Silvergate Bank: Silvergate Bank — Graduate Analyst", "/admin/reviews", null
   );
 }
 // The student has one unread approval and one older, already-read note.
 insertNotification.run(
   student, "review", "Your experience was approved",
-  "Microsoft: Interview preparation story is now live.",
+  "Northbridge Software: Interview preparation story is now live.",
   "/experience/1",
   null
 );
@@ -265,35 +265,35 @@ const insertAlumni = db.prepare(
 
 insertAlumni.run(
   "Neha Kulkarni", "neha.kulkarni.alumni@example.com", "9876500001",
-  "Computer Engineering", "2022", "Microsoft", "Software Engineer", "2022",
-  "Microsoft", "interested", "placement", "2026-11-10 10:00:00", "2026-11-25 10:00:00",
+  "Computer Engineering", "2022", "Northbridge Software", "Software Engineer", "2022",
+  "Northbridge Software", "interested", "placement", "2026-11-10 10:00:00", "2026-11-25 10:00:00",
   "Happy to connect TPO with the campus recruiting team for next season.",
-  "Microsoft", "Priya Nair (Campus Recruiting)", "Shared recruiter contact; expects hiring plan by Dec."
+  "Northbridge Software", "Priya Nair (Campus Recruiting)", "Shared recruiter contact; expects hiring plan by Dec."
 );
 insertAlumni.run(
   "Siddharth Rao", "siddharth.rao.alumni@example.com", "9876500002",
-  "Information Technology", "2021", "J.P. Morgan Chase & Co.", "Analyst", "2021",
-  "Goldman Sachs", "contacted", "internship", "2026-11-12 09:30:00", "2026-11-22 09:30:00",
+  "Information Technology", "2021", "Summit Bank Group", "Analyst", "2021",
+  "Ironvale Partners", "contacted", "internship", "2026-11-12 09:30:00", "2026-11-22 09:30:00",
   "Replied that he will check internship intake with his team.",
   null, null, null
 );
 insertAlumni.run(
   "Meera Iyer", "meera.iyer.alumni@example.com", null,
-  "Electronics Engineering", "2023", "Larsen & Toubro", "GET", "2023",
-  "Larsen & Toubro", "not_contacted", null, null, null,
+  "Electronics Engineering", "2023", "Keystone Engineering", "GET", "2023",
+  "Keystone Engineering", "not_contacted", null, null, null,
   null, null, null, null
 );
 insertAlumni.run(
   "Arjun Shah", "arjun.shah.alumni@example.com", "9876500004",
-  "Mechanical Engineering", "2020", "Tata Motors", "Graduate Engineer Trainee", "2020",
-  "Tata Motors", "referred", "both", "2026-11-05 11:15:00", null,
+  "Mechanical Engineering", "2020", "Harbor Automotive", "Graduate Engineer Trainee", "2020",
+  "Harbor Automotive", "referred", "both", "2026-11-05 11:15:00", null,
   "Forwarded official invitation to HR; HR asked for placement brochure.",
-  "Tata Motors", "HR Campus Team", "Placement + internship interest; requested drive details for 2027."
+  "Harbor Automotive", "HR Campus Team", "Placement + internship interest; requested drive details for 2027."
 );
 insertAlumni.run(
   "Pooja Nair", "pooja.nair.alumni@example.com", null,
-  "Computer Engineering", "2022", "Google", "Software Engineer", "2022",
-  "Google", "no_response", "placement", "2026-10-28 14:00:00", "2026-11-20 14:00:00",
+  "Computer Engineering", "2022", "Peregrine Systems", "Software Engineer", "2022",
+  "Peregrine Systems", "no_response", "placement", "2026-10-28 14:00:00", "2026-11-20 14:00:00",
   "No reply yet to initial placement outreach.",
   null, null, null
 );
@@ -306,23 +306,23 @@ const insertDrive = db.prepare(
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)`
 );
 const driveOne = Number(insertDrive.run(
-  "Microsoft", "Software Engineer", 12.5, "Mumbai / Remote",
+  "Northbridge Software", "Software Engineer", 12.5, "Mumbai / Remote",
   JSON.stringify(["Computer Engineering", "Information Technology"]), JSON.stringify(["2026", "2027"]),
-  "2026-12-05", "2026-12-12", "https://careers.microsoft.com/",
+  "2026-12-05", "2026-12-12", "https://careers.northbridge.example/",
   "Campus placement drive for final-year engineering students. Online assessment followed by two technical rounds.",
   tpo
 ).lastInsertRowid);
 insertDrive.run(
-  "J.P. Morgan Chase & Co.", "Analyst", 9.75, "Mumbai",
+  "Summit Bank Group", "Analyst", 9.75, "Mumbai",
   JSON.stringify(["Computer Engineering", "Information Technology", "Electronics Engineering"]), JSON.stringify(["2027"]),
-  "2026-11-28", "2026-12-03", "https://www.jpmorgan.com/careers",
+  "2026-11-28", "2026-12-03", "https://www.summitbank.example/careers",
   "Internship + placement pipeline for 2027 graduates. Shortlisting based on resume and academics.",
   tpo
 ).lastInsertRowid;
 insertDrive.run(
-  "Tata Motors", "Graduate Engineer Trainee", 7.0, "Pune",
+  "Harbor Automotive", "Graduate Engineer Trainee", 7.0, "Pune",
   JSON.stringify([]), JSON.stringify(["2026", "2027"]),
-  "2026-12-18", "2027-01-08", "https://www.tatamotors.com/careers/",
+  "2026-12-18", "2027-01-08", "https://www.harborauto.example/careers/",
   "Open to all engineering branches. Written test, technical interview and HR discussion.",
   tpo
 ).lastInsertRowid;
@@ -333,7 +333,7 @@ const insertApplication = db.prepare(
 insertApplication.run(student, driveOne, "applied", "Submitted resume on the portal. OA prep pending.");
 insertApplication.run(
   student,
-  db.prepare("SELECT id FROM drives WHERE company = ?").get("J.P. Morgan Chase & Co.").id,
+  db.prepare("SELECT id FROM drives WHERE company = ?").get("Summit Bank Group").id,
   "oa", "Online assessment scheduled — focus on aptitude and SQL."
 );
 
