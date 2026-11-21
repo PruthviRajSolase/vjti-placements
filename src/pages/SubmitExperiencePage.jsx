@@ -97,7 +97,7 @@ function SubmitExperiencePage() {
       </h1>
       <p className="section-sub">
         Signed in as <strong>{user.fullName}</strong>. Your write-up helps juniors prepare —
-        it goes to the TPO first, and only approved experiences appear on the public site.
+        it goes to the TPO first, and only approved experiences appear on the public site. Read our <Link to="/guidelines">community guidelines</Link> before submitting.
       </p>
 
       <div className="workflow-strip">

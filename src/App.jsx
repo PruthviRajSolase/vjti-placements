@@ -29,6 +29,7 @@ import MyExperiencesPage from "./pages/MyExperiencesPage.jsx";
 import SavedCompaniesPage from "./pages/SavedCompaniesPage.jsx";
 import NotificationsPage from "./pages/NotificationsPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
+import GuidelinesPage from "./pages/GuidelinesPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import { useAuth } from "./AuthContext.jsx";
 import { useContent } from "./ContentContext.jsx";
@@ -251,6 +252,7 @@ function App() {
               }
             />
           )}
+          <Route path="/guidelines" element={<GuidelinesPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

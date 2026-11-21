@@ -1586,13 +1586,15 @@ describe("database migrations", () => {
       const user = db.prepare("SELECT branch, token_version FROM users WHERE email = ?").get("old@vjti.ac.in");
       const drive = db.prepare("SELECT eligibility_branches FROM drives WHERE company = ?").get("Test Co");
       const branch = db.prepare("SELECT year, branch, percent, total_students, placed_students FROM branch_stats WHERE year = ?").get("2026");
-      if (version !== 4) throw new Error("version=" + version);
+      if (version !== 5) throw new Error("version=" + version);
       if (user.token_version !== 0) throw new Error("token=" + user.token_version);
       if (user.branch !== "Information Technology") throw new Error("branch=" + user.branch);
       const verified = db.prepare("SELECT email_verified FROM users WHERE email = ?").get("old@vjti.ac.in");
       if (Number(verified.email_verified) !== 1) throw new Error("verified=" + verified.email_verified);
       const otpTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='email_otps'").get();
       if (!otpTable) throw new Error("missing email_otps");
+      const reportTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='experience_reports'").get();
+      if (!reportTable) throw new Error("missing experience_reports");
       if (drive.eligibility_branches !== JSON.stringify(["Information Technology","Mechanical Engineering"])) {
         throw new Error("drive=" + drive.eligibility_branches);
       }
@@ -1804,6 +1806,53 @@ describe("password reset", () => {
 
     const newPw = await request("/api/auth/login", { method: "POST", body: { email, password: "NewPassword123!" } });
     assert.equal(newPw.status, 200);
+  });
+});
+
+describe("experience reports and guidelines", () => {
+  test("logged-in user can report once; staff can dismiss or unpublish", async () => {
+    const content = await request("/api/content");
+    const exp = content.data.experiences[0];
+    assert.ok(exp);
+
+    const anon = await request(`/api/experiences/${exp.id}/report`, { method: "POST", body: { reason: "Spam or irrelevant" } });
+    assert.equal(anon.status, 401);
+
+    const bad = await request(`/api/experiences/${exp.id}/report`, { method: "POST", cookie: session.student, body: { reason: "bad" } });
+    assert.equal(bad.status, 400);
+
+    const rep = await request(`/api/experiences/${exp.id}/report`, {
+      method: "POST", cookie: session.student,
+      body: { reason: "Spam or irrelevant", details: "Looks off" },
+    });
+    assert.equal(rep.status, 201);
+
+    const dup = await request(`/api/experiences/${exp.id}/report`, {
+      method: "POST", cookie: session.student,
+      body: { reason: "Spam or irrelevant" },
+    });
+    assert.equal(dup.status, 409);
+
+    const admin = await request("/api/admin/reports", { cookie: session.tpo });
+    assert.equal(admin.status, 200);
+    assert.ok(admin.data.openCount >= 1);
+    const report = admin.data.reports.find((r) => r.experienceId === exp.id && r.status === "open");
+    assert.ok(report);
+
+    const dismiss = await request(`/api/admin/reports/${report.id}/dismiss`, { method: "POST", cookie: session.tpo });
+    assert.equal(dismiss.status, 200);
+
+    // report another and unpublish
+    const exp2 = content.data.experiences[1];
+    const rep2 = await request(`/api/experiences/${exp2.id}/report`, { method: "POST", cookie: session.contributor, body: { reason: "Other", details: "x" } });
+    assert.equal(rep2.status, 201);
+    const admin2 = await request("/api/admin/reports", { cookie: session.tpo });
+    const report2 = admin2.data.reports.find((r) => r.experienceId === exp2.id && r.status === "open");
+    const unpub = await request(`/api/admin/reports/${report2.id}/unpublish`, { method: "POST", cookie: session.tpo });
+    assert.equal(unpub.status, 200);
+
+    const detail = await request(`/api/experiences/${exp2.id}`);
+    assert.equal(detail.status, 404);
   });
 });
 

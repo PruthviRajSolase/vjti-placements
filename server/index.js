@@ -1173,6 +1173,87 @@ app.get("/api/experiences/:id", (req, res) => {
 });
 
 // Staff sees real identities, review history and every status.
+
+const REPORT_REASONS = [
+  "Inaccurate or misleading",
+  "Contains confidential/NDA content",
+  "Includes personal or identifying details",
+  "Inappropriate or disrespectful",
+  "Spam or irrelevant",
+  "Other",
+];
+
+app.post("/api/experiences/:id/report", requireAuth, rateLimit("report"), (req, res) => {
+  const experienceId = Number(req.params.id);
+  const experience = db.prepare("SELECT id, company, heading, user_id FROM experiences WHERE id = ? AND status = 'approved'").get(experienceId);
+  if (!experience) return res.status(404).json({ error: "Experience not found." });
+  const reason = text(req.body?.reason, 120);
+  if (!REPORT_REASONS.includes(reason)) return res.status(400).json({ error: "Select a valid reason." });
+  const details = text(req.body?.details, 1000) || null;
+  const existing = db.prepare("SELECT id FROM experience_reports WHERE experience_id = ? AND reporter_id = ?").get(experienceId, req.user.id);
+  if (existing) return res.status(409).json({ error: "You have already reported this write-up." });
+  db.prepare(
+    "INSERT INTO experience_reports (experience_id, reporter_id, reason, details) VALUES (?, ?, ?, ?)"
+  ).run(experienceId, req.user.id, reason, details);
+  audit(req, "report_experience", `${experienceId}:${reason}`);
+  notifyStaff("report", "Experience reported", `${experience.company}: ${experience.heading}`, "/admin/reviews");
+  res.status(201).json({ ok: true });
+});
+
+app.get("/api/admin/reports", ...admin, (_req, res) => {
+  const reports = db.prepare(`
+    SELECT r.*, u.full_name AS reporter_name, u.email AS reporter_email,
+           e.company, e.heading, e.status AS experience_status, e.user_id AS experience_user_id
+    FROM experience_reports r
+    JOIN users u ON u.id = r.reporter_id
+    JOIN experiences e ON e.id = r.experience_id
+    ORDER BY CASE r.status WHEN 'open' THEN 0 ELSE 1 END, r.created_at DESC
+  `).all().map((r) => ({
+    id: r.id,
+    experienceId: r.experience_id,
+    reporterName: r.reporter_name,
+    reporterEmail: r.reporter_email,
+    reason: r.reason,
+    details: r.details,
+    status: r.status,
+    createdAt: r.created_at,
+    company: r.company,
+    heading: r.heading,
+    experienceStatus: r.experience_status,
+  }));
+  const openCount = reports.filter((r) => r.status === "open").length;
+  res.json({ reports, openCount });
+});
+
+app.post("/api/admin/reports/:id/dismiss", ...admin, (req, res) => {
+  const id = Number(req.params.id);
+  const report = db.prepare("SELECT * FROM experience_reports WHERE id = ?").get(id);
+  if (!report) return res.status(404).json({ error: "Report not found." });
+  db.prepare("UPDATE experience_reports SET status = 'dismissed', resolved_by = ?, resolved_at = datetime('now') WHERE id = ?")
+    .run(req.user.id, id);
+  audit(req, "dismiss_report", String(id));
+  res.json({ ok: true });
+});
+
+app.post("/api/admin/reports/:id/unpublish", ...admin, (req, res) => {
+  const id = Number(req.params.id);
+  const report = db.prepare(`
+    SELECT r.*, e.user_id AS author_id, e.company, e.heading
+    FROM experience_reports r JOIN experiences e ON e.id = r.experience_id
+    WHERE r.id = ?
+  `).get(id);
+  if (!report) return res.status(404).json({ error: "Report not found." });
+  withTransaction(() => {
+    db.prepare("UPDATE experiences SET status = 'rejected', review_note = ?, reviewed_by = ?, reviewed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?")
+      .run("Removed after a community report.", req.user.id, report.experience_id);
+    db.prepare("UPDATE experience_reports SET status = 'actioned', resolved_by = ?, resolved_at = datetime('now') WHERE id = ?")
+      .run(req.user.id, id);
+  });
+  audit(req, "unpublish_reported_experience", `${report.experience_id}:${id}`);
+  notify(report.author_id, "review", "Your experience was unpublished",
+    `"${report.company}: ${report.heading}" was unpublished after a community report.`, "/my-experiences");
+  res.json({ ok: true });
+});
 app.get("/api/admin/experiences", ...admin, (_req, res) => {
   const experiences = staffExperiences();
   res.json({

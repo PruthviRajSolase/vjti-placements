@@ -21,7 +21,7 @@ function Footer() {
             <strong>VJTI Placements</strong> — an unofficial, student-run project.
             Numbers and write-ups shown are sample data for this demo — staff-editable, not official TPO records.
           </p>
-          <p>Made with ♥ by VJTI students · Inspired by college placement trackers</p>
+          <p><Link to="/guidelines">Community guidelines</Link> · Made with ♥ by VJTI students · Inspired by college placement trackers</p>
         </>
       )}
     </footer>

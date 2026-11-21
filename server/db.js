@@ -111,6 +111,26 @@ function applyMigrations() {
     version = 4;
     db.exec(`PRAGMA user_version = ${version}`);
   }
+
+  if (version < 5) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS experience_reports (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        experience_id INTEGER NOT NULL REFERENCES experiences(id) ON DELETE CASCADE,
+        reporter_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        reason        TEXT NOT NULL,
+        details       TEXT,
+        status        TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','dismissed','actioned')),
+        resolved_by   INTEGER REFERENCES users(id),
+        resolved_at   TEXT,
+        created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE (experience_id, reporter_id)
+      )
+    `);
+    db.exec("CREATE INDEX IF NOT EXISTS idx_experience_reports_status ON experience_reports(status, created_at DESC)");
+    version = 5;
+    db.exec(`PRAGMA user_version = ${version}`);
+  }
 }
 
 applyMigrations();
