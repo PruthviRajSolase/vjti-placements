@@ -47,7 +47,7 @@ Created by `npm run seed:demo`:
 
 | Role | Email | Password |
 | --- | --- | --- |
-| TPO staff | `tpo@vjti.ac.in` | `Tpo123!` |
+| TPO staff | `tpo@vjti.ac.in` | `Tpo1234!` |
 | TPO in-charge | `tpoi@vjti.ac.in` | `ChangeMe123!` |
 | Student | `student@vjti.ac.in` | `Student123!` |
 | Contributor | `contributor@vjti.ac.in` | `Contributor123!` |

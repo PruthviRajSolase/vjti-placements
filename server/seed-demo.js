@@ -22,13 +22,24 @@ if (process.env.NODE_ENV === "production") {
 
 console.log("Seeding demo content...");
 
-// Content is replaced; users and the audit log are preserved. Bookmarks are
-// demo content too, so reseeding always starts from a predictable Saved page.
-db.exec(
-  `DELETE FROM experiences; DELETE FROM companies; DELETE FROM branch_stats;
-   DELETE FROM stats; DELETE FROM saved_companies; DELETE FROM notifications;
-   DELETE FROM alumni_contacts; DELETE FROM applications; DELETE FROM drives;`
-);
+// True reset: clear all app data, then rebuild the full demo state so reseeding
+// always starts from a predictable database.
+db.exec("PRAGMA foreign_keys = OFF;");
+db.exec(`
+  DELETE FROM notifications;
+  DELETE FROM saved_companies;
+  DELETE FROM applications;
+  DELETE FROM audit_log;
+  DELETE FROM experiences;
+  DELETE FROM drives;
+  DELETE FROM alumni_contacts;
+  DELETE FROM companies;
+  DELETE FROM branch_stats;
+  DELETE FROM stats;
+  DELETE FROM users;
+  DELETE FROM sqlite_sequence;
+`);
+db.exec("PRAGMA foreign_keys = ON;");
 
 const accounts = [
   {
@@ -76,7 +87,7 @@ const accounts = [
   },
   {
     email: "tpo@vjti.ac.in",
-    password: "Tpo123!",
+    password: "Tpo1234!",
     fullName: "TPO Office",
     role: "tpo",
     branch: null,

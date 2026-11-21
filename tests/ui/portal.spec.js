@@ -134,7 +134,7 @@ test("the header bell opens a private inbox and marks messages read", async ({ p
 });
 
 test("TPO imports companies from pasted CSV and sees validation details", async ({ page }) => {
-  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await signIn(page, "tpo@vjti.ac.in", "Tpo1234!");
   await page.goto("/admin");
 
   const card = page.locator(".csv-import-card");
@@ -154,7 +154,7 @@ test("TPO imports companies from pasted CSV and sees validation details", async 
 });
 
 test("TPO manages alumni outreach import and bulk actions", async ({ page }) => {
-  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await signIn(page, "tpo@vjti.ac.in", "Tpo1234!");
   await page.goto("/admin");
   await page.getByRole("link", { name: /Alumni outreach/ }).click();
   await expect(page).toHaveURL(/\/admin\/alumni$/);
@@ -191,7 +191,7 @@ test("TPO manages alumni outreach import and bulk actions", async ({ page }) => 
 
 test("TPO personalizes an outreach template and marks a contact contacted", async ({ page }) => {
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await signIn(page, "tpo@vjti.ac.in", "Tpo1234!");
   await page.goto("/admin/alumni");
   await page.getByPlaceholder("Search name, email, company, branch…").fill("Meera Iyer");
   const row = page.locator("tbody tr", { hasText: "Meera Iyer" });
@@ -222,7 +222,7 @@ test("TPO personalizes an outreach template and marks a contact contacted", asyn
 });
 
 test("TPO records an alumni response and referral details", async ({ page }) => {
-  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await signIn(page, "tpo@vjti.ac.in", "Tpo1234!");
   await page.goto("/admin/alumni");
   await page.getByPlaceholder("Search name, email, company, branch…").fill("Pooja Nair");
   const row = page.locator("tbody tr", { hasText: "Pooja Nair" });
@@ -244,7 +244,7 @@ test("TPO records an alumni response and referral details", async ({ page }) => 
 });
 
 test("TPO applies bulk status and type to all visible alumni contacts", async ({ page }) => {
-  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await signIn(page, "tpo@vjti.ac.in", "Tpo1234!");
   await page.goto("/admin/alumni");
   await page.getByRole("button", { name: /^Not contacted \(/ }).click();
 
@@ -298,7 +298,7 @@ test("a student moves an application forward with private notes", async ({ page 
 });
 
 test("TPO publishes a drive and it appears on the public page", async ({ page }) => {
-  await signIn(page, "tpo@vjti.ac.in", "Tpo123!");
+  await signIn(page, "tpo@vjti.ac.in", "Tpo1234!");
   await page.goto("/admin");
   await page.getByRole("link", { name: /Placement drives/ }).click();
   await expect(page).toHaveURL(/\/admin\/drives$/);

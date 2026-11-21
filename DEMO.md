@@ -27,7 +27,7 @@ npm run dev:full       # starts API (:3001) AND web (:5173) together
 
 | Who | Email | Password | Use for |
 |---|---|---|---|
-| TPO staff | `tpo@vjti.ac.in` | `Tpo123!` | **Main hero** — admin panel |
+| TPO staff | `tpo@vjti.ac.in` | `Tpo1234!` | **Main hero** — admin panel |
 | TPO in-charge | `tpoi@vjti.ac.in` | `ChangeMe123!` | Super-admin — staff controls & audit (§5) |
 | Student | `student@vjti.ac.in` | `Student123!` | Role-guard check, saved companies / account (§3b) and the application pipeline (§3c) |
 | Contributor | `contributor@vjti.ac.in` | `Contributor123!` | Placed student (mention only) |
@@ -63,7 +63,7 @@ Optional: click the **🌙 Dark / ☀️ Light** button in the header and switch
 This is the interaction to linger on. It answers the TPO's real question: *"Do I still need a developer to change a number?"*
 
 1. Click **Sign in** (top right).
-2. Enter `tpo@vjti.ac.in` / `Tpo123!` → **Sign in**.
+2. Enter `tpo@vjti.ac.in` / `Tpo1234!` → **Sign in**.
    - Say: *"This is a real login — passwords are hashed, the session is an httpOnly cookie, and the server checks who I am on every request. Not a fake front-end screen."*
 3. The header now shows **Hi, TPO Office** and an **Admin** nav link. Click **Admin**.
 4. In the **2026 statistics** card, change **Students placed** from `512` to `520`.
@@ -133,7 +133,7 @@ Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) — §3b
 4. The board has columns **Applied → Online assessment → Interview → Offer** (plus Rejected/Withdrawn when used). On the **J.P. Morgan Chase & Co.** card, change **Stage** to `Interview`, type a private note like `Technical round confirmed.`, click **Save** → the card moves columns.
    > "Each student owns their own pipeline. The notes are private — they are stored against my account and the API refuses to read or change anyone else's row."
 5. **Sign out**, sign in as `contributor@vjti.ac.in` / `Contributor123!`, open `/my-applications` → the board is empty. Sign back out. That proves the rows are per user, not a shared list.
-6. (Optional, 30 seconds) Sign in as `tpo@vjti.ac.in` / `Tpo123!`, open **Admin → Placement drives**. Point at the **Tracking** and **Self-reported offers** columns (Tata now has one applicant), then publish a test drive with deadline `2026-12-31`, eligible branch `Information Technology` and year `2027`. The green confirmation says eligible students were notified; sign in as the student again and the bell shows a **New drive** message linking to `/drives`.
+6. (Optional, 30 seconds) Sign in as `tpo@vjti.ac.in` / `Tpo1234!`, open **Admin → Placement drives**. Point at the **Tracking** and **Self-reported offers** columns (Tata now has one applicant), then publish a test drive with deadline `2026-12-31`, eligible branch `Information Technology` and year `2027`. The green confirmation says eligible students were notified; sign in as the student again and the bell shows a **New drive** message linking to `/drives`.
 
 > "Students get a concrete next action and a private tracker; TPO gets one publication point with audit entries and targeted alerts instead of a WhatsApp forward."
 
@@ -156,7 +156,7 @@ Sign in again as the **student** (`student@vjti.ac.in` / `Student123!`) after th
    - Tags: `Online Assessment, System Design, On-campus`
    - Choose **Anonymous** — point at the note: *"the TPO still sees your real name."*
 3. Click **Submit for review**. The tracker shows the new item as **Awaiting review**; the public homepage still shows only the six approved write-ups.
-4. **Sign out**, then sign in as `tpo@vjti.ac.in` / `Tpo123!`. Click **Reviews** in the nav.
+4. **Sign out**, then sign in as `tpo@vjti.ac.in` / `Tpo1234!`. Click **Reviews** in the nav.
 5. Point at the dashed identity panel on the anonymous submissions: **"Submitted by Asha Patil · student@vjti.ac.in"**.
 
    > "This is the trust bit. The student asked for anonymity, so juniors see ‘Anonymous senior’ — but the TPO always knows who wrote it."
@@ -193,7 +193,7 @@ No extra sign-in: this page is public, and you are still signed in as TPO from �
 
 ## 5. Who manages the managers — roles & audit (60 seconds)
 
-Sign in as **TPO** (`tpo@vjti.ac.in` / `Tpo123!`) if you aren't already — the optional last step of §4 left you as a contributor.
+Sign in as **TPO** (`tpo@vjti.ac.in` / `Tpo1234!`) if you aren't already — the optional last step of §4 left you as a contributor.
 
 1. Click **Admin** → the landing page has shortcut cards for reviews and accounts plus the CSV import panel. (A third shortcut, **Audit log**, appears only for the TPO in-charge.)
 2. Click **Accounts & roles**. Search for `student@vjti.ac.in` and change the role dropdown from **Student** to **Contributor**, then click **Save**.
@@ -233,7 +233,7 @@ You are still signed in as **TPOI** from §5. These two features make the workfl
 
 **CSV import**
 
-6. Sign out, sign in as `tpo@vjti.ac.in` / `Tpo123!`, open **Admin**. In the **Import companies — 2026** card, paste this into the text box:
+6. Sign out, sign in as `tpo@vjti.ac.in` / `Tpo1234!`, open **Admin**. In the **Import companies — 2026** card, paste this into the text box:
 
    ```csv
    name,role,package,hired,branches
@@ -251,7 +251,7 @@ You are still signed in as **TPOI** from §5. These two features make the workfl
 
 ## 5c. Alumni outreach — bring companies via alumni (60 seconds)
 
-Sign in as `tpo@vjti.ac.in` / `Tpo123!` if needed (end of §5b left you signed in as TPO). This shows the TPO **initiating contact** with previously placed alumni to help bring their current companies for **placement/internship** campus drives.
+Sign in as `tpo@vjti.ac.in` / `Tpo1234!` if needed (end of §5b left you signed in as TPO). This shows the TPO **initiating contact** with previously placed alumni to help bring their current companies for **placement/internship** campus drives.
 
 1. Open **Admin** → click **Alumni outreach** (`/admin/alumni`). Point at the seeded list: different outreach statuses, placed/current company, and referral/notes for contacts like Neha (interested/referral shared) and Meera (not contacted yet).
    > "TPO already knows who was placed where in previous years. This page turns that list into an outreach workflow — who to contact, for what drive, and what came back."
@@ -297,7 +297,7 @@ Write the answers down. They decide what gets built next.
 | API errors / "Couldn't load placement data" | Check the API tab shows *"VJTI Placements API listening on http://localhost:3001"*. If not, run `npm run dev:api`. |
 | Port 3001 or 5173 already in use | Stop the process holding the port: `Get-NetTCPConnection -LocalPort 3001 -State Listen` then `Stop-Process -Id <OwningProcess> -Force`. |
 | Login says "Incorrect email or password" | Run `npm run seed:demo` again — it restores all demo passwords. |
-| Login says "Password must be at least 8 characters" | Stale frontend bundle from before the sign-in validation fix. Hard-refresh (`Ctrl+F5`) or restart Vite. `Tpo123!` is 7 characters and is valid for sign-in; the 8-character rule applies only when creating a new account. |
+| Login says "Password must be at least 8 characters" | Stale frontend bundle from before the sign-in validation fix. Hard-refresh (`Ctrl+F5`) or restart Vite. `Tpo1234!` is 7 characters and is valid for sign-in; the 8-character rule applies only when creating a new account. |
 | Changes don't show up after saving | The admin panel refreshes public data automatically. If the tab was left open for a long time, hard-refresh (`Ctrl+F5`). |
 | Review queue looks empty | Run `npm run seed:demo` — it inserts two pending submissions. |
 | Approve button does nothing | A note is only required for **Reject** and **Request changes**; Approve is one click. If the item was already reviewed, it cannot be reviewed again. |

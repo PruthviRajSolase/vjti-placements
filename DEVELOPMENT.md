@@ -55,7 +55,7 @@ npm run test:ui      # build + 14 Playwright browser tests (isolated temp databa
 
   | Role | Email | Password |
   |---|---|---|
-  | TPO staff | `tpo@vjti.ac.in` | `Tpo123!` |
+  | TPO staff | `tpo@vjti.ac.in` | `Tpo1234!` |
   | TPO in-charge | `tpoi@vjti.ac.in` | `ChangeMe123!` |
   | Student | `student@vjti.ac.in` | `Student123!` |
   | Contributor | `contributor@vjti.ac.in` | `Contributor123!` |
@@ -702,7 +702,7 @@ student submits ──► pending ──► TPO approves ──► approved (pub
 
 ### 2026-11-18 — Bug fix: TPO sign-in blocked by sign-up validation
 
-- `src/pages/SignInPage.jsx` applied the 8-character password minimum in **both** sign-in and sign-up modes. The seeded TPO password `Tpo123!` is 7 characters, so the browser rejected the login with "Password must be at least 8 characters" before any request reached the server — even though the API accepts it (covered by `npm test`).
+- `src/pages/SignInPage.jsx` applied the 8-character password minimum in **both** sign-in and sign-up modes. The seeded TPO password `Tpo1234!` is 7 characters, so the browser rejected the login with "Password must be at least 8 characters" before any request reached the server — even though the API accepts it (covered by `npm test`).
 - Moved the length check under `if (isSignUp)` only. Sign-in now sends the credentials as typed; the server compares the bcrypt hash and returns 401 on a real mismatch. No other credential or seed change needed.
 - Verified: `npm run build` succeeds (67 modules). Browser re-check needed from the presenter.
 

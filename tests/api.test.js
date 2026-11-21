@@ -9,7 +9,7 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -79,7 +79,7 @@ before(async () => {
     stdio: ["ignore", "pipe", "pipe"],
   });
   base = await waitForServer();
-  session.tpo = await login("tpo@vjti.ac.in", "Tpo123!");
+  session.tpo = await login("tpo@vjti.ac.in", "Tpo1234!");
   session.tpoi = await login("tpoi@vjti.ac.in", "ChangeMe123!");
   session.student = await login("student@vjti.ac.in", "Student123!");
   session.contributor = await login("contributor@vjti.ac.in", "Contributor123!");
@@ -1386,6 +1386,48 @@ describe("production seed guards", () => {
     assert.throws(() => execFileSync(process.execPath, ["server/seed-demo.js"], {
       cwd: root, env: { ...process.env, NODE_ENV: "production", DB_PATH: join(tempDir, "demo-prod.db") }, stdio: "pipe",
     }));
+  });
+
+  test("seed-demo performs a true reset and uses 8+ char passwords", () => {
+    const dir = mkdtempSync(join(tmpdir(), "vjti-seed-reset-"));
+    const resetDbPath = join(dir, "placements.db");
+    execFileSync(process.execPath, ["server/seed-demo.js"], {
+      cwd: root, env: { ...process.env, DB_PATH: resetDbPath }, stdio: "pipe",
+    });
+
+    const db = new DatabaseSync(resetDbPath);
+    try {
+      db.prepare(
+        "INSERT INTO users (full_name, email, password_hash, role) VALUES (?, ?, 'x', 'student')"
+      ).run("Leftover", "leftover@vjti.ac.in");
+      db.prepare("INSERT INTO audit_log (actor_id, action, target) VALUES (1, 'test', 'leftover')").run();
+    } finally {
+      db.close();
+    }
+
+    execFileSync(process.execPath, ["server/seed-demo.js"], {
+      cwd: root, env: { ...process.env, DB_PATH: resetDbPath }, stdio: "pipe",
+    });
+
+    const check = new DatabaseSync(resetDbPath, { readOnly: true });
+    try {
+      assert.equal(
+        check.prepare("SELECT id FROM users WHERE email = ?").get("leftover@vjti.ac.in"),
+        undefined
+      );
+      const auditRows = check.prepare("SELECT action, target FROM audit_log ORDER BY id").all()
+        .map((r) => ({ action: r.action, target: r.target }));
+      assert.deepEqual(auditRows, [{ action: "seed_demo", target: "content + accounts" }]);
+      assert.ok(check.prepare("SELECT id FROM users WHERE email = ?").get("tpo@vjti.ac.in"));
+    } finally {
+      check.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+
+    const seedSrc = readFileSync(join(root, "server/seed-demo.js"), "utf8");
+    for (const m of seedSrc.matchAll(/password:\s*"([^"]+)"/g)) {
+      assert.ok(m[1].length >= 8, `seed password too short: ${m[1]}`);
+    }
   });
 });
 

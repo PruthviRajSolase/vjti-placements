@@ -189,7 +189,7 @@ function SignInPage() {
 
         <div className="demo-accounts">
           <strong>Demo accounts</strong>
-          <span>TPO: <code>tpo@vjti.ac.in</code> / <code>Tpo123!</code></span>
+          <span>TPO: <code>tpo@vjti.ac.in</code> / <code>Tpo1234!</code></span>
           <span>Student: <code>student@vjti.ac.in</code> / <code>Student123!</code></span>
           <span>Contributor: <code>contributor@vjti.ac.in</code> / <code>Contributor123!</code></span>
           <span>Admin: <code>tpoi@vjti.ac.in</code> / <code>ChangeMe123!</code></span>
