@@ -176,12 +176,12 @@ If asked **"How do students become contributors?"** — they register with a `@v
 
 No extra sign-in: this page is public, and you are still signed in as TPO from §4. This is the answer to *"I've read the experiences — what should I actually study?"*
 
-1. Scroll to the bottom of the homepage: **What seniors say to prepare** shows the top three actionable themes with counts and a one-line action each, e.g. *"Mentioned in 4 of 7 write-ups"*. Point out that the counts include the Peregrine Systems write-up you just approved.
+1. Scroll to the bottom of the homepage: **What seniors say to prepare** shows the top three actionable themes with counts and a one-line action each, e.g. *"Mentioned in 4 of 7 write-ups"* for DSA. Point out that the total includes the Peregrine Systems write-up you just approved; DSA stays at 4 mentions because that submission was tagged **Online Assessment, System Design, On-campus** (no DSA).
 2. Click **Full prep plan →** (or the **Prep insights** nav link) → `/prep-insights`.
-   - The three stat cards read **6 approved write-ups**, distinct themes and common themes.
+   - The three stat cards read **7 approved write-ups**, distinct themes and common themes.
    - **Your prep checklist** is the five most repeated *actionable* themes with a concrete next step each.
    - **All themes** shows a frequency bar per theme, the companies that mentioned it, and links to the source write-ups (`#id`) or a pre-filtered experience list.
-3. Point at **DSA**: `4 of 6 · 67%`, seen at Summit Bank Group, Northbridge Software, HexaNet Systems and Ironvale Partners. Click one `#id` link → the approved write-up it came from.
+3. Point at **DSA**: `4 of 7 · 57%`, seen at Summit Bank Group, Northbridge Software, HexaNet Systems and Ironvale Partners. Click one `#id` link → the approved write-up it came from.
 4. Scroll to a process tag like **On-campus**: it appears at the top of the ranking but is marked as a process fact, not a prep task, so it is excluded from the checklist.
 5. Say the trust line: *"Only approved write-ups feed this. The Bluepeak Retail and Silvergate Bank submissions still waiting in the review queue cannot influence a single number, and no real name or email is exposed."*
 

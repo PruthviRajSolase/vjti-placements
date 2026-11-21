@@ -1,4 +1,4 @@
-# DEMO-SHORT.md — 5-minute TPO demo
+# DEMO-SHORT.md — 6-minute TPO demo
 
 A short presenter script for the VJTI placement portal. For the full runbook, use `DEMO.md`.
 
@@ -23,44 +23,58 @@ npm run dev:full
 
 All accounts are created by `npm run seed:demo`.
 
-## 1. Public view (60s)
+## 1. Staff edit goes live
 
-1. On Home, point at the four stat cards and year tabs.
-2. In Companies, search `north` or filter by branch to show Northbridge Software.
-3. Open a company detail page, then open Prep insights / Experiences and show filters.
+1. Click **Sign in** and sign in as `tpo@vjti.ac.in` / `Tpo1234!`.
+2. Open **Admin**.
+3. In the **2026 statistics** card, change **Students placed** from `512` to `520`.
+4. Click **Save statistics**.
+5. Click **Home** and show the updated **Students Placed** stat card.
 
-> "Students get verified placement stats, company history, and reviewed interview experiences in one place."
+> "TPO staff can update official placement numbers directly, and the public site updates immediately."
 
-## 2. Staff edit goes live (90s)
+## 2. Submit -> review -> publish
 
-1. Sign in as `tpo@vjti.ac.in` / `Tpo1234!`.
-2. Open **Admin** and change **Students placed** for 2026.
-3. Click **Save statistics**, return to Home, and show the updated number.
+1. Sign out, then sign in as `student@vjti.ac.in` / `Student123!`.
+2. Open **My experiences** and click **+ Share a new experience**.
+3. Fill in the form exactly:
+   - **Company:** `Peregrine Systems`
+   - **Role:** `Software Engineer`
+   - **Placement year:** `2026`
+   - **Title:** `Peregrine Systems - SDE (2026)`
+   - **What was the process like?:** `OA had two coding questions in 90 minutes, then three interview rounds on DSA, system design and behavioural questions. Timed mock interviews helped the most.`
+   - **Tags:** `Online Assessment, System Design, On-campus`
+   - **Visibility:** choose **Anonymous**.
+4. Click **Submit for review**.
+5. Sign out, then sign in as `tpo@vjti.ac.in` / `Tpo1234!`.
+6. Open **Reviews** and point at the real-name identity panel on the Peregrine Systems submission (*Submitted by Asha Patil · student@vjti.ac.in*).
+7. Click **Approve & publish**.
+8. Open **Home** and show the new write-up with the **Anonymous senior** byline.
 
-> "TPO staff can update placement data directly; no code change or redeploy."
+> "Students can share anonymously, but staff always see the real identity before publishing."
 
-## 3. Access control (45s)
+## 3. Drives + private tracker
 
-1. Sign out and sign in as `student@vjti.ac.in` / `Student123!`.
-2. Try `/admin` — the student is redirected.
-3. Optional terminal proof:
+1. Sign out, then sign in as `student@vjti.ac.in` / `Student123!`.
+2. Open **Drives** and click **+ Track application** on **Harbor Automotive**.
+3. On **My applications**, find the **Summit Bank Group** card.
+4. Change **Stage** to `Interview`, add a note like `Technical round confirmed.`, and click **Save**.
+5. Mention that another account sees an empty board because applications are private to each student.
 
-```bash
-curl -i http://localhost:3001/api/admin/content
-# 401/403 depending on session
-```
+> "Students get a live drive board and a private application tracker that only they can see."
 
-> "Admin actions are protected on the server, not just hidden in the UI."
+## 4. Alumni outreach
 
-## 4. Student workflow (60s)
+1. Sign out, then sign in as `tpo@vjti.ac.in` / `Tpo1234!`.
+2. Open **Admin** → **Alumni outreach**.
+3. Find **Meera Iyer** (not contacted), click **Select**, and show the **Outreach composer** preview.
+4. Tick Meera Iyer's checkbox and click **Mark contacted now** in the bulk bar.
+5. Point out the status/last-contacted update.
 
-1. As student, open **Drives** and track a drive.
-2. Open **My applications** and update status/notes.
-3. Open **Saved** or **Account** to show private, account-scoped data.
+> "TPO can turn alumni relationships into outreach actions with tracked, auditable follow-up."
 
-> "Students can track opportunities privately while staff manage official data."
+## Close
 
-## 5. Close (30s)
-
-- Mention review queue, notifications, alumni outreach, CSV import, and audit log as staff workflows.
+- Pilot ask: "Which screen would your team use first, and what data would you want imported for a pilot?"
+- Note: If asked, access control can be shown quickly: a student is redirected from `/admin`, and the API returns `401/403` for unauthorized admin requests.
 - Reset after demo: `npm run seed:demo`.
