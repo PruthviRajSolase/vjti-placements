@@ -43,8 +43,13 @@
   --good: #1a7f4e;          /* green — high placement % */
   --mid: #b98a00;           /* amber — medium placement % */
 
-  --radius: 12px;           /* corner roundness used everywhere */
-  --shadow: 0 1px 3px rgb(0 0 0 / 8%);  /* soft shadow: x y blur color */
+  --radius: 12px;           /* card radius */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  --shadow-hover: 0 6px 16px rgb(0 0 0 / 10%);
 }
 
 /* ------------------------------------------------------------
@@ -90,6 +95,19 @@
   border-color: #2f6b4e;
 }
 
+:root[data-theme="dark"] .status-badge.pending { background: #3b2f12; color: #fcd34d; }
+:root[data-theme="dark"] .status-badge.approved { background: #14382a; color: #86efac; }
+:root[data-theme="dark"] .status-badge.changes_requested { background: #3a2714; color: #fdba74; }
+:root[data-theme="dark"] .status-badge.rejected { background: #3a1d1d; color: #ffb4a9; }
+:root[data-theme="dark"] .btn-danger { border-color: #f87171; color: #fca5a5; }
+:root[data-theme="dark"] .btn-danger:hover { background: #3a1d1d; }
+:root[data-theme="dark"] .audit-action.create { background: #14382a; color: #86efac; }
+:root[data-theme="dark"] .audit-action.review { background: #23274a; color: #c7d2fe; }
+:root[data-theme="dark"] .audit-action.danger { background: #3a1d1d; color: #ffb4a9; }
+:root[data-theme="dark"] .role-badge.tpo { color: #86efac; border-color: #2f6b4e; }
+:root[data-theme="dark"] .role-badge.tpoi { color: #d8b4fe; border-color: #6b4a8a; }
+:root[data-theme="dark"] .required { color: #fca5a5; }
+
 /* ------------------------------------------------------------
    2. RESET + BASE
    Browsers add default margins/paddings that fight our design.
@@ -133,7 +151,7 @@ img { max-width: 100%; }              /* never let an image overflow its contain
   z-index: 30;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: var(--radius-lg);
   padding: 12px 24px;
   margin: 16px;
   box-shadow: var(--shadow);
@@ -153,7 +171,7 @@ img { max-width: 100%; }              /* never let an image overflow its contain
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 8px 12px;
   font: inherit;
   font-size: 1.1rem;
@@ -174,7 +192,7 @@ img { max-width: 100%; }              /* never let an image overflow its contain
   color: var(--text-soft);
   text-decoration: none;
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.95rem;
   white-space: nowrap;
 }
@@ -197,7 +215,7 @@ img { max-width: 100%; }              /* never let an image overflow its contain
   color: var(--accent-text);
   text-decoration: none;
   padding: 8px 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-weight: 600;
   font-size: 0.95rem;
   white-space: nowrap;
@@ -211,7 +229,7 @@ img { max-width: 100%; }              /* never let an image overflow its contain
     gap: 10px;
     padding: 12px 16px;
     margin: 10px;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
   }
   .nav-toggle { display: inline-flex; align-items: center; justify-content: center; margin-left: auto; }
   .main-nav {
@@ -281,7 +299,7 @@ main > section, footer {
 .year-tab {
   padding: 8px 22px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--text-soft);
   text-decoration: none;
   background: var(--surface);
@@ -411,7 +429,7 @@ main > section, footer {
   min-width: 88px;
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font: inherit;
   color: var(--text);
   background: var(--surface);
@@ -439,14 +457,14 @@ main > section, footer {
   flex: 1;
   height: 8px;
   background: var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   overflow: hidden;
 }
 
 .branch-progress-fill {
   height: 100%;
   background: var(--accent);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 /* ------------------------------------------------------------
@@ -475,7 +493,7 @@ main > section, footer {
 .experience-card:hover {
   /* lift the card up on hover — transform moves it, transition animates it */
   transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
+  box-shadow: var(--shadow-hover);
 }
 
 .experience-card h3 { margin: 0; font-size: 1.05rem; }
@@ -501,7 +519,7 @@ main > section, footer {
   font-size: 0.78rem;
   font-weight: 600;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .author {
@@ -527,7 +545,7 @@ main > section, footer {
   max-width: 420px;
   padding: 10px 16px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--text);
   font: inherit;                      /* inputs don't inherit fonts by default! */
@@ -552,7 +570,7 @@ main > section, footer {
   background: var(--surface);
   color: var(--text-soft);
   padding: 6px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
@@ -621,14 +639,14 @@ main > section, footer {
   gap: 8px;
   margin: 0 0 12px;
 }
-.company-mobile-meta div { background: var(--surface-alt); border-radius: 8px; padding: 8px 10px; }
+.company-mobile-meta div { background: var(--surface-alt); border-radius: var(--radius-sm); padding: 8px 10px; }
 .company-mobile-meta dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-soft); font-weight: 700; }
 .company-mobile-meta dd { margin: 2px 0 0; font-weight: 700; }
 .company-mobile-branches { display: flex; flex-wrap: wrap; gap: 6px; }
 .branch-chip {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent-soft);
   color: var(--accent);
   font-size: 0.76rem;
@@ -676,7 +694,7 @@ main > section, footer {
 
 .company-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
+  box-shadow: var(--shadow-hover);
 }
 
 .company-card h3 { margin: 0; font-size: 1.05rem; }
@@ -742,7 +760,7 @@ main > section, footer {
   font-weight: 700;
   font-size: 0.85rem;
   padding: 4px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .year-card-stats {
@@ -769,7 +787,7 @@ main > section, footer {
   font-size: 0.78rem;
   font-weight: 600;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   margin: 0 6px 6px 0;
 }
 
@@ -792,7 +810,7 @@ main > section, footer {
 .not-found code {
   background: var(--accent-soft);
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 0.9em;
 }
 
@@ -809,7 +827,7 @@ main > section, footer {
   background: var(--accent-soft);
   color: var(--accent);
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.9rem;
   font-weight: 700;
   border: 1px solid transparent;
@@ -827,7 +845,7 @@ main > section, footer {
   min-width: 180px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 8px;
   display: grid;
@@ -838,7 +856,7 @@ main > section, footer {
 .user-dropdown-link {
   display: block;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--text);
   text-decoration: none;
   font-weight: 600;
@@ -857,7 +875,7 @@ main > section, footer {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
@@ -878,7 +896,7 @@ main > section, footer {
   color: var(--text-soft);
   border: 1px solid var(--border);
   padding: 8px 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 600;
@@ -931,7 +949,7 @@ main > section, footer {
 .field select {
   padding: 10px 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--bg);
   color: var(--text);
   font: inherit;             /* inputs don't inherit fonts by default */
@@ -950,7 +968,7 @@ main > section, footer {
   background: var(--accent);
   color: var(--accent-text);
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 11px 20px;
   font: inherit;
   font-weight: 700;
@@ -964,7 +982,7 @@ main > section, footer {
   background: #fdecea;
   color: #a11206;
   border: 1px solid #f5c6c0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   margin: 0;
   font-size: 0.9rem;
@@ -1037,7 +1055,7 @@ main > section, footer {
   margin: 8px 0 0;
   padding: 12px 14px;
   border: 1px dashed var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   color: var(--text-soft);
   font-size: 0.9rem;
   background: var(--surface-alt);
@@ -1053,7 +1071,7 @@ main > section, footer {
   margin-top: 20px;
   padding: 14px;
   border: 1px dashed var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   color: var(--text-soft);
   font-size: 0.8rem;
   text-align: left;
@@ -1102,7 +1120,7 @@ main > section, footer {
 .admin-fields input, .admin-fields select, .admin-branch-grid input, .admin-company-form input {
   padding: 9px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg);
   color: var(--text);
   font: inherit;
@@ -1149,7 +1167,7 @@ main > section, footer {
   background: var(--accent-soft);
   color: var(--accent);
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 5px 12px;
   margin-right: 6px;
   font: inherit;
@@ -1167,7 +1185,7 @@ main > section, footer {
   z-index: 60;
   max-width: min(420px, calc(100vw - 32px));
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   font-size: 0.92rem;
   font-weight: 600;
   box-shadow: var(--shadow);
@@ -1204,7 +1222,7 @@ main > section, footer {
 .btn-secondary, .btn-danger {
   display: inline-block;
   padding: 9px 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--accent);
   background: transparent;
   color: var(--accent);
@@ -1274,7 +1292,7 @@ main > section, footer {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg);
   color: var(--text);
   font: inherit;
@@ -1294,7 +1312,7 @@ main > section, footer {
   gap: 10px !important;
   padding: 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-weight: 500 !important;
 }
@@ -1311,7 +1329,7 @@ main > section, footer {
 .status-badge, .visibility-badge {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -1357,7 +1375,7 @@ main > section, footer {
   margin: 14px 0;
   padding: 12px 14px;
   border-left: 3px solid var(--accent);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   font-size: 0.9rem;
 }
@@ -1371,7 +1389,7 @@ main > section, footer {
   margin: 12px 0;
   padding: 12px 14px;
   border: 1px dashed var(--accent);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
 }
 
@@ -1388,7 +1406,7 @@ main > section, footer {
 .filter-tab {
   padding: 8px 14px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--text-soft);
   font: inherit;
@@ -1397,7 +1415,7 @@ main > section, footer {
   cursor: pointer;
 }
 
-.filter-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filter-tab.active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .tab-count { margin-left: 6px; opacity: 0.75; }
 
 .empty-card { text-align: center; padding: 46px 24px; }
@@ -1454,7 +1472,7 @@ main > section, footer {
 .role-badge {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--bg);
   border: 1px solid var(--border);
   font-size: 0.75rem;
@@ -1468,7 +1486,7 @@ main > section, footer {
 .users-table select, .role-editor select {
   padding: 6px 8px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg);
   color: var(--text);
   font: inherit;
@@ -1480,7 +1498,7 @@ main > section, footer {
 .role-editor button {
   padding: 5px 12px;
   border: 1px solid var(--accent);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent-soft);
   color: var(--accent);
   font: inherit;
@@ -1495,7 +1513,7 @@ main > section, footer {
 .audit-action {
   display: inline-block;
   padding: 3px 9px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent);
   font-size: 0.75rem;
@@ -1639,7 +1657,7 @@ main { padding-bottom: 24px; }
   overflow-x: auto;
   margin: 16px 0;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg);
   color: var(--mid);
   font-size: 0.78rem;
@@ -1685,7 +1703,7 @@ main { padding-bottom: 24px; }
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -1836,7 +1854,7 @@ a.tag:hover { text-decoration: underline; }
   gap: 6px;
   padding: 8px 13px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--accent);
   font: inherit;
@@ -1953,7 +1971,7 @@ a.user-chip:hover { opacity: 0.85; }
   background: #e7f6ed;
   color: #12603a;
   border: 1px solid #b7e2ca;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   margin: 0 0 16px;
   font-size: 0.9rem;
@@ -1985,7 +2003,7 @@ a.user-chip:hover { opacity: 0.85; }
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #c0392b;
   color: #fff;
   font-size: 0.7rem;
@@ -2110,7 +2128,7 @@ a.user-chip:hover { opacity: 0.85; }
   gap: 8px;
   padding: 8px 14px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   cursor: pointer;
   font-size: 0.9rem;
@@ -2133,7 +2151,7 @@ a.user-chip:hover { opacity: 0.85; }
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -2171,7 +2189,7 @@ a.user-chip:hover { opacity: 0.85; }
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -2191,7 +2209,7 @@ a.user-chip:hover { opacity: 0.85; }
   margin-top: 8px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--surface-alt);
 }
 
@@ -2229,7 +2247,7 @@ a.user-chip:hover { opacity: 0.85; }
   margin-bottom: 12px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--surface-alt);
 }
 
@@ -2245,7 +2263,7 @@ a.user-chip:hover { opacity: 0.85; }
 .alumni-bulk-controls input {
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -2300,7 +2318,7 @@ a.user-chip:hover { opacity: 0.85; }
 .application-card textarea {
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -2324,7 +2342,7 @@ a.user-chip:hover { opacity: 0.85; }
 .drive-deadline {
   flex: none;
   padding: 5px 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent-soft);
   color: var(--accent);
   font-size: 0.8rem;
@@ -2351,7 +2369,7 @@ a.user-chip:hover { opacity: 0.85; }
 }
 .pipeline-column h2 { margin: 0 0 10px; font-size: 1rem; }
 .pipeline-count { color: var(--accent); }
-.application-card { display: grid; gap: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.application-card { display: grid; gap: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
 .application-card h3 { margin: 0; font-size: 1rem; }
 .application-role, .application-meta { margin: 0; color: var(--text-soft); font-size: 0.85rem; }
 .application-card label { display: grid; gap: 4px; font-size: 0.8rem; color: var(--text-soft); }
@@ -2380,7 +2398,7 @@ a.user-chip:hover { opacity: 0.85; }
     position: sticky;
     bottom: 8px;
     z-index: 25;
-    box-shadow: 0 6px 20px rgb(0 0 0 / 18%);
+    box-shadow: var(--shadow-hover);
   }
 }
 
@@ -2482,8 +2500,8 @@ a.user-chip:hover { opacity: 0.85; }
 .insight-topic-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .insight-topic-head h3 { margin: 0; font-size: 1.05rem; }
 .insight-topic-head span { color: var(--text-soft); font-size: 0.82rem; white-space: nowrap; }
-.insight-bar { height: 7px; border-radius: 999px; background: var(--border); overflow: hidden; }
-.insight-bar span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.insight-bar { height: 7px; border-radius: var(--radius-pill); background: var(--border); overflow: hidden; }
+.insight-bar span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--accent); }
 .insight-topic p { margin: 0; }
 .insight-action { color: var(--text-soft); }
 .insight-links { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.85rem; }
