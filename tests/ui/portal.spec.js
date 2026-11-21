@@ -347,7 +347,7 @@ test("key pages have no horizontal overflow at 390px", async ({ page }) => {
   const assertNoOverflow = async (path) => {
     await page.goto(path);
     await page.waitForLoadState("domcontentloaded");
-    const hasOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    const hasOverflow = await page.evaluate(() => document.body.scrollWidth > window.innerWidth + 1);
     expect(hasOverflow, `overflow at ${path}`).toBeFalsy();
   };
 
