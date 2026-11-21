@@ -88,7 +88,7 @@ function CompaniesSection({ year }) {
         Showing {visible.length} of {companies.length} companies
       </p>
 
-      <div className="table-scroll">
+      <div className="table-scroll company-table-desktop">
         <table className="company-table">
           <thead>
             <tr>
@@ -100,12 +100,6 @@ function CompaniesSection({ year }) {
             </tr>
           </thead>
           <tbody>
-            {/*
-              CONDITIONAL RENDERING: a ternary inside JSX.
-              Nothing matched? Render the friendly empty row.
-              Otherwise map the visible companies into rows.
-              Note colSpan (camelCase!) and key={c.name}.
-            */}
             {visible.length === 0 ? (
               <tr>
                 <td colSpan={5} className="no-results">
@@ -116,12 +110,7 @@ function CompaniesSection({ year }) {
               visible.map((c) => (
                 <tr key={c.name}>
                   <td>
-                    {/* Step 8: company names are now LINKS to their
-                        own page — /company/<slug> */}
-                    <Link
-                      className="company-link"
-                      to={`/company/${slugify(c.name)}`}
-                    >
+                    <Link className="company-link" to={`/company/${slugify(c.name)}`}>
                       {c.name}
                     </Link>
                   </td>
@@ -134,6 +123,30 @@ function CompaniesSection({ year }) {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="company-cards-mobile">
+        {visible.length === 0 ? (
+          <p className="no-results">No companies match your search. Try clearing the filters.</p>
+        ) : (
+          visible.map((c) => (
+            <article key={c.name} className="company-mobile-card">
+              <h3 className="company-mobile-name">
+                <Link className="company-link" to={`/company/${slugify(c.name)}`}>
+                  {c.name}
+                </Link>
+              </h3>
+              <p className="company-mobile-role">{c.role}</p>
+              <dl className="company-mobile-meta">
+                <div><dt>Package</dt><dd>{c.package} LPA</dd></div>
+                <div><dt>Hired</dt><dd>{c.hired}</dd></div>
+              </dl>
+              <div className="company-mobile-branches">
+                {c.branches.map((b) => <span key={b} className="branch-chip">{b}</span>)}
+              </div>
+            </article>
+          ))
+        )}
       </div>
     </section>
   );

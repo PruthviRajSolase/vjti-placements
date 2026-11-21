@@ -545,6 +545,43 @@ main > section, footer {
 
 .company-link:hover { text-decoration: underline; }
 
+.company-cards-mobile { display: none; }
+
+.company-mobile-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.company-mobile-name { margin: 0 0 4px; font-size: 1.05rem; }
+.company-mobile-role { margin: 0 0 12px; color: var(--text-soft); font-size: 0.9rem; }
+.company-mobile-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.company-mobile-meta div { background: var(--surface-alt); border-radius: 8px; padding: 8px 10px; }
+.company-mobile-meta dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-soft); font-weight: 700; }
+.company-mobile-meta dd { margin: 2px 0 0; font-weight: 700; }
+.company-mobile-branches { display: flex; flex-wrap: wrap; gap: 6px; }
+.branch-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+@media (max-width: 639px) {
+  .company-table-desktop { display: none; }
+  .company-cards-mobile { display: grid; gap: 12px; }
+}
+
 /* Centered page intro (Companies page) */
 .page-intro {
   text-align: center;
