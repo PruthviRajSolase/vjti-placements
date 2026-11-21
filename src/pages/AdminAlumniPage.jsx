@@ -490,9 +490,9 @@ export default function AdminAlumniPage() {
             </div>
           </div>
 
-          <div className="alumni-bulk-bar" role="group" aria-label="Bulk actions">
+          <div className={`alumni-bulk-bar${selectedCount > 0 ? " alumni-bulk-bar-active" : ""}`} role="group" aria-label="Bulk actions">
             <div className="alumni-bulk-summary">
-              <strong>{selectedCount}</strong> selected
+              <span className="alumni-bulk-count"><strong>{selectedCount}</strong> selected</span>
               <button type="button" className="btn-secondary" onClick={toggleSelectAllVisible} disabled={visible.length === 0}>
                 {allVisibleSelected ? "Unselect visible" : "Select all visible"}
               </button>
