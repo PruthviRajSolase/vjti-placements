@@ -2020,6 +2020,18 @@ describe("launch mode", () => {
     assert.equal(res.data.mode, "launch");
   });
 
+  test("launch content hides placement data even when DB has demo data", async () => {
+    const res = await reqL("/api/content");
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.data.stats, {});
+    assert.deepEqual(res.data.companiesByYear, {});
+    assert.deepEqual(res.data.companiesBySlug, {});
+    assert.deepEqual(res.data.branchStatsByYear, {});
+    assert.ok(Array.isArray(res.data.experiences));
+    assert.equal(typeof res.data.prepInsights?.totalExperiences, "number");
+    assert.ok(Array.isArray(res.data.prepInsights?.topics));
+  });
+
   test("disabled routes return 404 for every role", async () => {
     const roles = [null, sess.student, sess.contributor, sess.tpo, sess.tpoi];
     const checks = [

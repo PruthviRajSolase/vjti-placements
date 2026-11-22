@@ -348,7 +348,14 @@ app.get("/api/admin/ping", requireAuth, requireRole("tpo", "tpoi"), (req, res) =
 // ------------------------------------------------------------- content
 // Public read — everything the student-facing pages need in ONE request.
 app.get("/api/content", (_req, res) => {
-  res.json({ ...getPublicContent(), mode: APP_MODE });
+  const content = getPublicContent();
+  if (isLaunchMode) {
+    content.stats = {};
+    content.companiesByYear = {};
+    content.companiesBySlug = {};
+    content.branchStatsByYear = {};
+  }
+  res.json({ ...content, mode: APP_MODE });
 });
 
 // Admin uses the same middleware stack for every write below.
