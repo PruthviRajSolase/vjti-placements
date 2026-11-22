@@ -271,18 +271,19 @@ app.post("/api/auth/resend-verification", rateLimit("resend"), async (req, res) 
   res.json({ ok: true, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
 });
 
-app.post("/api/auth/forgot-password", rateLimit("forgot"), async (req, res) => {
+app.post("/api/auth/forgot-password", rateLimit("forgot"), (req, res) => {
   const email = text(req.body?.email, 120).toLowerCase();
-  if (!email.endsWith(COLLEGE_DOMAIN)) {
-    return res.json({ ok: true });
-  }
-  const userRow = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
-  if (userRow) {
-    const otp = await createEmailOtp(email, "reset_password");
-    if (!otp.ok) return res.status(otp.sendFailed ? 503 : 429).json({ error: otp.error });
-    return res.json({ ok: true, ...(otp.devCode ? { devCode: otp.devCode } : {}) });
-  }
+  // Always respond identically to avoid account-existence leaks.
   res.json({ ok: true });
+  if (!email.endsWith(COLLEGE_DOMAIN)) return;
+  void (async () => {
+    const userRow = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+    if (!userRow) return;
+    const otp = await createEmailOtp(email, "reset_password");
+    if (!otp.ok) console.error(`[forgot-password] otp failed for ${email}: ${otp.error}`);
+  })().catch((err) => {
+    console.error(`[forgot-password] failed for ${email}: ${err?.message || String(err)}`);
+  });
 });
 
 app.post("/api/auth/reset-password", rateLimit("reset"), async (req, res) => {

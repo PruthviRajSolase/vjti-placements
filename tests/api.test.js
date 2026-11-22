@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
+import bcrypt from "bcryptjs";
 import { buildPrepInsights } from "../server/insights.js";
 import { sendMail, sendOtpEmail, _setTransporterForTest, _resetTransporterForTest } from "../server/mailer.js";
 import { pruneBackups, listBackupFiles, startDailyBackupTimer } from "../server/backup.js";
@@ -1778,10 +1779,12 @@ describe("email verification OTP", () => {
 
 describe("password reset", () => {
   test("forgot password does not reveal account existence", async () => {
+    const known = await request("/api/auth/forgot-password", { method: "POST", body: { email: "student@vjti.ac.in" } });
     const missing = await request("/api/auth/forgot-password", { method: "POST", body: { email: "missing@vjti.ac.in" } });
+    assert.equal(known.status, 200);
     assert.equal(missing.status, 200);
-    assert.equal(missing.data.ok, true);
-    assert.equal(missing.data.devCode, undefined);
+    assert.deepEqual(known.data, { ok: true });
+    assert.deepEqual(missing.data, { ok: true });
   });
 
   test("reset password sets new password, increments token_version, and kills old sessions", async () => {
@@ -1796,12 +1799,24 @@ describe("password reset", () => {
 
     const forgot = await request("/api/auth/forgot-password", { method: "POST", body: { email } });
     assert.equal(forgot.status, 200);
-    assert.match(forgot.data.devCode || "", /^\d{6}$/);
+    assert.deepEqual(forgot.data, { ok: true });
 
-    const bad = await request("/api/auth/reset-password", { method: "POST", body: { email, code: forgot.data.devCode, newPassword: "short" } });
+    // forgot-password returns identical response; insert a known reset OTP directly for the reset flow.
+    const code = "123456";
+    const codeHash = bcrypt.hashSync(code, 10);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+    const db = new DatabaseSync(dbPath);
+    try {
+      db.prepare("DELETE FROM email_otps WHERE email = ? AND purpose = 'reset_password'").run(email);
+      db.prepare("INSERT INTO email_otps (email, purpose, code_hash, expires_at) VALUES (?, ?, ?, ?)").run(email, "reset_password", codeHash, expiresAt);
+    } finally {
+      db.close();
+    }
+
+    const bad = await request("/api/auth/reset-password", { method: "POST", body: { email, code, newPassword: "short" } });
     assert.equal(bad.status, 400);
 
-    const reset = await request("/api/auth/reset-password", { method: "POST", body: { email, code: forgot.data.devCode, newPassword: "NewPassword123!" } });
+    const reset = await request("/api/auth/reset-password", { method: "POST", body: { email, code, newPassword: "NewPassword123!" } });
     assert.equal(reset.status, 200);
 
     const oldSession = await request("/api/auth/me", { cookie: oldCookie });
