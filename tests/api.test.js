@@ -2105,6 +2105,23 @@ describe('mailer', () => {
       _resetTransporterForTest();
     }
   });
+
+  test('OTP codes generated through API are 6-digit numeric strings', async () => {
+    const codes = new Set();
+    for (let i = 0; i < 5; i++) {
+      const email = `otpcode${i}@vjti.ac.in`;
+      const res = await request('/api/auth/register', {
+        method: 'POST',
+        body: { fullName: `OTP Code ${i}`, email, password: 'Password123!' },
+      });
+      assert.equal(res.status, 201);
+      assert.match(String(res.data.devCode), /^\d{6}$/);
+      const n = Number(res.data.devCode);
+      assert.ok(n >= 100000 && n < 1000000);
+      codes.add(res.data.devCode);
+    }
+    assert.ok(codes.size >= 1);
+  });
 });
 
 describe('email send caps', () => {

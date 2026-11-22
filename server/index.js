@@ -6,6 +6,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import bcrypt from "bcryptjs";
+import { randomInt } from "node:crypto";
 import { createReadStream, existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -128,7 +129,7 @@ app.get("/api/health", (_req, res) => {
 
 // ---------------------------------------------------------------- auth
 function generateOtpCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(randomInt(100000, 1000000));
 }
 
 async function createEmailOtp(email, purpose) {
