@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { buildPrepInsights } from "../server/insights.js";
 import { sendMail, sendOtpEmail, _setTransporterForTest, _resetTransporterForTest } from "../server/mailer.js";
-import { pruneBackups, listBackupFiles } from "../server/backup.js";
+import { pruneBackups, listBackupFiles, startDailyBackupTimer } from "../server/backup.js";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const tempDir = mkdtempSync(join(tmpdir(), "vjti-api-"));
@@ -2275,5 +2275,30 @@ describe('backup pruning and admin download', () => {
 
     const audit = await request('/api/admin/audit', { cookie: session.tpoi });
     assert.ok(audit.data.entries.some((e) => e.action === 'download_backup' && String(e.target).includes('placements-2099-01-01T00-00-00-000Z.db')));
+  });
+
+  test('startup creates initial backup when BACKUP_DAILY=1 and none exists', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'vjti-initial-backup-'));
+    const db = join(dir, 'placements.db');
+    const backupDir = join(dir, 'backups');
+    execFileSync(process.execPath, ['server/seed-demo.js'], { cwd: root, env: { ...process.env, DB_PATH: db }, stdio: 'pipe' });
+    const prev = { BACKUP_DAILY: process.env.BACKUP_DAILY, DB_PATH: process.env.DB_PATH, BACKUP_DIR: process.env.BACKUP_DIR, BACKUP_KEEP: process.env.BACKUP_KEEP };
+    process.env.BACKUP_DAILY = '1';
+    process.env.DB_PATH = db;
+    process.env.BACKUP_DIR = backupDir;
+    process.env.BACKUP_KEEP = '14';
+    let timer;
+    try {
+      timer = startDailyBackupTimer();
+      const files = listBackupFiles(backupDir);
+      assert.equal(files.length, 1);
+      assert.match(files[0].name, /^placements-.*\.db$/);
+    } finally {
+      if (timer) clearInterval(timer);
+      for (const [k, v] of Object.entries(prev)) {
+        if (v === undefined) delete process.env[k]; else process.env[k] = v;
+      }
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

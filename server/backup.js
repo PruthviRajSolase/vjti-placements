@@ -80,6 +80,12 @@ export function startDailyBackupTimer() {
       console.error(`[backup] daily backup failed: ${err?.message || String(err)}`);
     }
   };
+  try {
+    const dir = resolveBackupDir(resolveDbPath());
+    if (!latestBackup(dir)) run();
+  } catch (err) {
+    console.error(`[backup] initial backup failed: ${err?.message || String(err)}`);
+  }
   const timer = setInterval(run, dayMs);
   timer.unref?.();
   return timer;
